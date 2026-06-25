@@ -23,8 +23,8 @@ r_opts <- options(
 
 # Loading libraries and installing if unavailable
 # Install the development version from GitHub
-if (!require("devtools")) {
-  install.packages("devtools")
+if (!require("pak")) {
+  install.packages("pak")
 }
 #For access to the polytomous data 'election'
 if (!require("poLCA")) {
@@ -32,7 +32,7 @@ if (!require("poLCA")) {
 }
 
 if (!require("teLCA")) {
-  devtools::install_github("SamLeeBYU/teLCA")
+  pak::pak("SamLeeBYU/teLCA")
 }
 
 library(teLCA)

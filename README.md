@@ -43,13 +43,13 @@ Following a similar approach as **multilevLCA**, **teLCA** employs Full-Informat
 You can install the development version of teLCA from GitHub like so:
 
 ``` r
-# Install devtools if it is not already available
-if (!require("devtools")) {
-  install.packages("devtools")
+# Install pak if it is not already available
+if (!require("pak")) {
+  install.packages("pak")
 }
 
 # Install teLCA from the GitHub repository
-devtools::install_github("SamLeeBYU/teLCA")
+pak::pak("SamLeeBYU/teLCA")
 ```
 
 ## Example
