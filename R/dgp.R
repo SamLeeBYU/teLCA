@@ -33,6 +33,15 @@
 #'     `$sigma` (residual SD = 1) for the distal outcome model.}
 #' }
 #'
+#' @examples
+#' # True item-response probabilities for high separation
+#' bk2018_params$rho_high
+#'
+#' # Covariate model parameters (intercepts and slopes)
+#' bk2018_params$covariate_params
+#'
+#' # Distal outcome parameters
+#' bk2018_params$distal_params
 #' @export
 bk2018_params <- list(
   class_props = c(1 / 3, 1 / 3, 1 / 3),
@@ -72,6 +81,12 @@ bk2018_params <- list(
 #'   Use `bk2018_params$separation_levels` for the three simulation levels.
 #'
 #' @return A 3 x 6 numeric matrix.
+#' @examples
+#' # High separation: P(Y=1|class) = 0.9 for the "high" class
+#' make_rho(0.9)
+#'
+#' # Low separation
+#' make_rho(0.7)
 #' @export
 make_rho <- function(pi) {
   if (!is.numeric(pi) || length(pi) != 1L || pi <= 0.5 || pi >= 1) {
@@ -98,6 +113,9 @@ make_rho <- function(pi) {
 #'   and `$b` (length-T slopes, reference = 0).  See `bk2018_params$covariate_params`.
 #'
 #' @return An n x T matrix of class probabilities (rows sum to 1).
+#' @examples
+#' # Class membership probabilities for Zp = 1..5
+#' mnl_probs(1:5, bk2018_params$covariate_params)
 #' @export
 mnl_probs <- function(Zp, params) {
   n <- length(Zp)
@@ -118,6 +136,9 @@ mnl_probs <- function(Zp, params) {
 #' @param pi Numeric vector of length T. Class proportions (must sum to 1).
 #'
 #' @return Integer vector of length n with values in `1:T`.
+#' @examples
+#' # Draw 100 class labels from equal prevalences
+#' draw_classes(100, c(1/3, 1/3, 1/3))
 #' @export
 draw_classes <- function(n, pi) {
   sample(seq_along(pi), size = n, replace = TRUE, prob = pi)
@@ -130,6 +151,10 @@ draw_classes <- function(n, pi) {
 #' @param rho T x K matrix. `rho[t, k] = P(Y_k = 1 | X = t)`.
 #'
 #' @return An n x K integer matrix of 0/1 values.
+#' @examples
+#' rho <- make_rho(0.9)
+#' X   <- draw_classes(50, c(1/3, 1/3, 1/3))
+#' draw_indicators(X, rho)
 #' @export
 draw_indicators <- function(X, rho) {
   n <- length(X)
@@ -147,6 +172,9 @@ draw_indicators <- function(X, rho) {
 #' @param n Integer. Sample size.
 #'
 #' @return Integer vector of length n.
+#' @examples
+#' Zp <- draw_Zp(100)
+#' table(Zp)
 #' @export
 draw_Zp <- function(n) {
   sample(1:5, size = n, replace = TRUE)
@@ -159,6 +187,10 @@ draw_Zp <- function(n) {
 #' @param params Multinomial logistic parameter list (see `bk2018_params$covariate_params`).
 #'
 #' @return Integer vector of length n with class labels in `1:T`.
+#' @examples
+#' Zp <- draw_Zp(100)
+#' X  <- draw_classes_given_Zp(Zp, bk2018_params$covariate_params)
+#' table(X)
 #' @export
 draw_classes_given_Zp <- function(Zp, params) {
   probs <- mnl_probs(Zp, params) # n x T
@@ -177,6 +209,10 @@ draw_classes_given_Zp <- function(Zp, params) {
 #'   See `bk2018_params$distal_params`.
 #'
 #' @return Numeric vector of length n.
+#' @examples
+#' X  <- draw_classes(100, c(1/3, 1/3, 1/3))
+#' Zo <- draw_Zo(X, bk2018_params$distal_params)
+#' tapply(Zo, X, mean)   # should be close to true mu
 #' @export
 draw_Zo <- function(X, params) {
   rnorm(length(X), mean = params$mu[X], sd = params$sigma)
@@ -205,6 +241,17 @@ draw_Zo <- function(X, params) {
 #'   \item{`Zp`}{Integer covariate 1-5 (scenario `"covariate"` only).}
 #'   \item{`Zo`}{Continuous distal outcome (scenario `"distal"` only).}
 #' }
+#' @examples
+#' # Covariate scenario with high separation
+#' d <- generate_data(n = 200, separation = "high", scenario = "covariate",
+#'                    seed = 1)
+#' head(d)
+#' colMeans(d)
+#'
+#' # Distal outcome scenario
+#' d2 <- generate_data(n = 200, separation = "high", scenario = "distal",
+#'                     seed = 2)
+#' head(d2)
 #' @export
 generate_data <- function(
   n,
@@ -275,6 +322,14 @@ generate_data <- function(
 #'   each element a list of `n_rep` data frames.
 #'
 #' @importFrom cli cli_progress_bar cli_progress_update cli_progress_done cli_alert_success
+#' @examples
+#' \donttest{
+#' # Generate 5 replicates for mid and high separation only
+#' datasets <- generate_all_conditions(n_rep = 5L, base_seed = 1L,
+#'                                     sep_levels = c("mid", "high"))
+#' # Access a single replicate
+#' head(datasets[["covariate"]][["high"]][["500"]][[1]])
+#' }
 #' @export
 generate_all_conditions <- function(
   n_rep = 500L,
