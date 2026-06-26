@@ -1,7 +1,7 @@
 Package: teLCA
 Type: Package
 Title: Three-Step Estimation for Latent Class Analysis
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: person("Sam", "Lee", email = "samlee@arizona.edu", role = c("aut", "cre"))
 Description: Implements BCH and ML three-step estimators for latent class
     analysis (LCA) with covariates and distal outcomes, following Bakk, Tekle &

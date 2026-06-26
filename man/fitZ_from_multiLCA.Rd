@@ -15,6 +15,7 @@ fitZ_from_multiLCA(
   iter.measurement,
   R2.threshold,
   incomplete = FALSE,
+  rebase = "C1",
   verbose = FALSE
 )
 }
@@ -38,6 +39,10 @@ fitZ_from_multiLCA(
 \item{R2.threshold}{Entropy R\eqn{^2} restart threshold.}
 
 \item{incomplete}{Logical.}
+
+\item{rebase}{Character or integer. Reference class for column naming of
+\verb{$mGamma}. Must match the \code{rebase} used in \code{\link[=three_step]{three_step()}} so
+coefficient labels are consistent. Default \code{"C1"}.}
 
 \item{verbose}{Logical.}
 }
