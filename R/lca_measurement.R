@@ -418,6 +418,9 @@ fitZ_from_fit0 <- function(
 #' @param iter.measurement Number of random restarts.
 #' @param R2.threshold Entropy R\eqn{^2} restart threshold.
 #' @param incomplete Logical.
+#' @param rebase Character or integer. Reference class for column naming of
+#'   `$mGamma`. Must match the `rebase` used in [teLCA::three_step()] so
+#'   coefficient labels are consistent. Default `"C1"`.
 #' @param verbose Logical.
 #'
 #' @return A list with `$mGamma`, `$mPhi`, `$vOmega`, `$LLKSeries`, and
@@ -435,6 +438,7 @@ fitZ_from_multiLCA <- function(
   iter.measurement,
   R2.threshold,
   incomplete = FALSE,
+  rebase = "C1",
   verbose = FALSE
 ) {
   run_fit <- function() {
@@ -508,7 +512,9 @@ fitZ_from_multiLCA <- function(
   raw <- initial
   mGamma <- raw$mGamma
   rownames(mGamma) <- c("Intercept", Zp.names)
-  colnames(mGamma) <- paste0("C", seq_len(ncol(mGamma)) + 1L)
+  ref_idx <- parse_rebase(rebase, n_classes)
+  non_ref_classes <- seq_len(n_classes)[-ref_idx]
+  colnames(mGamma) <- paste0("C", non_ref_classes)
 
   list(
     mGamma = mGamma,

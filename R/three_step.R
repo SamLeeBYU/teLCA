@@ -1639,6 +1639,7 @@ three_step <- function(
         iter.measurement = iter.measurement,
         R2.threshold = R2.threshold,
         incomplete = incomplete,
+        rebase = rebase,
         verbose = verbose
       )
       # Update s1$fitZ with the multiLCA result so $two_step reflects it
