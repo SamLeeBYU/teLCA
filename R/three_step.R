@@ -1296,6 +1296,57 @@ lca_vcov_distal <- function(
 #'
 #' @return A list containing `$measurement_model`, `$covariate` (if
 #'   `Zp.names` supplied), and/or `$distal` (if `Zo.name` supplied).
+#' @examples
+#' d <- generate_data(n = 200, separation = "high",
+#'                    scenario = "covariate", seed = 1)
+#'
+#' # Measurement model only
+#' fit_m <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3)
+#' summary(fit_m)
+#'
+#'
+#' # ML three-step with simple SEs (fast)
+#' fit <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3,
+#'                   Zp.names = "Zp", use.simple.cov = TRUE)
+#' summary(fit)
+#' coef(fit)
+#' vcov(fit)
+#'
+#' # Full measurement-uncertainty correction
+#' fit_cor <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3,
+#'                       Zp.names = "Zp", use.simple.cov = FALSE,
+#'                       use.modal.assignment = FALSE)
+#' summary(fit_cor)
+#'
+#' # BCH estimator
+#' fit_bch <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3,
+#'                       Zp.names = "Zp", use.bch = TRUE,
+#'                       use.simple.cov = TRUE)
+#' summary(fit_bch)
+#'
+#' # Change reference class
+#' fit_c2 <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3,
+#'                      Zp.names = "Zp", use.simple.cov = TRUE,
+#'                      rebase = "C2")
+#' summary(fit_c2)
+#'
+#' # Gaussian distal outcome
+#' d2 <- generate_data(200, "high", "distal", seed = 2)
+#' fit_dis <- three_step(d2, Y.names = paste0("Y", 1:6), n_classes = 3,
+#'                       Zo.name = "Zo", family = "gaussian",
+#'                       use.simple.cov = TRUE)
+#' summary(fit_dis)
+#'
+#' # Pass a pre-fitted measurement model
+#' fit_step1 <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3)
+#' fit2 <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3,
+#'                    Zp.names = "Zp", step1 = fit_step1,
+#'                    use.simple.cov = TRUE)
+#' summary(fit2)
+#'
+#' # Plot item-response profiles
+#' plot(fit)
+#'
 #' @export
 three_step <- function(
   data,
@@ -1987,6 +2038,10 @@ three_step <- function(
 
 # -- print ---------------------------------------------------------------------
 
+#' @examples
+#' d    <- generate_data(100, "high", "covariate", seed = 1)
+#' fit_m <- three_step(d, paste0("Y", 1:6), n_classes = 3)
+#' print(fit_m)
 #' @export
 print.teLCA_measurement <- function(x, ...) {
   cat("teLCA -- measurement model\n")
@@ -2003,6 +2058,13 @@ print.teLCA_measurement <- function(x, ...) {
   invisible(x)
 }
 
+#' @examples
+#' \donttest{
+#' d   <- generate_data(200, "high", "covariate", seed = 1)
+#' fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,
+#'                   Zp.names = "Zp", use.simple.cov = TRUE)
+#' print(fit)
+#' }
 #' @export
 print.teLCA_covariate <- function(x, digits = 4, ...) {
   cat("teLCA -- three-step covariate model\n")
@@ -2018,6 +2080,13 @@ print.teLCA_covariate <- function(x, digits = 4, ...) {
   invisible(x)
 }
 
+#' @examples
+#' \donttest{
+#' d   <- generate_data(200, "high", "distal", seed = 2)
+#' fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,
+#'                   Zo.name = "Zo", use.simple.cov = TRUE)
+#' print(fit)
+#' }
 #' @export
 print.teLCA_distal <- function(x, digits = 4, ...) {
   fam <- if (!is.null(x$family)) x$family else "gaussian"
@@ -2049,6 +2118,10 @@ print.teLCA_both <- function(x, digits = 4, ...) {
 
 # -- summary -------------------------------------------------------------------
 
+#' @examples
+#' d    <- generate_data(100, "high", "covariate", seed = 1)
+#' fit_m <- three_step(d, paste0("Y", 1:6), n_classes = 3)
+#' summary(fit_m)
 #' @export
 summary.teLCA_measurement <- function(object, ...) {
   cat("-- teLCA Measurement Model --------------------------------\n")
@@ -2068,6 +2141,13 @@ summary.teLCA_measurement <- function(object, ...) {
   invisible(object)
 }
 
+#' @examples
+#' \donttest{
+#' d   <- generate_data(200, "high", "covariate", seed = 1)
+#' fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,
+#'                   Zp.names = "Zp", use.simple.cov = TRUE)
+#' summary(fit)
+#' }
 #' @export
 summary.teLCA_covariate <- function(object, digits = 4, ...) {
   cat("-- teLCA Three-Step Covariate Model -----------------------\n")
@@ -2092,6 +2172,13 @@ summary.teLCA_covariate <- function(object, digits = 4, ...) {
   invisible(object)
 }
 
+#' @examples
+#' \donttest{
+#' d   <- generate_data(200, "high", "distal", seed = 2)
+#' fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,
+#'                   Zo.name = "Zo", use.simple.cov = TRUE)
+#' summary(fit)
+#' }
 #' @export
 summary.teLCA_distal <- function(object, digits = 4, ...) {
   fam <- if (!is.null(object$family)) object$family else "gaussian"
@@ -2134,6 +2221,10 @@ summary.teLCA_both <- function(object, digits = 4, ...) {
 
 # -- coef ----------------------------------------------------------------------
 
+#' @examples
+#' d    <- generate_data(100, "high", "covariate", seed = 1)
+#' fit_m <- three_step(d, paste0("Y", 1:6), n_classes = 3)
+#' coef(fit_m)   # returns list with $prevalences and $item_probs
 #' @export
 coef.teLCA_measurement <- function(object, ...) {
   list(
@@ -2142,6 +2233,14 @@ coef.teLCA_measurement <- function(object, ...) {
   )
 }
 
+#' @examples
+#' \donttest{
+#' d   <- generate_data(200, "high", "covariate", seed = 1)
+#' fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,
+#'                   Zp.names = "Zp", use.simple.cov = TRUE)
+#' coef(fit)                      # three-step estimates
+#' coef(fit, which = "two_step")  # two-step starting values
+#' }
 #' @export
 coef.teLCA_covariate <- function(
   object,
@@ -2158,11 +2257,29 @@ coef.teLCA_covariate <- function(
   object$three_step
 }
 
+#' @examples
+#' \donttest{
+#' d   <- generate_data(200, "high", "distal", seed = 2)
+#' fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,
+#'                   Zo.name = "Zo", use.simple.cov = TRUE)
+#' coef(fit)   # named vector of class means
+#' }
 #' @export
 coef.teLCA_distal <- function(object, ...) {
   object$three_step
 }
 
+#' @examples
+#' \donttest{
+#' d   <- generate_data(200, "high", "covariate", seed = 1)
+#' d$Zo <- rnorm(200, mean = c(-1, 0, 1)[d$X], sd = 0.5)
+#' fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,
+#'                   Zp.names = "Zp", Zo.name = "Zo",
+#'                   use.simple.cov = TRUE)
+#' coef(fit, which = "covariate")
+#' coef(fit, which = "distal")
+#' coef(fit, which = "both")
+#' }
 #' @export
 coef.teLCA_both <- function(
   object,
@@ -2192,6 +2309,10 @@ coef.teLCA_both <- function(
 
 # -- vcov ----------------------------------------------------------------------
 
+#' @examples
+#' d    <- generate_data(100, "high", "covariate", seed = 1)
+#' fit_m <- three_step(d, paste0("Y", 1:6), n_classes = 3)
+#' vcov(fit_m)   # returns NULL with a message
 #' @export
 vcov.teLCA_measurement <- function(object, ...) {
   message(
@@ -2200,6 +2321,13 @@ vcov.teLCA_measurement <- function(object, ...) {
   invisible(NULL)
 }
 
+#' @examples
+#' \donttest{
+#' d   <- generate_data(200, "high", "covariate", seed = 1)
+#' fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,
+#'                   Zp.names = "Zp", use.simple.cov = TRUE)
+#' vcov(fit)   # Q*(T-1) x Q*(T-1) vcov matrix with named rows/cols
+#' }
 #' @export
 vcov.teLCA_covariate <- function(
   object,
@@ -2219,11 +2347,28 @@ vcov.teLCA_covariate <- function(
   object$three_step_vcov
 }
 
+#' @examples
+#' \donttest{
+#' d   <- generate_data(200, "high", "distal", seed = 2)
+#' fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,
+#'                   Zo.name = "Zo", use.simple.cov = TRUE)
+#' vcov(fit)   # T x T vcov matrix with mu_C1..mu_CT row/col names
+#' }
 #' @export
 vcov.teLCA_distal <- function(object, ...) {
   object$three_step_vcov
 }
 
+#' @examples
+#' \donttest{
+#' d   <- generate_data(200, "high", "covariate", seed = 1)
+#' d$Zo <- rnorm(200, mean = c(-1, 0, 1)[d$X], sd = 0.5)
+#' fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,
+#'                   Zp.names = "Zp", Zo.name = "Zo",
+#'                   use.simple.cov = TRUE)
+#' vcov(fit, which = "covariate")
+#' vcov(fit, which = "distal")
+#' }
 #' @export
 vcov.teLCA_both <- function(
   object,
@@ -2284,6 +2429,15 @@ vcov.teLCA_both <- function(
 #'
 #' @return Called for its side effect (a base-graphics plot). Invisibly
 #'   returns `NULL`.
+#' @examples
+#' d    <- generate_data(100, "high", "covariate", seed = 1)
+#' fit_m <- three_step(d, paste0("Y", 1:6), n_classes = 3)
+#' plot(fit_m)
+#'
+#' \donttest{
+#' # Custom class labels
+#' plot(fit_m, clab = c("Low risk", "Mixed", "High risk"))
+#' }
 #' @export
 plot.teLCA_measurement <- function(x, horiz = FALSE, clab = NULL, ...) {
   plot(.get_fit0(x), horiz = horiz, clab = clab, ...)
