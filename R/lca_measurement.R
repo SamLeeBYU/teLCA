@@ -134,13 +134,17 @@ lca_step1 <- function(
     if (nrow(fit$LLKSeries) == maxIter.measurement) {
       args$maxIter <- 2L * maxIter.measurement
       fit <- do.call(multilevLCA::multiLCA, args)
-      warning(sprintf(
-        "Measurement model hit %d iterations; retried with %d. Low separation is likely the cause.",
-        maxIter.measurement,
-        2L * maxIter.measurement
-      ))
+      if (verbose) {
+        warning(sprintf(
+          "Measurement model hit %d iterations; retried with %d. Low separation is likely the cause.",
+          maxIter.measurement,
+          2L * maxIter.measurement
+        ))
+      }
       if (nrow(fit$LLKSeries) == 2L * maxIter.measurement) {
-        warning("Measurement model still failed to converge.")
+        warning(
+          "Measurement model still failed to converge even after running more iterations. Consider increasing maxIter.measurement and or measurement.tol"
+        )
       }
     }
     fit
@@ -151,32 +155,38 @@ lca_step1 <- function(
     if (is.null(initial$R2entr) || initial$R2entr >= R2.threshold) {
       return(initial)
     }
-    warning(sprintf(
-      "Measurement model has low entropy R\u00b2 (%.3f < %.3f). Running %d additional random restarts.",
-      initial$R2entr,
-      R2.threshold,
-      iter.measurement
-    ))
-    cands <- lapply(seq_len(iter.measurement), function(r) run_fn())
-    cand_lls <- vapply(
-      cands,
-      function(f) f$LLKSeries[nrow(f$LLKSeries), 1L],
-      numeric(1L)
-    )
-    best_r <- which.max(cand_lls)
-    if (cand_lls[best_r] > ll0) {
-      if (verbose) {
-        message(sprintf(
-          "Restart %d improved log-likelihood to %.4f.",
-          best_r,
-          cand_lls[best_r]
-        ))
+    if (verbose) {
+      warning(sprintf(
+        "Measurement model has low entropy R\u00b2 (%.3f < %.3f). Running %d additional random restarts.",
+        initial$R2entr,
+        R2.threshold,
+        iter.measurement
+      ))
+    }
+    if (iter.measurement > 0L) {
+      cands <- lapply(seq_len(iter.measurement), function(r) run_fn())
+      cand_lls <- vapply(
+        cands,
+        function(f) f$LLKSeries[nrow(f$LLKSeries), 1L],
+        numeric(1L)
+      )
+      best_r <- which.max(cand_lls)
+      if (cand_lls[best_r] > ll0) {
+        if (verbose) {
+          message(sprintf(
+            "Restart %d improved log-likelihood to %.4f.",
+            best_r,
+            cand_lls[best_r]
+          ))
+        }
+        cands[[best_r]]
+      } else {
+        if (verbose) {
+          message("No restart improved on the initial measurement model.")
+        }
+        initial
       }
-      cands[[best_r]]
     } else {
-      if (verbose) {
-        message("No restart improved on the initial measurement model.")
-      }
       initial
     }
   }
@@ -447,27 +457,29 @@ fitZ_from_multiLCA <- function(
         iter.measurement
       ))
     }
-    cands <- lapply(seq_len(iter.measurement), function(r) run_fit())
-    cand_lls <- vapply(
-      cands,
-      function(f) f$LLKSeries[nrow(f$LLKSeries), 1L],
-      numeric(1L)
-    )
-    best_r <- which.max(cand_lls)
-    if (cand_lls[best_r] > ll0) {
-      if (verbose) {
-        message(sprintf(
-          "fitZ restart %d improved log-likelihood to %.4f.",
-          best_r,
-          cand_lls[best_r]
-        ))
-      }
-      initial <- cands[[best_r]]
-    } else {
-      if (verbose) {
-        message(
-          "No fitZ restart improved on the initial multiLCA covariate fit."
-        )
+    if (iter.measurement > 0L) {
+      cands <- lapply(seq_len(iter.measurement), function(r) run_fit())
+      cand_lls <- vapply(
+        cands,
+        function(f) f$LLKSeries[nrow(f$LLKSeries), 1L],
+        numeric(1L)
+      )
+      best_r <- which.max(cand_lls)
+      if (cand_lls[best_r] > ll0) {
+        if (verbose) {
+          message(sprintf(
+            "fitZ restart %d improved log-likelihood to %.4f.",
+            best_r,
+            cand_lls[best_r]
+          ))
+        }
+        initial <- cands[[best_r]]
+      } else {
+        if (verbose) {
+          message(
+            "No fitZ restart improved on the initial multiLCA covariate fit."
+          )
+        }
       }
     }
   }

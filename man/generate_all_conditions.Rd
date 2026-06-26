@@ -8,6 +8,9 @@ generate_all_conditions(
   n_rep = 500L,
   base_seed = 5262026L,
   params = bk2018_params,
+  scenarios = c("covariate", "distal"),
+  sep_levels = c("low", "mid", "high"),
+  sample_sizes = c(500L, 1000L, 2000L),
   verbose = TRUE
 )
 }
@@ -18,7 +21,17 @@ generate_all_conditions(
 
 \item{params}{Population parameters list.  Defaults to \link{bk2018_params}.}
 
-\item{verbose}{Logical. If \code{TRUE}, print a progress line per condition.}
+\item{scenarios}{Character. Lists the scenario(s) ("covariate" and/or "distal")
+wanting to be simulated. Passed into \code{\link[=generate_data]{generate_data()}}.}
+
+\item{sep_levels}{Character. Lists the separation level(s) ("low", "mid", "high")
+wanting to be simulated. Passed into \code{\link[=generate_data]{generate_data()}}.}
+
+\item{sample_sizes}{Integer. Lists the sample size(s) wanting to be generated
+for each replication condition. Passed into \code{\link[=generate_data]{generate_data()}}.}
+
+\item{verbose}{Logical. If \code{TRUE} (default), display a live CLI progress
+bar with per-rep status and ETA.}
 }
 \value{
 Nested list indexed as

@@ -258,27 +258,55 @@ generate_data <- function(
 #' derived deterministically from `base_seed` so the entire experiment is
 #' reproducible from a single integer.
 #'
-#' @param n_rep      Integer. Replications per condition (paper uses 500).
-#' @param base_seed  Integer. Base seed for reproducibility.
-#' @param params     Population parameters list.  Defaults to [teLCA::bk2018_params].
-#' @param verbose    Logical. If `TRUE`, print a progress line per condition.
+#' @param n_rep        Integer. Replications per condition (paper uses 500).
+#' @param base_seed    Integer. Base seed for reproducibility.
+#' @param params       Population parameters list.  Defaults to [teLCA::bk2018_params].
+#' @param scenarios    Character. Lists the scenario(s) ("covariate" and/or "distal")
+#'   wanting to be simulated. Passed into [generate_data()].
+#' @param sep_levels   Character. Lists the separation level(s) ("low", "mid", "high")
+#'   wanting to be simulated. Passed into [generate_data()].
+#' @param sample_sizes Integer. Lists the sample size(s) wanting to be generated
+#'   for each replication condition. Passed into [generate_data()].
+#' @param verbose      Logical. If `TRUE` (default), display a live CLI progress
+#'   bar with per-rep status and ETA.
 #'
 #' @return Nested list indexed as
 #'   `datasets[[scenario]][[separation]][[as.character(n)]]`,
 #'   each element a list of `n_rep` data frames.
+#'
+#' @importFrom cli cli_progress_bar cli_progress_update cli_progress_done cli_alert_success
 #' @export
 generate_all_conditions <- function(
   n_rep = 500L,
   base_seed = 05262026L,
   params = bk2018_params,
+  scenarios = c("covariate", "distal"),
+  sep_levels = c("low", "mid", "high"),
+  sample_sizes = c(500L, 1000L, 2000L),
   verbose = TRUE
 ) {
-  scenarios <- c("covariate", "distal")
-  sep_levels <- c("low", "mid", "high")
-  sample_sizes <- c(500L, 1000L, 2000L)
-
   datasets <- list()
   condition_index <- 0L
+  n_conditions <- length(scenarios) * length(sep_levels) * length(sample_sizes)
+  total_reps <- n_conditions * n_rep
+
+  if (verbose) {
+    cli::cli_progress_bar(
+      name = "Generating simulation datasets",
+      total = total_reps,
+      format = paste0(
+        "{cli::pb_spin} {cli::pb_name} | ",
+        "{cli::pb_bar} {cli::pb_percent} | ",
+        "Rep {cli::pb_current}/{cli::pb_total} | ",
+        "Elapsed: {cli::pb_elapsed} | ETA: {cli::pb_eta}"
+      ),
+      format_done = paste0(
+        "{cli::pb_name} | ",
+        "{cli::pb_total} reps across {n_conditions} conditions | ",
+        "Total time: {cli::pb_elapsed}"
+      )
+    )
+  }
 
   for (sc in scenarios) {
     datasets[[sc]] <- list()
@@ -290,6 +318,21 @@ generate_all_conditions <- function(
         reps <- vector("list", n_rep)
 
         for (r in seq_len(n_rep)) {
+          if (verbose) {
+            cli::cli_progress_update(
+              status = sprintf(
+                "condition %2d/%2d | scenario=%-10s sep=%-4s n=%-5d rep=%d/%d",
+                condition_index,
+                n_conditions,
+                sc,
+                sep,
+                nn,
+                r,
+                n_rep
+              )
+            )
+          }
+
           seed_r <- base_seed * 1e6 + condition_index * 1e3 + r
           reps[[r]] <- generate_data(
             n = nn,
@@ -301,18 +344,12 @@ generate_all_conditions <- function(
         }
 
         datasets[[sc]][[sep]][[key]] <- reps
-
-        if (verbose) {
-          message(sprintf(
-            "Condition %2d/18: scenario=%-10s sep=%-4s n=%4d -- done",
-            condition_index,
-            sc,
-            sep,
-            nn
-          ))
-        }
       }
     }
+  }
+
+  if (verbose) {
+    cli::cli_progress_done()
   }
 
   datasets
