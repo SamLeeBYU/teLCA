@@ -40,6 +40,9 @@ library(teLCA)
 ###################################################
 ### generate synthetic data
 ###################################################
+message(
+  "\n── Generating synthetic data ──────────────────────────────────────────"
+)
 
 #Data-generating process described in
 
@@ -72,6 +75,9 @@ head(d.low)
 ###################################################
 ### estimate measurement model
 ###################################################
+message(
+  "\n── Step 1: Measurement model ──────────────────────────────────────────"
+)
 
 #Calls multilev::multiLCA under the hood
 #Uses k-means to initialize starting parameter estimates
@@ -101,6 +107,9 @@ plot(d.measurement)
 ###################################################
 ### obtain two-step estimates
 ###################################################
+message(
+  "\n── Two-step estimates (fitZ_from_fit0) ────────────────────────────────"
+)
 
 #Two-step LCA model converges smoothly with EM algorithm
 #These estimates can be used as starting parameter values
@@ -128,6 +137,9 @@ d.low.fitZ$mGamma
 #####################################################
 ### obtain three-step estimates
 #####################################################
+message(
+  "\n── Three-step estimation ──────────────────────────────────────────────"
+)
 
 #Three-step estimation can be done with one teLCA function call
 #This estimates the measurement model if one is not provided
@@ -185,6 +197,9 @@ summary(d.three_step.bch)
 
 #This will take longer to run than usual because both the
 #measurement model estimation (re-estimated here) and BCH estimation procedures struggle to converge
+message(
+  "  [Note: the following BCH call on low-separation data may take 1-2 minutes]"
+)
 bch.fail <- three_step(
   data = d.low,
   Y.names = paste0("Y", 1:6),
@@ -210,6 +225,9 @@ summary(d.low.three_step.prop)
 ###############################################################
 ### choose different class as reference category in regression
 ###############################################################
+message(
+  "\n── Reference class selection (rebase) ─────────────────────────────────"
+)
 
 #The default reference class for the multinomial logistic parameterization
 # in the three-step/two-step estimation procedure is class one ("C1")
@@ -241,6 +259,9 @@ summary(d.three_step.simpleC3)
 ##############################################################
 ### pass in measurement model as argument
 ##############################################################
+message(
+  "\n── Passing pre-fitted measurement model via step1 ─────────────────────"
+)
 
 #The first stage measurement can be passed in as an argument
 # even if computed on a different sample (uncertainty is properly calibrated)
@@ -308,6 +329,9 @@ summary(d.low.three_step.prop3)
 ##############################################################
 ### missing data
 ##############################################################
+message(
+  "\n── Missing data handling ──────────────────────────────────────────────"
+)
 
 #teLCA handles missing data similar to multilevLCA
 
@@ -395,6 +419,9 @@ summary(d.sparse.three_step3)
 ##############################################################
 ### polytomous outcomes
 ##############################################################
+message(
+  "\n── Polytomous items (election data) ───────────────────────────────────"
+)
 
 #Like other LCA software, we can accomodate polytomous outcomes
 
@@ -428,6 +455,9 @@ summary(elec.three_step)
 ###################################################
 ### distal outcomes
 ###################################################
+message(
+  "\n── Distal outcomes ────────────────────────────────────────────────────"
+)
 
 #Unlike multilevLCA, we can accomodate distal outcomes
 
@@ -486,8 +516,11 @@ summary(d.distal.three_step.ml)
 summary(d.distal.three_step.bch)
 
 ###################################################
-### reset_options
+### reset options
 ###################################################
+message(
+  "\n── Done ───────────────────────────────────────────────────────────────"
+)
 options(r_opts)
 rm(list = ls())
 gc()
