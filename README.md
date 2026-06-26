@@ -52,6 +52,12 @@ if (!require("pak")) {
 pak::pak("SamLeeBYU/teLCA")
 ```
 
+Then read the introductory vignette:
+
+```r
+vignette("teLCA-workflow", package = "teLCA")
+```
+
 ## Example
 
 This is a basic example which shows you how to simulate data and run a three-step LCA with a covariate in a single function call:
