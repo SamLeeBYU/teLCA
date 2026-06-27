@@ -23,10 +23,6 @@ r_opts <- options(
 
 # Loading libraries and installing if unavailable
 
-if (!require("cli")) {
-  install.packages("pak")
-}
-
 # Install the development version from GitHub
 if (!require("pak")) {
   install.packages("pak")
@@ -42,10 +38,11 @@ library(tseLCA)
 ### generate all simulation conditions
 ###################################################
 
-dataset_path <- file.path("data/simulation", "sim_datasets.rds")
+output.dir <- "tseLCA_output/simulation"
+dataset_path <- file.path(output.dir, "sim_datasets.rds")
 
-if (!dir.exists("data/simulation")) {
-  dir.create("data/simulation")
+if (!dir.exists(output.dir)) {
+  dir.create(output.dir, recursive = TRUE)
 }
 
 if (!file.exists(dataset_path)) {
@@ -75,10 +72,10 @@ if (!file.exists(dataset_path)) {
 #
 # Structure mirrors datasets: measurement_models[[scenario]][[sep]][[n]][[rep]]
 
-measurement_path <- file.path("data/simulation", "measurement_models.rds")
+measurement_path <- file.path(output.dir, "measurement_models.rds")
 
 if (!file.exists(measurement_path)) {
-  message("Fitting measurement models...")
+  message("Fitting measurement models... This will take several hours.")
 
   scenarios <- c("covariate", "distal")
   sep_levels <- c("low", "mid", "high")
