@@ -1268,10 +1268,12 @@ lca_vcov_distal <- function(
 #' @param R2.threshold Entropy R\eqn{^2} restart threshold.
 #' @param use.bch Logical. Use BCH weights instead of ML.
 #' @param em.maxIter Maximum EM iterations for Step 3.
-#' @param get.twostep.vcov Logical. If `TRUE`, call
-#'   [tseLCA::fitZ_from_multiLCA()] to obtain multilevLCA's corrected standard errors
-#'   for the two-step gamma estimates and store them in `$two_step_vcov`.
-#'   Requires \pkg{multilevLCA}. Default `FALSE`.
+#' @param get.twostep.vcov Logical. If `TRUE`, obtain multilevLCA's
+#'   bias-corrected variance-covariance matrix for the two-step gamma
+#'   estimates and store it in `$two_step_vcov`. If the `fitZ` object passed
+#'   via `step1` already contains a `Varmat_cor` (from a prior
+#'   `fitZ_from_multiLCA` or plain `multiLCA` call), it is attached
+#'   automatically even when `get.twostep.vcov = FALSE`. Default `FALSE`.
 #' @param rebase Character (e.g. `"C1"`, `"C2"`) or integer specifying which
 #'   latent class to use as the reference category in the multinomial logit
 #'   for Steps 2 and 3. The measurement model is permuted so this class
@@ -1375,14 +1377,22 @@ three_step <- function(
   verbose = FALSE
 ) {
   # -- Step 1: measurement model -----------------------------------------------
+  ref_idx <- parse_rebase(rebase, n_classes)
+
   if (!is.null(step1)) {
     # Normalize: accept raw lca_step1() list or any tseLCA object
     s1 <- if (inherits(step1, "tseLCA")) step1$measurement_model else step1
     # Apply rebase permutation so the desired reference class is column 1.
-    # Invalidate any pre-existing fitZ -- it was estimated under the old ordering.
-    ref_idx <- parse_rebase(rebase, n_classes)
     s1$fit0 <- permute_fit0_classes(s1$fit0, ref_idx)
-    s1$fitZ <- NULL
+    # Normalise fitZ names first (handles raw multiLCA output with
+    # "gamma(X|C)" rownames), then rebase to the new reference class.
+    if (!is.null(s1$fitZ)) {
+      s1$fitZ <- normalise_fitZ_names(
+        s1$fitZ,
+        n_classes = n_classes
+      )
+      s1$fitZ <- permute_fitZ_classes(s1$fitZ, ref_idx)
+    }
   } else {
     s1 <- lca_step1(
       data,
@@ -1673,12 +1683,59 @@ three_step <- function(
     total.AIC <- -2 * total.llik + 2 * total.k
     total.BIC <- -2 * total.llik + total.k * log(nrow(Y_cc))
 
-    # -- Optional two-step vcov from multiLCA -------------------------------------
-    # get.twostep.vcov = TRUE always calls fitZ_from_multiLCA() to get
-    # multilevLCA's bias-corrected SEs for the two-step estimator.
-    # This is independent of whether fitZ_from_fit0 has already run -- the two
-    # functions use different estimation strategies and produce different vcovs.
-    two_step_vcov <- if (get.twostep.vcov) {
+    # -- Optional two-step vcov from multiLCA ------------------------------------
+    # get.twostep.vcov = TRUE requests multilevLCA's bias-corrected SEs.
+    # We skip re-estimation if a Varmat_cor is already attached to fitZ --
+    # this handles three cases:
+    #   (a) fitZ_from_multiLCA output: Varmat_cor lives at fitZ$raw_fit$Varmat_cor
+    #   (b) Plain multiLCA output passed directly: fitZ$Varmat_cor
+    #   (c) fitZ_from_fit0 output: no Varmat_cor anywhere -> must re-estimate
+    #
+    # If a Varmat_cor is already present on fitZ (regardless of get.twostep.vcov),
+    # we always attach it to the output -- the user shouldn't lose it just because
+    # they didn't set get.twostep.vcov = TRUE.
+
+    .extract_varmat <- function(fZ) {
+      # Returns Varmat_cor from whichever location it lives in, or NULL.
+      if (is.null(fZ)) {
+        return(NULL)
+      }
+      if (!is.null(fZ$Varmat_cor)) {
+        return(fZ$Varmat_cor)
+      }
+      if (!is.null(fZ$raw_fit$Varmat_cor)) {
+        return(fZ$raw_fit$Varmat_cor)
+      }
+      if (!is.null(fZ$raw_fit$SEs_cor_gamma)) {
+        return(diag(as.vector(fZ$raw_fit$SEs_cor_gamma)^2))
+      }
+      NULL
+    }
+
+    .name_varmat <- function(V, fZ) {
+      if (is.null(V) || is.null(fZ$mGamma)) {
+        return(V)
+      }
+      param_names <- as.vector(outer(
+        rownames(fZ$mGamma),
+        colnames(fZ$mGamma),
+        paste,
+        sep = ":"
+      ))
+      rownames(V) <- param_names
+      colnames(V) <- param_names
+      V
+    }
+
+    # Check for an already-present Varmat_cor before deciding whether to
+    # call fitZ_from_multiLCA.
+    existing_varmat <- .extract_varmat(fitZ)
+
+    two_step_vcov <- if (!is.null(existing_varmat)) {
+      # Already have it -- attach regardless of get.twostep.vcov
+      .name_varmat(existing_varmat, fitZ)
+    } else if (get.twostep.vcov) {
+      # No existing vcov -- call fitZ_from_multiLCA
       fZ_ml <- fitZ_from_multiLCA(
         data = data,
         Y.names = Y.names,
@@ -1693,28 +1750,17 @@ three_step <- function(
         rebase = rebase,
         verbose = verbose
       )
-      # Update s1$fitZ with the multiLCA result so $two_step reflects it
+      # Use the multiLCA result as fitZ if none existed
       if (is.null(fitZ)) {
         fitZ <- fZ_ml
         s1$fitZ <- fZ_ml
       }
-      raw <- fZ_ml$raw_fit
-      param_names <- as.vector(outer(
-        c("Intercept", Zp.names),
-        paste0("C", seq_len(T)[-parse_rebase(rebase, T)]),
-        paste,
-        sep = ":"
-      ))
-      if (!is.null(raw$Varmat_cor)) {
-        vcov_ml <- raw$Varmat_cor
-        rownames(vcov_ml) <- param_names
-        colnames(vcov_ml) <- param_names
-        vcov_ml
-      } else if (!is.null(raw$SEs_cor_gamma)) {
-        diag(as.vector(raw$SEs_cor_gamma)^2)
+      raw_varmat <- .extract_varmat(fZ_ml)
+      if (!is.null(raw_varmat)) {
+        .name_varmat(raw_varmat, fZ_ml)
       } else {
         warning(
-          "get.twostep.vcov: neither Varmat_cor nor SEs_cor_gamma found in multiLCA output."
+          "get.twostep.vcov: neither Varmat_cor nor SEs_cor_gamma found."
         )
         NULL
       }

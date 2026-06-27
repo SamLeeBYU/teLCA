@@ -209,6 +209,181 @@ parse_rebase <- function(rebase, T) {
   idx
 }
 
+#' Normalise row/column names of a fitZ$mGamma matrix
+#'
+#' A plain `multiLCA` object uses `rownames` like `"gamma(Intercept|C)"` and
+#' `"gamma(Zp|C)"`. This function strips the `gamma(...)` wrapper so names
+#' match the clean format used throughout tseLCA (`"Intercept"`, `"Zp"`, etc.)
+#' and ensures column names are `"C2"`, `"C3"`, etc.
+#'
+#' @param fitZ  A fitZ-like list with at least `$mGamma`.
+#' @param Zp.names Character vector of covariate column names (used to set
+#'   clean rownames when the raw names can't be parsed). If `NULL`, rownames
+#'   are stripped from the `gamma(X|C)` pattern only.
+#' @param n_classes Integer. Total number of classes (used to derive clean
+#'   column names if they are non-standard).
+#' @return `fitZ` with normalised `$mGamma` row/col names.
+#' @keywords internal
+normalise_fitZ_names <- function(fitZ, Zp.names = NULL, n_classes = NULL) {
+  if (is.null(fitZ) || is.null(fitZ$mGamma)) {
+    return(fitZ)
+  }
+
+  mG <- fitZ$mGamma
+
+  # ---- Normalise rownames ----------------------------------------------------
+  rn <- rownames(mG)
+  if (!is.null(rn)) {
+    # Strip "gamma(X|C)" -> "X"
+    rn_clean <- sub("^gamma\\((.+)\\|C\\)$", "\\1", rn)
+    # Also handle "gamma(X)" without the |C suffix
+    rn_clean <- sub("^gamma\\((.+)\\)$", "\\1", rn_clean)
+    rownames(mG) <- rn_clean
+  } else if (!is.null(Zp.names)) {
+    rownames(mG) <- c("Intercept", Zp.names)
+  }
+
+  # ---- Normalise colnames ----------------------------------------------------
+  cn <- colnames(mG)
+  if (!is.null(cn)) {
+    # Already clean ("C2", "C3", ...) -- leave alone
+    if (!all(grepl("^C[0-9]+$", cn))) {
+      # Non-standard: derive from n_classes if available
+      if (!is.null(n_classes)) {
+        colnames(mG) <- paste0("C", seq_len(ncol(mG)) + 1L)
+      }
+    }
+  } else if (!is.null(n_classes)) {
+    colnames(mG) <- paste0("C", seq_len(ncol(mG)) + 1L)
+  }
+
+  fitZ$mGamma <- mG
+  fitZ
+}
+
+#' Permute class columns of a fitZ object to match a new reference class
+#'
+#' Rebases a `fitZ` object (output of `fitZ_from_fit0` or
+#' `fitZ_from_multiLCA`) so that `ref_idx` becomes the reference class.
+#' This involves:
+#' \enumerate{
+#'   \item Rebasing `$mGamma` -- reconstructing the full T-column log-ratio
+#'     matrix, subtracting the new reference column, and dropping it.
+#'   \item Propagating through `$Varmat_cor` via the delta method -- the
+#'     rebasing transformation is linear (`gamma_new = A * gamma_old`)
+#'     so the vcov transforms exactly as `A %*% V %*% t(A)`.
+#'   \item Updating all column names.
+#' }
+#'
+#' @param fitZ    Output of `fitZ_from_fit0()` or `fitZ_from_multiLCA()`.
+#' @param ref_idx Integer. New reference class (1-based index into the T
+#'   classes as currently ordered in `fitZ`).
+#' @return `fitZ` with `$mGamma`, `$Varmat_cor`, and names updated.
+#' @keywords internal
+permute_fitZ_classes <- function(fitZ, ref_idx) {
+  if (is.null(fitZ)) {
+    return(NULL)
+  }
+
+  # Normalise names first so all downstream logic sees clean "Intercept"/"Zp"
+  # rownames and "C2"/"C3" colnames regardless of whether fitZ came from
+  # fitZ_from_fit0, fitZ_from_multiLCA, or a raw multiLCA call.
+  fitZ <- normalise_fitZ_names(fitZ, n_classes = ncol(fitZ$mGamma) + 1L)
+
+  mGamma <- fitZ$mGamma # Q x (T-1): cols = non-ref classes (C2..CT)
+  Q <- nrow(mGamma)
+  T <- ncol(mGamma) + 1L # total number of classes
+
+  if (ref_idx == 1L) {
+    return(fitZ)
+  } # already the right reference
+
+  # ---- Step 1: rebase mGamma --------------------------------------------------
+  # Reconstruct Q x T full log-ratio matrix (column 1 = 0, reference)
+  gamma_full <- cbind(0, mGamma) # Q x T
+
+  # Subtract the new reference column
+  new_ref_col <- gamma_full[, ref_idx, drop = FALSE] # Q x 1
+  gamma_rebased <- gamma_full - as.vector(new_ref_col) # Q x T, col ref_idx = 0
+
+  # Drop the new reference column; keep remaining classes in ascending order
+  keep_cols <- seq_len(T)[-ref_idx] # T-1 indices
+  gamma_new <- gamma_rebased[, keep_cols, drop = FALSE]
+  colnames(gamma_new) <- paste0("C", keep_cols)
+  rownames(gamma_new) <- rownames(mGamma)
+  fitZ$mGamma <- gamma_new
+
+  # ---- Step 2: propagate Varmat_cor via delta method --------------------------
+  # The rebasing is a linear map on the vec(mGamma) parameter vector.
+  # Stacking columns: theta = vec(mGamma), length = Q*(T-1).
+  # After rebasing: theta_new = (A_kron_I_Q) * theta_old
+  # where A is the (T-1) x (T-1) contrast matrix acting on class columns.
+  #
+  # A[i, j] = I(keep_cols[i] == old_col_j) - I(ref_idx == old_col_j + 1)
+  # Simpler: A = gamma_rebased[, keep_cols] expressed as a linear function
+  # of gamma_full[, -1] (the original non-ref columns).
+  #
+  # gamma_full[, keep_cols] = gamma_full[, keep_cols]
+  #                         - gamma_full[, ref_idx] * 1'
+  # i.e. A_col[j] = e_{keep_cols[j]-1} - e_{ref_idx-1}  (in the T-1 basis)
+  # where e_k is the k-th standard basis vector of R^{T-1},
+  # with the convention that the "C1" column has index 0 (not in basis).
+  #
+  # For the original columns j = 2..T (indexed 1..T-1 in mGamma):
+  #   A[i, j] = I(keep_cols[i] - 1 == j)       (direct contribution)
+  #           - I(ref_idx - 1   == j)            (subtracted reference)
+
+  if (!is.null(fitZ$Varmat_cor) || !is.null(fitZ$raw_fit$Varmat_cor)) {
+    V <- if (!is.null(fitZ$Varmat_cor)) {
+      fitZ$Varmat_cor
+    } else {
+      fitZ$raw_fit$Varmat_cor
+    } # Q*(T-1) x Q*(T-1)
+
+    # Build (T-1) x (T-1) column-space contrast matrix A
+    # Original columns are indexed 1..(T-1) corresponding to classes C2..CT
+    old_non_ref <- seq_len(T - 1L) # 1..(T-1) indexing into mGamma columns
+    # keep_cols are class indices (1-based), need to map to mGamma col indices
+    keep_mGamma_cols <- keep_cols - 1L # subtract 1 because C1 is not in mGamma
+    ref_mGamma_col <- ref_idx - 1L # column of the new ref in old mGamma
+
+    A <- matrix(0, T - 1L, T - 1L)
+    for (i in seq_len(T - 1L)) {
+      j_direct <- keep_mGamma_cols[i]
+      if (j_direct >= 1L && j_direct <= T - 1L) {
+        A[i, j_direct] <- 1
+      }
+      if (ref_mGamma_col >= 1L && ref_mGamma_col <= T - 1L) {
+        A[i, ref_mGamma_col] <- A[i, ref_mGamma_col] - 1
+      }
+    }
+
+    # Kronecker: A acts on class columns, I_Q acts on predictor rows
+    # Full transformation: (A kron I_Q)
+    A_kron <- kronecker(A, diag(Q)) # Q*(T-1) x Q*(T-1)
+    V_new <- A_kron %*% V %*% t(A_kron)
+
+    # Update names
+    param_names <- as.vector(outer(
+      rownames(mGamma),
+      paste0("C", keep_cols),
+      paste,
+      sep = ":"
+    ))
+    rownames(V_new) <- param_names
+    colnames(V_new) <- param_names
+
+    if (!is.null(fitZ$Varmat_cor)) {
+      fitZ$Varmat_cor <- V_new
+    }
+    if (!is.null(fitZ$raw_fit$Varmat_cor)) {
+      fitZ$raw_fit$Varmat_cor <- V_new
+    }
+  }
+
+  fitZ
+}
+
 #' Permute class columns of a fit0 object so that class ref_idx is first
 #'
 #' Reorders columns of mPhi and vPi so that the desired reference class
