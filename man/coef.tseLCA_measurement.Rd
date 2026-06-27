@@ -58,7 +58,7 @@ coef(fit)   # named vector of class means
 }
 \donttest{
 d   <- generate_data(200, "high", "covariate", seed = 1)
-d$Zo <- rnorm(200, mean = c(-1, 0, 1)[d$X], sd = 0.5)
+d$Zo <- rnorm(200, mean = c(-1, 0, 1)[d$X], sd = 1)
 fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,
                   Zp.names = "Zp", Zo.name = "Zo",
                   use.simple.cov = TRUE)

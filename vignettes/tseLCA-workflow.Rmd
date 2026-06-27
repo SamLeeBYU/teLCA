@@ -570,6 +570,48 @@ summary(d.distal.three_step.bch)
 
 ---
 
+## Three-step estimation with both covariates ($Z_p$) and distal outcomes ($Z_o$)
+
+Consistent with how most research in the social sciences construct the relationships between $Z_p$ and $X$, and $X$ and $Z_o$, the relationship between $Z_p$ and $X$ is estimated **first**, followed by estimation between $X$ and $Z_o$, adjusting for the covariate-adjusted posteriors in the estimation procedures for the distal outcome model in step 3.
+
+```{r covariate-distal-fit}
+d.covariate <- generate_data(
+  n = 500,
+  separation = "high",
+  scenario = "covariate",
+  seed = 4
+)
+d.covariate$Zo <- draw_Zo(d.covariate$X, bk2018_params$distal_params)
+head(d.covariate)
+
+d.covariate.three_step <- three_step(
+  data = d.covariate,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  Zp.names = "Zp",
+  Zo.name = "Zo",
+  use.modal.assignment = FALSE
+)
+summary(d.covariate.three_step)
+```
+
+Note that with covariates in the model, the standard errors above are systematically smaller for distal outcome estimation than if there were no covariates in the model (see below).
+
+```{r}
+three_step(
+  data = d.covariate,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  Zo.name = "Zo",
+  use.modal.assignment = FALSE
+) |>
+  vcov() |>
+  diag() |>
+  sqrt()
+```
+
+---
+
 ## References
 
 Bakk, Z., Tekle, F. B., & Vermunt, J. K. (2013). Estimating the association

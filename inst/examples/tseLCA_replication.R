@@ -515,6 +515,33 @@ d.distal.three_step.bch <- three_step(
 summary(d.distal.three_step.ml)
 summary(d.distal.three_step.bch)
 
+#########################################################################
+### three-step estimation with both covariates (Zp) and distal outcomes
+#######################################################################
+
+message(
+  "\n── Covariate estimation and distal outcomes ───────────────────────────"
+)
+
+d.covariate <- generate_data(
+  n = 500,
+  separation = "high",
+  scenario = "covariate",
+  seed = 4
+)
+d.covariate$Zo <- draw_Zo(d.covariate$X, bk2018_params$distal_params)
+head(d.covariate)
+
+d.covariate.three_step <- three_step(
+  data = d.covariate,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  Zp.names = "Zp",
+  Zo.name = "Zo",
+  use.modal.assignment = FALSE
+)
+summary(d.covariate.three_step)
+
 ###################################################
 ### reset options
 ###################################################

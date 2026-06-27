@@ -25,7 +25,7 @@ and adjust for classification error at the final stage.
 
 \describe{
 \item{Step 1}{Estimate the LCA measurement model -- class-conditional
-item-response probabilities and class prevalences -- via
+item-response probabilities and class prevalences estimated with
 \pkg{multilevLCA}.}
 \item{Step 2}{Assign posterior class probabilities and compute the
 T x T misclassification matrix.}
