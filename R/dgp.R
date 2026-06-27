@@ -1,4 +1,4 @@
-# teLCA/R/dgp.R
+# tseLCA/R/dgp.R
 #
 # Data-generating process for the simulation study in:
 #   Bakk & Kuha (2018). "Two-Step Estimation of Models between Latent Classes
@@ -18,7 +18,7 @@
 
 #' Default population parameters for the Bakk & Kuha (2018) simulation
 #'
-#' A list of pre-specified parameters used by [teLCA::generate_data()] and related
+#' A list of pre-specified parameters used by [tseLCA::generate_data()] and related
 #' functions.  All elements correspond to the values stated in the paper
 #' (Section 3, p. 879).
 #'
@@ -231,7 +231,7 @@ draw_Zo <- function(X, params) {
 #'     \item{`"covariate"`}{Zp (discrete, 1-5) predicts latent X via multinomial logit.}
 #'     \item{`"distal"`}{Latent X predicts continuous Zo via linear regression.}
 #'   }
-#' @param params     List of population parameters.  Defaults to [teLCA::bk2018_params].
+#' @param params     List of population parameters.  Defaults to [tseLCA::bk2018_params].
 #' @param seed       Integer or `NULL`. Optional random seed for reproducibility.
 #'
 #' @return A `data.frame` with columns:
@@ -307,7 +307,7 @@ generate_data <- function(
 #'
 #' @param n_rep        Integer. Replications per condition (paper uses 500).
 #' @param base_seed    Integer. Base seed for reproducibility.
-#' @param params       Population parameters list.  Defaults to [teLCA::bk2018_params].
+#' @param params       Population parameters list.  Defaults to [tseLCA::bk2018_params].
 #' @param scenarios    Character. Lists the scenario(s) ("covariate" and/or "distal")
 #'   wanting to be simulated. Passed into [generate_data()].
 #' @param sep_levels   Character. Lists the separation level(s) ("low", "mid", "high")

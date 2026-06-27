@@ -93,6 +93,58 @@ A list containing \verb{$measurement_model}, \verb{$covariate} (if
 \description{
 Three-step LCA estimation with covariates and/or distal outcomes
 }
+\examples{
+d <- generate_data(n = 200, separation = "high",
+                   scenario = "covariate", seed = 1)
+
+# Measurement model only
+fit_m <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3)
+summary(fit_m)
+
+
+# ML three-step with simple SEs (fast)
+fit <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3,
+                  Zp.names = "Zp", use.simple.cov = TRUE)
+summary(fit)
+coef(fit)
+vcov(fit)
+
+# Full measurement-uncertainty correction
+fit_cor <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3,
+                      Zp.names = "Zp", use.simple.cov = FALSE,
+                      use.modal.assignment = FALSE)
+summary(fit_cor)
+
+# BCH estimator
+fit_bch <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3,
+                      Zp.names = "Zp", use.bch = TRUE,
+                      use.simple.cov = TRUE)
+summary(fit_bch)
+
+# Change reference class
+fit_c2 <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3,
+                     Zp.names = "Zp", use.simple.cov = TRUE,
+                     rebase = "C2")
+summary(fit_c2)
+
+# Gaussian distal outcome
+d2 <- generate_data(200, "high", "distal", seed = 2)
+fit_dis <- three_step(d2, Y.names = paste0("Y", 1:6), n_classes = 3,
+                      Zo.name = "Zo", family = "gaussian",
+                      use.simple.cov = TRUE)
+summary(fit_dis)
+
+# Pass a pre-fitted measurement model
+fit_step1 <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3)
+fit2 <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3,
+                   Zp.names = "Zp", step1 = fit_step1,
+                   use.simple.cov = TRUE)
+summary(fit2)
+
+# Plot item-response profiles
+plot(fit)
+
+}
 \references{
 Bakk, Z., Tekle, F. B., & Vermunt, J. K. (2013). Estimating the association
 between latent class membership and external variables using bias-adjusted

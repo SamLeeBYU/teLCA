@@ -36,7 +36,7 @@ fitZ_from_fit0(
 \item{include.intercept}{Logical.}
 
 \item{rebase}{Character or integer. Reference class for the multinomial logit
-parameterisation (e.g. \code{"C1"}, \code{"C2"}, or an integer). Default \code{"C1"}.
+parameterization (e.g. \code{"C1"}, \code{"C2"}, or an integer). Default \code{"C1"}.
 Must match the \code{rebase} used in \code{lca_step1()} so class column ordering
 is consistent.}
 
@@ -51,4 +51,21 @@ A list with \verb{$mGamma} (Q x (T-1)), \verb{$mPhi}, \verb{$vOmega},
 \description{
 Fixes \code{mPhi} at \code{fit0$mPhi} and estimates multinomial logit coefficients
 \code{mGamma} (Q x (T-1)) via an EM algorithm with a BFGS M-step.
+}
+\examples{
+\donttest{
+d  <- generate_data(200, "high", "covariate", seed = 1)
+s1 <- lca_step1(d, Y.names = paste0("Y", 1:6), n_classes = 3)
+
+# Estimate two-step gamma with mPhi fixed at Step-1 values
+fZ <- fitZ_from_fit0(
+  fit0     = s1$fit0,
+  data     = d,
+  Y.names  = paste0("Y", 1:6),
+  Zp.names = "Zp",
+  verbose  = TRUE
+)
+fZ$mGamma   # Q x (T-1) coefficient matrix
+fZ$converged
+}
 }

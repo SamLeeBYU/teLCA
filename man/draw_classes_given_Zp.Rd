@@ -17,3 +17,8 @@ Integer vector of length n with class labels in \code{1:T}.
 \description{
 Draw latent classes conditional on the covariate (scenario "covariate")
 }
+\examples{
+Zp <- draw_Zp(100)
+X  <- draw_classes_given_Zp(Zp, bk2018_params$covariate_params)
+table(X)
+}

@@ -17,3 +17,8 @@ An n x K integer matrix of 0/1 values.
 \description{
 Draw binary indicators given true class memberships
 }
+\examples{
+rho <- make_rho(0.9)
+X   <- draw_classes(50, c(1/3, 1/3, 1/3))
+draw_indicators(X, rho)
+}

@@ -1,4 +1,4 @@
-# teLCA/R/clean.R
+# tseLCA/R/clean.R
 #
 # Shared data-cleaning utilities used by three_step() and fitZ_from_fit0().
 #
@@ -20,7 +20,7 @@
 # Step 3 distal:
 #   Restrict to rows that (a) passed the Y filter AND (b) have complete Z0.
 
-#' Prepare and validate data for teLCA estimation
+#' Prepare and validate data for tseLCA estimation
 #'
 #' @keywords internal
 #'

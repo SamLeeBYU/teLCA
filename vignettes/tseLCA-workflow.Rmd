@@ -1,8 +1,8 @@
 ---
-title: "teLCA Workflow"
+title: "tseLCA Workflow"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{teLCA Workflow}
+  %\VignetteIndexEntry{tseLCA Workflow}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -22,18 +22,18 @@ if (!require("pak")) {
   install.packages("pak")
 }
 
-# Install teLCA from the GitHub repository
-pak::pak("SamLeeBYU/teLCA")
+# Install tseLCA from the GitHub repository
+pak::pak("SamLeeBYU/tseLCA")
 
-library(teLCA)
+library(tseLCA)
 ```
 
 ## Overview
 
-`teLCA` implements the BCH and ML bias-adjusted three-step estimators for
+`tseLCA` implements the BCH and ML bias-adjusted three-step estimators for
 latent class analysis (LCA) with covariates and distal outcomes, following the methodological framework for both BCH and Vermunt's ML approaches from
-Bakk, Tekle & Vermunt (2013). `teLCA` also builds on top of the two-step LCA estimation procedure outlined by Bakk & Kuha (2018), and using the R package `multilevLCA` for efficient measurement model estimation from Lyrvall et al.
-(2025). `teLCA` provides analytic sandwich variance estimation that propagates measurement
+Bakk, Tekle & Vermunt (2013). `tseLCA` also builds on top of the two-step LCA estimation procedure outlined by Bakk & Kuha (2018), and using the R package `multilevLCA` for efficient measurement model estimation from Lyrvall et al.
+(2025). `tseLCA` provides analytic sandwich variance estimation that propagates measurement
 uncertainty through the classification-error correction in the final step.
 
 The three-step approach separates the model into:
@@ -58,10 +58,10 @@ class membership.
 ```{r generate-data}
 # High separation: P(Y_h = 1 | class) = 0.9 / 0.1
 d <- generate_data(
-  n          = 500,
+  n = 500,
   separation = "high",
-  scenario   = "covariate",
-  seed       = 1
+  scenario = "covariate",
+  seed = 1
 )
 head(d)
 ```
@@ -70,10 +70,10 @@ head(d)
 # Low separation: P(Y_h = 1 | class) = 0.7 / 0.3
 # Zp and X are identical to 'd' because seed = 1
 d.low <- generate_data(
-  n          = 500,
+  n = 500,
   separation = "low",
-  scenario   = "covariate",
-  seed       = 1
+  scenario = "covariate",
+  seed = 1
 )
 head(d.low)
 ```
@@ -83,15 +83,15 @@ head(d.low)
 ## Step 1: Measurement model
 
 `three_step()` with no `Zp.names` or `Zo.name` fits the measurement model
-only, returning a `teLCA_measurement` object. Internally this calls
+only, returning a `tseLCA_measurement` object. Internally this calls
 `multilevLCA::multiLCA()` with random restarts when entropy $R^2$ is low.
 
 ```{r measurement}
 d.measurement <- three_step(
-  data              = d,
-  Y.names           = paste0("Y", 1:6),
-  n_classes         = 3,
-  measurement.tol   = 1e-8
+  data = d,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  measurement.tol = 1e-8
 )
 summary(d.measurement)
 ```
@@ -102,11 +102,11 @@ $R^2$ falls below `R2.threshold`.
 
 ```{r measurement-low}
 d.low.measurement <- three_step(
-  data              = d.low,
-  Y.names           = paste0("Y", 1:6),
-  n_classes         = 3,
-  iter.measurement  = 10,
-  R2.threshold      = 0.9
+  data = d.low,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  iter.measurement = 10,
+  R2.threshold = 0.9
 )
 summary(d.low.measurement)
 ```
@@ -128,9 +128,9 @@ final three-step estimates.
 
 ```{r two-step}
 d.fitZ <- fitZ_from_fit0(
-  fit0     = d.measurement$measurement_model$fit0,
-  data     = d,
-  Y.names  = paste0("Y", 1:6),
+  fit0 = d.measurement$measurement_model$fit0,
+  data = d,
+  Y.names = paste0("Y", 1:6),
   Zp.names = "Zp"
 )
 # True slopes: -1 (C2) and +1 (C3) relative to C1
@@ -142,11 +142,11 @@ low-separation fit to help it converge.
 
 ```{r two-step-low}
 d.low.fitZ <- fitZ_from_fit0(
-  fit0          = d.low.measurement$measurement_model$fit0,
-  data          = d.low,
-  Y.names       = paste0("Y", 1:6),
-  Zp.names      = "Zp",
-  starting_val  = d.fitZ$mGamma
+  fit0 = d.low.measurement$measurement_model$fit0,
+  data = d.low,
+  Y.names = paste0("Y", 1:6),
+  Zp.names = "Zp",
+  starting_val = d.fitZ$mGamma
 )
 d.low.fitZ$mGamma
 ```
@@ -162,15 +162,15 @@ ML correction of Vermunt (2010) and modal class assignment.
 
 ```{r three-step-default}
 d.three_step <- three_step(
-  data      = d,
-  Y.names   = paste0("Y", 1:6),
+  data = d,
+  Y.names = paste0("Y", 1:6),
   n_classes = 3,
-  Zp.names  = "Zp"
+  Zp.names = "Zp"
 )
 summary(d.three_step)
 ```
 
-The standard `coef()` and `vcov()` S3 methods work on any `teLCA` object.
+The standard `coef()` and `vcov()` S3 methods work on any `tseLCA` object.
 
 ```{r s3-methods}
 coef(d.three_step)
@@ -186,10 +186,10 @@ separation is moderate or low. When `use.modal.assignment = TRUE`, the Jacobian 
 
 ```{r three-step-prop}
 d.three_step.prop <- three_step(
-  data                 = d,
-  Y.names              = paste0("Y", 1:6),
-  n_classes            = 3,
-  Zp.names             = "Zp",
+  data = d,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  Zp.names = "Zp",
   use.modal.assignment = FALSE
 )
 summary(d.three_step.prop)
@@ -204,10 +204,10 @@ large samples.
 
 ```{r three-step-simple}
 d.three_step.simple <- three_step(
-  data           = d,
-  Y.names        = paste0("Y", 1:6),
-  n_classes      = 3,
-  Zp.names       = "Zp",
+  data = d,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  Zp.names = "Zp",
   use.simple.cov = TRUE
 )
 summary(d.three_step.simple)
@@ -222,11 +222,11 @@ is preferred.
 
 ```{r three-step-bch}
 d.three_step.bch <- three_step(
-  data      = d,
-  Y.names   = paste0("Y", 1:6),
+  data = d,
+  Y.names = paste0("Y", 1:6),
   n_classes = 3,
-  Zp.names  = "Zp",
-  use.bch   = TRUE
+  Zp.names = "Zp",
+  use.bch = TRUE
 )
 summary(d.three_step.bch)
 ```
@@ -238,23 +238,23 @@ this setting.
 ```{r bch-low, eval = FALSE}
 # Not run in vignette build (slow and and produces warnings)
 bch.fail <- three_step(
-  data                 = d.low,
-  Y.names              = paste0("Y", 1:6),
-  n_classes            = 3,
-  Zp.names             = "Zp",
-  use.bch              = TRUE,
-  maxIter.measurement  = 2000,
-  iter.measurement     = 10
+  data = d.low,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  Zp.names = "Zp",
+  use.bch = TRUE,
+  maxIter.measurement = 2000,
+  iter.measurement = 10
 )
 ```
 
 ```{r three-step-low}
 # Preferred approach for low separation
 d.low.three_step.prop <- three_step(
-  data                 = d.low,
-  Y.names              = paste0("Y", 1:6),
-  n_classes            = 3,
-  Zp.names             = "Zp",
+  data = d.low,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  Zp.names = "Zp",
   use.modal.assignment = FALSE
 )
 summary(d.low.three_step.prop)
@@ -277,24 +277,24 @@ summary(d.three_step.simple)
 
 ```{r rebase-c2}
 d.three_step.simpleC2 <- three_step(
-  data           = d,
-  Y.names        = paste0("Y", 1:6),
-  n_classes      = 3,
-  Zp.names       = "Zp",
+  data = d,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  Zp.names = "Zp",
   use.simple.cov = TRUE,
-  rebase         = "C2"
+  rebase = "C2"
 )
 summary(d.three_step.simpleC2)
 ```
 
 ```{r rebase-c3}
 d.three_step.simpleC3 <- three_step(
-  data           = d,
-  Y.names        = paste0("Y", 1:6),
-  n_classes      = 3,
-  Zp.names       = "Zp",
+  data = d,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  Zp.names = "Zp",
   use.simple.cov = TRUE,
-  rebase         = "C3"
+  rebase = "C3"
 )
 summary(d.three_step.simpleC3)
 ```
@@ -303,7 +303,7 @@ summary(d.three_step.simpleC3)
 
 ## Passing a pre-fitted measurement model
 
-The `step1` argument accepts any previously fitted `teLCA` object or the raw
+The `step1` argument accepts any previously fitted `tseLCA` object or the raw
 output of `lca_step1()`. This is useful when you want to:
 
 - Reuse an expensive measurement model across multiple structural models.
@@ -314,36 +314,40 @@ output of `lca_step1()`. This is useful when you want to:
 ```{r step1-same-data}
 # Reuse the measurement model estimated above
 d.three_step.prop2 <- three_step(
-  data                 = d,
-  Y.names              = paste0("Y", 1:6),
-  n_classes            = 3,
-  Zp.names             = "Zp",
+  data = d,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  Zp.names = "Zp",
   use.modal.assignment = FALSE,
-  step1                = d.measurement$measurement_model
+  step1 = d.measurement$measurement_model
 )
 summary(d.three_step.prop2)
 ```
 
 ```{r step1-different-sample}
 # Measurement model from a larger low-separation sample
-d.low2000 <- generate_data(n = 2000, separation = "low",
-                            scenario = "covariate", seed = 2)
+d.low2000 <- generate_data(
+  n = 2000,
+  separation = "low",
+  scenario = "covariate",
+  seed = 2
+)
 d.low.measurement2000 <- three_step(
-  data      = d.low2000,
-  Y.names   = paste0("Y", 1:6),
+  data = d.low2000,
+  Y.names = paste0("Y", 1:6),
   n_classes = 3
 )
 
 # Apply to the smaller sample; get.twostep.vcov returns multilevLCA's
 # bias-corrected vcov for the two-step estimates
 d.low.three_step.prop2 <- three_step(
-  data                 = d.low,
-  Y.names              = paste0("Y", 1:6),
-  n_classes            = 3,
-  Zp.names             = "Zp",
+  data = d.low,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  Zp.names = "Zp",
   use.modal.assignment = FALSE,
-  step1                = d.low.measurement2000$measurement_model,
-  get.twostep.vcov     = TRUE
+  step1 = d.low.measurement2000$measurement_model,
+  get.twostep.vcov = TRUE
 )
 summary(d.low.three_step.prop2)
 ```
@@ -353,20 +357,20 @@ before calling `three_step()`.
 
 ```{r step1-inject-fitz}
 d.low.fitZ2 <- fitZ_from_fit0(
-  fit0     = d.low.measurement2000$measurement_model$fit0,
-  data     = d.low,
-  Y.names  = paste0("Y", 1:6),
+  fit0 = d.low.measurement2000$measurement_model$fit0,
+  data = d.low,
+  Y.names = paste0("Y", 1:6),
   Zp.names = "Zp"
 )
 d.low.measurement2000$measurement_model$fitZ <- d.low.fitZ2
 
 d.low.three_step.prop3 <- three_step(
-  data                 = d.low,
-  Y.names              = paste0("Y", 1:6),
-  n_classes            = 3,
-  Zp.names             = "Zp",
+  data = d.low,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  Zp.names = "Zp",
   use.modal.assignment = FALSE,
-  step1                = d.low.measurement2000$measurement_model
+  step1 = d.low.measurement2000$measurement_model
 )
 summary(d.low.three_step.prop3)
 ```
@@ -375,18 +379,20 @@ summary(d.low.three_step.prop3)
 
 ## Missing data
 
-`teLCA` uses a two-pass row-filtering strategy that matches `multilevLCA`'s
+`tseLCA` uses a two-pass row-filtering strategy that matches `multilevLCA`'s
 approach for the measurement model while allowing more observations into Steps
 1 and 2 than Step 3.
 
 ```{r missing-data-setup}
 set.seed(42)
-d.new    <- generate_data(500, separation = "high", seed = 3)
+d.new <- generate_data(500, separation = "high", seed = 3)
 sparsity <- 0.1
-missing  <- 1 - matrix(
-  rbinom(prod(dim(d.new)), size = 1, prob = sparsity),
-  nrow = nrow(d.new), ncol = ncol(d.new)
-)
+missing <- 1 -
+  matrix(
+    rbinom(prod(dim(d.new)), size = 1, prob = sparsity),
+    nrow = nrow(d.new),
+    ncol = ncol(d.new)
+  )
 missing[missing == 0] <- NA_real_
 d.sparse <- d.new * missing
 head(d.sparse)
@@ -397,11 +403,11 @@ dropped before the measurement model is estimated.
 
 ```{r missing-listwise}
 d.sparse.measurement <- three_step(
-  data       = d.sparse,
-  Y.names    = paste0("Y", 1:6),
-  n_classes  = 3,
+  data = d.sparse,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
   incomplete = FALSE,
-  verbose    = TRUE
+  verbose = TRUE
 )
 # Rows dropped = number of rows with at least one missing Y
 sum(apply(d.sparse[, paste0("Y", 1:6)], 1, \(x) any(is.na(x))))
@@ -413,11 +419,11 @@ observed rows contribute to the measurement model via FIML.
 
 ```{r missing-fiml}
 d.sparse.measurement2 <- three_step(
-  data       = d.sparse,
-  Y.names    = paste0("Y", 1:6),
-  n_classes  = 3,
+  data = d.sparse,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
   incomplete = TRUE,
-  verbose    = TRUE
+  verbose = TRUE
 )
 summary(d.sparse.measurement2)
 ```
@@ -427,12 +433,12 @@ rows used in Step 3 are a subset of those used in Steps 1 and 2.
 
 ```{r missing-covariate}
 d.sparse.three_step <- three_step(
-  data       = d.sparse,
-  Y.names    = paste0("Y", 1:6),
-  n_classes  = 3,
-  Zp.names   = "Zp",
+  data = d.sparse,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  Zp.names = "Zp",
   incomplete = TRUE,
-  verbose    = TRUE
+  verbose = TRUE
 )
 # Additional rows dropped from Step 3 due to missing Zp
 sum(is.na(d.sparse$Zp))
@@ -444,13 +450,13 @@ step on the same sparse data.
 
 ```{r missing-reuse}
 d.sparse.three_step2 <- three_step(
-  data       = d.sparse,
-  Y.names    = paste0("Y", 1:6),
-  n_classes  = 3,
-  Zp.names   = "Zp",
+  data = d.sparse,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  Zp.names = "Zp",
   incomplete = TRUE,
-  step1      = d.sparse.measurement2$measurement_model,
-  verbose    = TRUE
+  step1 = d.sparse.measurement2$measurement_model,
+  verbose = TRUE
 )
 summary(d.sparse.three_step2)
 ```
@@ -459,14 +465,14 @@ summary(d.sparse.three_step2)
 
 ## Polytomous items
 
-`teLCA` supports polytomous indicators, following `multilevLCA`'s convention
+`tseLCA` supports polytomous indicators, following `multilevLCA`'s convention
 that item categories are coded as consecutive integers starting at 0.
 
 Here we reproduce the example from the `poLCA` package.
 
 ```{r polytomous-setup, message = FALSE}
 data(election, package = "poLCA")
-elec       <- election
+elec <- election
 elec.items <- colnames(election)[1:12]
 
 # Recode to 0-based integers as required by multilevLCA
@@ -475,19 +481,19 @@ elec[, elec.items] <- lapply(elec[, elec.items], \(x) as.integer(x) - 1L)
 
 ```{r polytomous-fit}
 elec.measurement <- three_step(
-  data       = elec,
-  Y.names    = elec.items,
-  n_classes  = 3,
+  data = elec,
+  Y.names = elec.items,
+  n_classes = 3,
   #The poLCA example drops any row with a missing cell
   incomplete = FALSE
 )
 
 elec.three_step <- three_step(
-  data       = elec,
-  Y.names    = elec.items,
-  n_classes  = 3,
-  Zp.names   = c("PARTY"),
-  step1      = elec.measurement$measurement_model,
+  data = elec,
+  Y.names = elec.items,
+  n_classes = 3,
+  Zp.names = c("PARTY"),
+  step1 = elec.measurement$measurement_model,
   incomplete = FALSE,
   #With the neutral group as the base-category
   rebase = "C3"
@@ -501,11 +507,16 @@ party.x <- seq(from = 1, to = 7, length.out = 101)
 pidmat <- cbind(1, party.x)
 exb <- exp(pidmat %*% coef(elec.three_step))
 
-matplot(party.x, (cbind(1, exb))/(1 + rowSums(exb)), 
-        ylim = c(0, 1), type = "l", lwd = 3, col = 1,
-        xlab = "Party ID: strong Democratic (1) to strong Republican (7)",
-        ylab = "Probability of latent class membership",
-        main = "Party ID as a predictor of candidate affinity class",
+matplot(
+  party.x,
+  (cbind(1, exb)) / (1 + rowSums(exb)),
+  ylim = c(0, 1),
+  type = "l",
+  lwd = 3,
+  col = 1,
+  xlab = "Party ID: strong Democratic (1) to strong Republican (7)",
+  ylab = "Probability of latent class membership",
+  main = "Party ID as a predictor of candidate affinity class",
 )
 text(5.9, 0.40, "Other")
 text(5.4, 0.75, "Bush affinity")
@@ -523,42 +534,42 @@ For distal outcomes ($Z_o \leftarrow X \rightarrow Y$), supply `Zo.name` and a
 
 ```{r distal-data}
 d.distal <- generate_data(
-  n          = 500,
+  n = 500,
   separation = "high",
-  scenario   = "distal",
-  seed       = 4
+  scenario = "distal",
+  seed = 4
 )
 # True class means: mu = (0, 1, -1) for C1, C2, C3
 ```
 
 ```{r distal-fit}
 d.distal.measurement <- three_step(
-  data      = d.distal,
-  Y.names   = paste0("Y", 1:6),
+  data = d.distal,
+  Y.names = paste0("Y", 1:6),
   n_classes = 3
 )
 
 # ML estimator
 d.distal.three_step.ml <- three_step(
-  data                 = d.distal,
-  Y.names              = paste0("Y", 1:6),
-  n_classes            = 3,
-  Zo.name              = "Zo",
-  step1                = d.distal.measurement$measurement_model,
+  data = d.distal,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  Zo.name = "Zo",
+  step1 = d.distal.measurement$measurement_model,
   use.modal.assignment = FALSE,
-  family               = "gaussian"
+  family = "gaussian"
 )
 
 # BCH estimator: closed-form M-step for distal outcomes
 d.distal.three_step.bch <- three_step(
-  data                 = d.distal,
-  Y.names              = paste0("Y", 1:6),
-  n_classes            = 3,
-  Zo.name              = "Zo",
-  step1                = d.distal.measurement$measurement_model,
+  data = d.distal,
+  Y.names = paste0("Y", 1:6),
+  n_classes = 3,
+  Zo.name = "Zo",
+  step1 = d.distal.measurement$measurement_model,
   use.modal.assignment = FALSE,
-  use.bch              = TRUE,
-  family               = "gaussian"
+  use.bch = TRUE,
+  family = "gaussian"
 )
 
 summary(d.distal.three_step.ml)

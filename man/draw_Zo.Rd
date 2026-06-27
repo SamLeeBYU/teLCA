@@ -18,3 +18,8 @@ Numeric vector of length n.
 \description{
 Draw a continuous distal outcome given true class memberships (scenario "distal")
 }
+\examples{
+X  <- draw_classes(100, c(1/3, 1/3, 1/3))
+Zo <- draw_Zo(X, bk2018_params$distal_params)
+tapply(Zo, X, mean)   # should be close to true mu
+}

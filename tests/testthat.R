@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(teLCA)
+library(tseLCA)
 
-test_check("teLCA")
+test_check("tseLCA")

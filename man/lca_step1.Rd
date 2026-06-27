@@ -57,7 +57,7 @@ only compute \code{fitZ}.}
 \item{rebase}{Character or integer specifying the reference latent class.
 Use \code{"C1"}, \code{"C2"}, etc. or an integer index. Default \code{"C1"}. The
 measurement model is permuted so this class becomes column 1, making it
-the reference for all downstream multinomial logit parameterisations.}
+the reference for all downstream multinomial logit parameterizations.}
 
 \item{verbose}{Logical. Print progress messages. Default \code{FALSE}.}
 }
@@ -68,5 +68,20 @@ A list with \verb{$fit0} (multilevLCA measurement model) and \verb{$fitZ}
 \description{
 Estimates the latent class measurement model via \pkg{multilevLCA} and,
 optionally, fixes \code{mPhi} and estimates covariate effects (two-step
-initialisation) via \code{fitZ_from_fit0()}.
+initialization) via \code{fitZ_from_fit0()}.
+}
+\examples{
+\donttest{
+d <- generate_data(200, "high", "covariate", seed = 1)
+
+# Measurement model only
+s1 <- lca_step1(d, Y.names = paste0("Y", 1:6), n_classes = 3)
+s1$fit0$vPi    # estimated class prevalences
+s1$fit0$mPhi   # item-response probabilities
+
+# With two-step covariate initialization
+s1z <- lca_step1(d, Y.names = paste0("Y", 1:6), n_classes = 3,
+                 Zp.names = "Zp", use.two.step = TRUE, verbose = TRUE)
+s1z$fitZ$mGamma   # two-step gamma estimates
+}
 }

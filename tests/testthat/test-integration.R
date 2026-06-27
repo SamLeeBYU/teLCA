@@ -42,7 +42,7 @@ test_that("lca_step1 with Zp returns fitZ with named mGamma", {
 
 # ── Measurement only ──────────────────────────────────────────────────────────
 
-test_that("three_step measurement-only returns teLCA_measurement", {
+test_that("three_step measurement-only returns tseLCA_measurement", {
   d <- generate_data(200L, "high", "distal", seed = 50L)
   fit <- three_step(
     d,
@@ -52,8 +52,8 @@ test_that("three_step measurement-only returns teLCA_measurement", {
     verbose = FALSE
   )
 
-  expect_s3_class(fit, "teLCA_measurement")
-  expect_s3_class(fit, "teLCA")
+  expect_s3_class(fit, "tseLCA_measurement")
+  expect_s3_class(fit, "tseLCA")
   expect_true(is.finite(fit$AIC))
   expect_true(is.finite(fit$BIC))
   expect_equal(fit$n_classes, 2L)
@@ -61,7 +61,7 @@ test_that("three_step measurement-only returns teLCA_measurement", {
 
 # ── Covariate model ───────────────────────────────────────────────────────────
 
-test_that("three_step covariate returns teLCA_covariate with correct structure", {
+test_that("three_step covariate returns tseLCA_covariate with correct structure", {
   d <- generate_data(250L, "high", "covariate", seed = 100L)
   fit <- three_step(
     d,
@@ -72,7 +72,7 @@ test_that("three_step covariate returns teLCA_covariate with correct structure",
     verbose = FALSE
   )
 
-  expect_s3_class(fit, "teLCA_covariate")
+  expect_s3_class(fit, "tseLCA_covariate")
   expect_equal(fit$n_classes, 3L)
 
   # Coefficient matrix: Q x (T-1) = 2 x 2, named
@@ -109,13 +109,13 @@ test_that("three_step BCH covariate runs and returns finite SEs", {
       verbose = FALSE
     )
   )
-  expect_s3_class(fit, "teLCA_covariate")
+  expect_s3_class(fit, "tseLCA_covariate")
   expect_true(all(is.finite(fit$three_step)))
 })
 
 # ── Distal model ──────────────────────────────────────────────────────────────
 
-test_that("three_step gaussian distal returns teLCA_distal with named estimates", {
+test_that("three_step gaussian distal returns tseLCA_distal with named estimates", {
   d <- generate_data(250L, "high", "distal", seed = 200L)
   fit <- three_step(
     d,
@@ -127,7 +127,7 @@ test_that("three_step gaussian distal returns teLCA_distal with named estimates"
     verbose = FALSE
   )
 
-  expect_s3_class(fit, "teLCA_distal")
+  expect_s3_class(fit, "tseLCA_distal")
   expect_length(fit$three_step, 3L)
   expect_named(fit$three_step, paste0("mu_C", 1:3))
   expect_equal(dim(fit$three_step_vcov), c(3L, 3L))
@@ -138,7 +138,7 @@ test_that("three_step gaussian distal returns teLCA_distal with named estimates"
   expect_true(max(fit$three_step) > 0)
 })
 
-test_that("three_step with both Zp and Zo returns teLCA_both", {
+test_that("three_step with both Zp and Zo returns tseLCA_both", {
   d <- generate_data(250L, "high", "covariate", seed = 300L)
   # Add a synthetic distal outcome
   d$Zo <- rnorm(nrow(d), mean = d$X - 2, sd = 0.5)
@@ -153,7 +153,7 @@ test_that("three_step with both Zp and Zo returns teLCA_both", {
     verbose = FALSE
   )
 
-  expect_s3_class(fit, "teLCA_both")
+  expect_s3_class(fit, "tseLCA_both")
   expect_false(is.null(fit$covariate))
   expect_false(is.null(fit$distal))
   expect_equal(fit$n_classes, 3L)

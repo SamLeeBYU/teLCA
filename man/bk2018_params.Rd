@@ -23,3 +23,13 @@ set so that marginal class sizes average to 1/3 when Zp ~ Uniform\{1..5\}.}
 \verb{$sigma} (residual SD = 1) for the distal outcome model.}
 }
 }
+\examples{
+# True item-response probabilities for high separation
+bk2018_params$rho_high
+
+# Covariate model parameters (intercepts and slopes)
+bk2018_params$covariate_params
+
+# Distal outcome parameters
+bk2018_params$distal_params
+}

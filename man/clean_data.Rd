@@ -2,7 +2,7 @@
 % Please edit documentation in R/clean.R
 \name{clean_data}
 \alias{clean_data}
-\title{Prepare and validate data for teLCA estimation}
+\title{Prepare and validate data for tseLCA estimation}
 \usage{
 clean_data(
   data,
@@ -43,6 +43,6 @@ A named list with:
 }
 }
 \description{
-Prepare and validate data for teLCA estimation
+Prepare and validate data for tseLCA estimation
 }
 \keyword{internal}

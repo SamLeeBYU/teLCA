@@ -19,3 +19,7 @@ An n x T matrix of class probabilities (rows sum to 1).
 Evaluates P(X = t | Zp) for each observation using a multinomial logit
 with one covariate and class-specific intercepts and slopes.
 }
+\examples{
+# Class membership probabilities for Zp = 1..5
+mnl_probs(1:5, bk2018_params$covariate_params)
+}

@@ -15,3 +15,7 @@ Integer vector of length n.
 \description{
 Draw the covariate Zp ~ Uniform\{1, 2, 3, 4, 5\}
 }
+\examples{
+Zp <- draw_Zp(100)
+table(Zp)
+}

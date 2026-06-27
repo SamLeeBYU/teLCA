@@ -1,10 +1,10 @@
-#' teLCA: Three-Step Estimation for Latent Class Analysis
+#' tseLCA: Three-Step Estimation for Latent Class Analysis
 #'
 #' @description
-#' **teLCA** implements bias-adjusted three-step estimators for structural
+#' **tseLCA** implements bias-adjusted three-step estimators for structural
 #' latent class models with covariates and distal outcomes. Building on the
 #' efficient measurement-model estimation procedures in \pkg{multilevLCA},
-#' **teLCA** extends existing functionality through modern three-step
+#' **tseLCA** extends existing functionality through modern three-step
 #' estimators, classification-error corrections, and analytic sandwich
 #' variance estimation that propagates uncertainty from the latent class
 #' measurement stage through to the final structural parameter estimates.
@@ -86,17 +86,17 @@
 #'     analysis sample via the \code{step1} argument.
 #'   \item Arbitrary reference class via the \code{rebase} argument.
 #'   \item S3 methods: \code{print}, \code{summary}, \code{coef}, \code{vcov},
-#'     \code{plot} for all four return subclasses (\code{teLCA_measurement},
-#'     \code{teLCA_covariate}, \code{teLCA_distal}, \code{teLCA_both}).
+#'     \code{plot} for all four return subclasses (\code{tseLCA_measurement},
+#'     \code{tseLCA_covariate}, \code{tseLCA_distal}, \code{tseLCA_both}).
 #' }
 #'
 #' @section Getting started:
 #' ```r
 #' # Install from GitHub
-#' pak::pak("SamLeeBYU/teLCA")
+#' pak::pak("SamLeeBYU/tseLCA")
 #'
 #' # Introductory vignette
-#' vignette("teLCA-workflow", package = "teLCA")
+#' vignette("tseLCA-workflow", package = "tseLCA")
 #' ```
 #'
 #' @references

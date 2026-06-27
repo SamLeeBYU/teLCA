@@ -1,6 +1,6 @@
 #####################################################
-### Simulation Script for the teLCA package:
-### teLCA: Three-Step Estimation for Latent Class Analysis
+### Simulation Script for the tseLCA package:
+### tseLCA: Three-Step Estimation for Latent Class Analysis
 ### -------------------------------------------------
 ### By: Sam Lee
 ### E-Mail: samlee@arizona.edu
@@ -32,11 +32,11 @@ if (!require("pak")) {
   install.packages("pak")
 }
 
-if (!require("teLCA")) {
-  pak::pak("SamLeeBYU/teLCA")
+if (!require("tseLCA")) {
+  pak::pak("SamLeeBYU/tseLCA")
 }
 
-library(teLCA)
+library(tseLCA)
 
 ###################################################
 ### generate all simulation conditions

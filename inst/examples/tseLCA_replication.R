@@ -1,6 +1,6 @@
 #####################################################
-### Replication Script for the teLCA package:
-### teLCA: Three-Step Estimation for Latent Class Analysis
+### Replication Script for the tseLCA package:
+### tseLCA: Three-Step Estimation for Latent Class Analysis
 ### -------------------------------------------------
 ### By: Sam Lee
 ### E-Mail: samlee@arizona.edu
@@ -31,11 +31,11 @@ if (!require("poLCA")) {
   install.packages("poLCA")
 }
 
-if (!require("teLCA")) {
-  pak::pak("SamLeeBYU/teLCA")
+if (!require("tseLCA")) {
+  pak::pak("SamLeeBYU/tseLCA")
 }
 
-library(teLCA)
+library(tseLCA)
 
 ###################################################
 ### generate synthetic data
@@ -87,7 +87,7 @@ d.measurement <- three_step(
   n_classes = 3,
   measurement.tol = 1e-8
 )
-#S3 method summary for teLCA objects
+#S3 method summary for tseLCA objects
 summary(d.measurement)
 
 #In cases of low-separation, fit multiple measurement models
@@ -101,7 +101,7 @@ d.low.measurement <- three_step(
 )
 summary(d.low.measurement)
 
-## teLCA also adopts the S3 plot method, from multilevLCA, so you can call plot() on a teLCA object
+## tseLCA also adopts the S3 plot method, from multilevLCA, so you can call plot() on a tseLCA object
 plot(d.measurement)
 
 ###################################################
@@ -141,7 +141,7 @@ message(
   "\n── Three-step estimation ──────────────────────────────────────────────"
 )
 
-#Three-step estimation can be done with one teLCA function call
+#Three-step estimation can be done with one tseLCA function call
 #This estimates the measurement model if one is not provided
 # (can be turned off with use.two.step=FALSE)
 d.three_step <- three_step(
@@ -154,7 +154,7 @@ summary(d.three_step)
 #Other useful S3 methods
 coef(d.three_step)
 vcov(d.three_step)
-#Note that fitZ_from_fit0 does not return a teLCA object so S3 methods will not work with those objects
+#Note that fitZ_from_fit0 does not return a tseLCA object so S3 methods will not work with those objects
 
 #Default is use.modal.assignment=TRUE
 #Recommended to change to proportional assignment in cases of poor separation
@@ -265,7 +265,7 @@ message(
 
 #The first stage measurement can be passed in as an argument
 # even if computed on a different sample (uncertainty is properly calibrated)
-#This is the biggest advantage of using teLCA as opposed to one-step estimation (poLCA)
+#This is the biggest advantage of using tseLCA as opposed to one-step estimation (poLCA)
 
 d.three_step.prop2 <- three_step(
   data = d,
@@ -333,7 +333,7 @@ message(
   "\n── Missing data handling ──────────────────────────────────────────────"
 )
 
-#teLCA handles missing data similar to multilevLCA
+#tseLCA handles missing data similar to multilevLCA
 
 #Example
 d.new <- generate_data(500, separation = "high", seed = 3)
@@ -472,7 +472,7 @@ d.distal <- generate_data(
 )
 
 #For estimation, however, a distributional assumption on P(Z|X)
-#Current families available in teLCA are:
+#Current families available in tseLCA are:
 # - family="gaussian": for continuous Zo
 # - family="poisson": for positive discrete Zo
 # - family="binomial": for binary Zo

@@ -2,7 +2,7 @@
 % Please edit documentation in R/lca_measurement.R
 \name{lca_indiv_varmat}
 \alias{lca_indiv_varmat}
-\title{Individual-level BHHH Varmat matching teLCA's lca_em.cpp}
+\title{Individual-level BHHH Varmat matching tseLCA's lca_em.cpp}
 \usage{
 lca_indiv_varmat(mY, T, pi, phi)
 }
@@ -22,7 +22,7 @@ list with $Infomat, $Varmat, $SEs, $mScore (N x p score matrix)
 }
 \description{
 Computes the standard outer-product (BHHH) sandwich variance on the N
-individual observations, exactly replicating what LCA_teLCA returns in
+individual observations, exactly replicating what LCA_tseLCA returns in
 $Varmat and $mScore.
 }
 \details{

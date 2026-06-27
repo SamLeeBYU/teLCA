@@ -40,3 +40,15 @@ A \code{data.frame} with columns:
 \description{
 Generate one dataset following the Bakk & Kuha (2018) simulation design
 }
+\examples{
+# Covariate scenario with high separation
+d <- generate_data(n = 200, separation = "high", scenario = "covariate",
+                   seed = 1)
+head(d)
+colMeans(d)
+
+# Distal outcome scenario
+d2 <- generate_data(n = 200, separation = "high", scenario = "distal",
+                    seed = 2)
+head(d2)
+}

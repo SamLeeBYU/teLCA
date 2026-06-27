@@ -17,3 +17,7 @@ Integer vector of length n with values in \code{1:T}.
 \description{
 Draw latent class memberships from their marginal distribution
 }
+\examples{
+# Draw 100 class labels from equal prevalences
+draw_classes(100, c(1/3, 1/3, 1/3))
+}

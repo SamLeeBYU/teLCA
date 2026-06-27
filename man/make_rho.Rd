@@ -24,3 +24,10 @@ The three-class structure is:
 \item Class 3: \code{1 - pi} on all 6 items (low responders).
 }
 }
+\examples{
+# High separation: P(Y=1|class) = 0.9 for the "high" class
+make_rho(0.9)
+
+# Low separation
+make_rho(0.7)
+}

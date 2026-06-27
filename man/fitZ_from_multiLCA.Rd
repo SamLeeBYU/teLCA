@@ -57,3 +57,23 @@ fit the two-step covariate model.  This is the original multilevLCA approach
 and is used when \code{get.twostep.vcov = TRUE} in \code{\link[=three_step]{three_step()}} to obtain
 multilevLCA's corrected standard errors for the two-step gamma estimates.
 }
+\examples{
+\donttest{
+d <- generate_data(200, "high", "covariate", seed = 1)
+
+# Two-step estimation via multiLCA (fixedpars = 1)
+fZ_ml <- fitZ_from_multiLCA(
+  data                = d,
+  Y.names             = paste0("Y", 1:6),
+  n_classes           = 3,
+  Zp.names            = "Zp",
+  maxIter.measurement = 5000L,
+  measurement.tol     = 1e-8,
+  covariate.tol       = 1e-6,
+  iter.measurement    = 10L,
+  R2.threshold        = 0.70
+)
+fZ_ml$mGamma           # two-step estimates
+fZ_ml$raw_fit$Varmat_cor   # multilevLCA corrected vcov
+}
+}

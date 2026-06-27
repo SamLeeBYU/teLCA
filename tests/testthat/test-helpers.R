@@ -4,7 +4,7 @@
 test_that("expand_Y one-hot encodes binary items correctly", {
   mY <- matrix(c(0L, 1L, 0L, 1L, 1L, 0L, 1L, 0L), ncol = 2L)
   ivItem <- c(2L, 2L)
-  out <- teLCA:::expand_Y(mY, ivItem)
+  out <- tseLCA:::expand_Y(mY, ivItem)
 
   expect_equal(dim(out), c(4L, 4L))
   expect_true(all(out %in% c(0L, 1L)))
@@ -19,7 +19,7 @@ test_that("expand_Y one-hot encodes binary items correctly", {
 test_that("expand_Y handles a 3-category polytomous item", {
   mY <- matrix(c(0L, 1L, 2L, 1L), ncol = 1L)
   ivItem <- c(3L)
-  out <- teLCA:::expand_Y(mY, ivItem)
+  out <- tseLCA:::expand_Y(mY, ivItem)
 
   expect_equal(dim(out), c(4L, 3L))
   expect_true(all(rowSums(out) == 1L))
@@ -43,7 +43,7 @@ test_that("expand_Phi (three_step internal) expands n_free x T to K x T", {
     byrow = TRUE
   )
   ivItem <- c(2L, 2L)
-  out <- teLCA:::expand_Phi(phi_free, ivItem)
+  out <- tseLCA:::expand_Phi(phi_free, ivItem)
 
   expect_equal(dim(out), c(4L, 2L))
   # Rows 1-2: item 1; rows 3-4: item 2
@@ -64,7 +64,7 @@ test_that("log_lik_matrix returns correct dimensions and non-positive values", {
   Y <- matrix(sample(0:1, N * K, replace = TRUE), N, K)
   mPhi <- matrix(runif(K * T, 0.1, 0.9), K, T)
 
-  out <- teLCA:::log_lik_matrix(Y, mPhi)
+  out <- tseLCA:::log_lik_matrix(Y, mPhi)
   expect_equal(dim(out), c(N, T))
   expect_true(all(is.finite(out)))
   expect_true(all(out <= 0)) # log probabilities
@@ -85,9 +85,9 @@ test_that("log_lik_matrix with mDesign reduces log-likelihood", {
   mDes_partial <- mDes_full
   mDes_partial[, 3:4] <- 0L # mask last two columns
 
-  out_full <- teLCA:::log_lik_matrix(Y, mPhi, mDes_full)
-  out_partial <- teLCA:::log_lik_matrix(Y, mPhi, mDes_partial)
-  out_2col <- teLCA:::log_lik_matrix(Y[, 1:2], mPhi[1:2, ])
+  out_full <- tseLCA:::log_lik_matrix(Y, mPhi, mDes_full)
+  out_partial <- tseLCA:::log_lik_matrix(Y, mPhi, mDes_partial)
+  out_2col <- tseLCA:::log_lik_matrix(Y[, 1:2], mPhi[1:2, ])
 
   # Masking columns reduces (makes less negative) the log-likelihood
   expect_true(all(out_partial >= out_full - 1e-12))
@@ -134,7 +134,7 @@ test_that("compute_pwx_adj returns valid p.wx_mat", {
   )
   ivItemcat <- c(2L, 2L)
 
-  res <- teLCA:::compute_pwx_adj(
+  res <- tseLCA:::compute_pwx_adj(
     Y.obs,
     fit0,
     ivItemcat,

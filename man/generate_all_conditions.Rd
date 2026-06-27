@@ -44,3 +44,12 @@ generating \code{n_rep} independent replications per condition.  Seeds are
 derived deterministically from \code{base_seed} so the entire experiment is
 reproducible from a single integer.
 }
+\examples{
+\donttest{
+# Generate 5 replicates for mid and high separation only
+datasets <- generate_all_conditions(n_rep = 5L, base_seed = 1L,
+                                    sep_levels = c("mid", "high"))
+# Access a single replicate
+head(datasets[["covariate"]][["high"]][["500"]][[1]])
+}
+}

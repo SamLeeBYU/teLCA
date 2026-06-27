@@ -1171,7 +1171,7 @@ lca_vcov_distal <- function(
   g_it <- J.3 / pmax(r_it, 1e-300) # N x T
 
   # -- C1_mat: d/d theta2 [colSums(score_distal)]  (T x T*(T-1)) ----------------
-  # theta2 = off-diagonal log-ratios of pwx (column-softmax parameterisation).
+  # theta2 = off-diagonal log-ratios of pwx (column-softmax parameterzation).
   # d ae_{i,t0}/d g_{s0,t0} = pwx[s0,t0] * (w_{i,s0} - ae_{i,t0})
   # c_i = dae / ae_{i,t0}
   # t==t0: dr_{i,t0} = r_{i,t0} * c_i * (1 - r_{i,t0})
@@ -1254,7 +1254,7 @@ lca_vcov_distal <- function(
 #' @param n_classes Integer. Number of latent classes.
 #' @param Zp.names Character vector of covariate column names, or `NULL`.
 #' @param Zo.name Single character name of the distal outcome column, or `NULL`.
-#' @param step1 Pre-fitted Step-1 object (output of [teLCA::lca_step1()]), or `NULL`.
+#' @param step1 Pre-fitted Step-1 object (output of [tseLCA::lca_step1()]), or `NULL`.
 #' @param use.two.step Logical. Use two-step starting values for Step 3.
 #' @param use.modal.assignment Logical. Use modal (hard) class assignment.
 #' @param include.intercept Logical. Include intercept in covariate model.
@@ -1269,7 +1269,7 @@ lca_vcov_distal <- function(
 #' @param use.bch Logical. Use BCH weights instead of ML.
 #' @param em.maxIter Maximum EM iterations for Step 3.
 #' @param get.twostep.vcov Logical. If `TRUE`, call
-#'   [teLCA::fitZ_from_multiLCA()] to obtain multilevLCA's corrected standard errors
+#'   [tseLCA::fitZ_from_multiLCA()] to obtain multilevLCA's corrected standard errors
 #'   for the two-step gamma estimates and store them in `$two_step_vcov`.
 #'   Requires \pkg{multilevLCA}. Default `FALSE`.
 #' @param rebase Character (e.g. `"C1"`, `"C2"`) or integer specifying which
@@ -1376,8 +1376,8 @@ three_step <- function(
 ) {
   # -- Step 1: measurement model -----------------------------------------------
   if (!is.null(step1)) {
-    # Normalise: accept raw lca_step1() list or any teLCA object
-    s1 <- if (inherits(step1, "teLCA")) step1$measurement_model else step1
+    # Normalize: accept raw lca_step1() list or any tseLCA object
+    s1 <- if (inherits(step1, "tseLCA")) step1$measurement_model else step1
     # Apply rebase permutation so the desired reference class is column 1.
     # Invalidate any pre-existing fitZ -- it was estimated under the old ordering.
     ref_idx <- parse_rebase(rebase, n_classes)
@@ -1455,7 +1455,7 @@ three_step <- function(
         R2entr = s1$fit0$R2entr,
         n_classes = n_classes
       ),
-      class = c("teLCA_measurement", "teLCA")
+      class = c("tseLCA_measurement", "tseLCA")
     ))
   }
 
@@ -1736,7 +1736,7 @@ three_step <- function(
         BIC = total.BIC,
         n_classes = T
       ),
-      class = c("teLCA_covariate", "teLCA")
+      class = c("tseLCA_covariate", "tseLCA")
     )
   }
 
@@ -1935,11 +1935,11 @@ three_step <- function(
     out <- s3.distal.list
     out$family <- family
     out$n_classes <- T
-    class(out) <- c("teLCA_distal", "teLCA")
+    class(out) <- c("tseLCA_distal", "tseLCA")
     return(out)
   }
   if (!is.null(Z_mat) && is.null(Z0_mat)) {
-    class(s3.covariate) <- c("teLCA_covariate", "teLCA")
+    class(s3.covariate) <- c("tseLCA_covariate", "tseLCA")
     return(s3.covariate)
   }
 
@@ -1949,22 +1949,22 @@ three_step <- function(
     family = family,
     n_classes = T
   )
-  class(out) <- c("teLCA_both", "teLCA")
+  class(out) <- c("tseLCA_both", "tseLCA")
   return(out)
 }
 
-# -- S3 methods for teLCA objects ----------------------------------------------
+# -- S3 methods for tseLCA objects ----------------------------------------------
 #
 # Four subclasses:
-#   teLCA_measurement  - measurement model only (no Zp, no Zo)
-#   teLCA_covariate    - covariate model only   (Zp present, no Zo)
-#   teLCA_distal       - distal outcome only    (Zo present, no Zp)
-#   teLCA_both         - both covariate and distal
+#   tseLCA_measurement  - measurement model only (no Zp, no Zo)
+#   tseLCA_covariate    - covariate model only   (Zp present, no Zo)
+#   tseLCA_distal       - distal outcome only    (Zo present, no Zp)
+#   tseLCA_both         - both covariate and distal
 
 # -- helpers -------------------------------------------------------------------
 
 .covariate_table <- function(x) {
-  # x is a teLCA_covariate or x$covariate for teLCA_both
+  # x is a tseLCA_covariate or x$covariate for tseLCA_both
   est <- as.vector(x$three_step)
   se <- sqrt(diag(x$three_step_vcov))
   zval <- est / se
@@ -1981,7 +1981,7 @@ three_step <- function(
 }
 
 .distal_table <- function(x, family) {
-  # x is a teLCA_distal or x$distal for teLCA_both
+  # x is a tseLCA_distal or x$distal for tseLCA_both
   est <- x$three_step
   se <- sqrt(diag(x$three_step_vcov))
   zval <- est / se
@@ -2038,13 +2038,21 @@ three_step <- function(
 
 # -- print ---------------------------------------------------------------------
 
+#' Print a tseLCA model object
+#'
+#' Compact one-line or table summary printed to the console.
+#'
+#' @param x   A `tseLCA` object returned by [tseLCA::three_step()].
+#' @param digits Integer. Number of decimal places for coefficient tables.
+#' @param ... Further arguments.
+#' @return Invisibly returns `x`.
 #' @examples
 #' d    <- generate_data(100, "high", "covariate", seed = 1)
 #' fit_m <- three_step(d, paste0("Y", 1:6), n_classes = 3)
 #' print(fit_m)
 #' @export
-print.teLCA_measurement <- function(x, ...) {
-  cat("teLCA -- measurement model\n")
+print.tseLCA_measurement <- function(x, ...) {
+  cat("tseLCA -- measurement model\n")
   cat(sprintf(
     "  Classes: %d   Log-lik: %.4f   AIC: %.2f   BIC: %.2f\n",
     x$n_classes,
@@ -2058,6 +2066,7 @@ print.teLCA_measurement <- function(x, ...) {
   invisible(x)
 }
 
+#' @rdname print.tseLCA_measurement
 #' @examples
 #' \donttest{
 #' d   <- generate_data(200, "high", "covariate", seed = 1)
@@ -2066,8 +2075,8 @@ print.teLCA_measurement <- function(x, ...) {
 #' print(fit)
 #' }
 #' @export
-print.teLCA_covariate <- function(x, digits = 4, ...) {
-  cat("teLCA -- three-step covariate model\n")
+print.tseLCA_covariate <- function(x, digits = 4, ...) {
+  cat("tseLCA -- three-step covariate model\n")
   cat(sprintf(
     "  Classes: %d   Log-lik: %.4f   AIC: %.2f   BIC: %.2f\n",
     x$n_classes,
@@ -2080,6 +2089,7 @@ print.teLCA_covariate <- function(x, digits = 4, ...) {
   invisible(x)
 }
 
+#' @rdname print.tseLCA_measurement
 #' @examples
 #' \donttest{
 #' d   <- generate_data(200, "high", "distal", seed = 2)
@@ -2088,19 +2098,20 @@ print.teLCA_covariate <- function(x, digits = 4, ...) {
 #' print(fit)
 #' }
 #' @export
-print.teLCA_distal <- function(x, digits = 4, ...) {
+print.tseLCA_distal <- function(x, digits = 4, ...) {
   fam <- if (!is.null(x$family)) x$family else "gaussian"
-  cat("teLCA -- three-step distal outcome model\n")
+  cat("tseLCA -- three-step distal outcome model\n")
   cat(sprintf("  Classes: %d   Family: %s\n", x$n_classes, fam))
   cat("\nDistal outcome means by class:\n")
   .print_table(.distal_table(x, fam), digits = digits)
   invisible(x)
 }
 
+#' @rdname print.tseLCA_measurement
 #' @export
-print.teLCA_both <- function(x, digits = 4, ...) {
+print.tseLCA_both <- function(x, digits = 4, ...) {
   fam <- if (!is.null(x$family)) x$family else "gaussian"
-  cat("teLCA -- three-step model with covariate and distal outcome\n")
+  cat("tseLCA -- three-step model with covariate and distal outcome\n")
   cat(sprintf("  Classes: %d   Family: %s\n", x$n_classes, fam))
   cat(sprintf(
     "  Log-lik: %.4f   AIC: %.2f   BIC: %.2f\n",
@@ -2118,13 +2129,22 @@ print.teLCA_both <- function(x, digits = 4, ...) {
 
 # -- summary -------------------------------------------------------------------
 
+#' Summarize a tseLCA model object
+#'
+#' Verbose summary including model fit, class prevalences, item-response
+#' probabilities, and coefficient tables with standard errors and p-values.
+#'
+#' @param object A `tseLCA` object returned by [tseLCA::three_step()].
+#' @param digits Integer. Number of decimal places for coefficient tables.
+#' @param ... Further arguments (currently unused).
+#' @return Invisibly returns `object`.
 #' @examples
 #' d    <- generate_data(100, "high", "covariate", seed = 1)
 #' fit_m <- three_step(d, paste0("Y", 1:6), n_classes = 3)
 #' summary(fit_m)
 #' @export
-summary.teLCA_measurement <- function(object, ...) {
-  cat("-- teLCA Measurement Model --------------------------------\n")
+summary.tseLCA_measurement <- function(object, ...) {
+  cat("-- tseLCA Measurement Model --------------------------------\n")
   cat(sprintf("Latent classes : %d\n", object$n_classes))
   cat(sprintf("Log-likelihood : %.4f\n", object$llik))
   cat(sprintf("AIC            : %.4f\n", object$AIC))
@@ -2141,6 +2161,7 @@ summary.teLCA_measurement <- function(object, ...) {
   invisible(object)
 }
 
+#' @rdname summary.tseLCA_measurement
 #' @examples
 #' \donttest{
 #' d   <- generate_data(200, "high", "covariate", seed = 1)
@@ -2149,8 +2170,8 @@ summary.teLCA_measurement <- function(object, ...) {
 #' summary(fit)
 #' }
 #' @export
-summary.teLCA_covariate <- function(object, digits = 4, ...) {
-  cat("-- teLCA Three-Step Covariate Model -----------------------\n")
+summary.tseLCA_covariate <- function(object, digits = 4, ...) {
+  cat("-- tseLCA Three-Step Covariate Model -----------------------\n")
   cat(sprintf("Latent classes : %d\n", object$n_classes))
   cat(sprintf("Log-likelihood : %.4f\n", object$llik))
   cat(sprintf("AIC            : %.4f\n", object$AIC))
@@ -2172,6 +2193,7 @@ summary.teLCA_covariate <- function(object, digits = 4, ...) {
   invisible(object)
 }
 
+#' @rdname summary.tseLCA_measurement
 #' @examples
 #' \donttest{
 #' d   <- generate_data(200, "high", "distal", seed = 2)
@@ -2180,9 +2202,9 @@ summary.teLCA_covariate <- function(object, digits = 4, ...) {
 #' summary(fit)
 #' }
 #' @export
-summary.teLCA_distal <- function(object, digits = 4, ...) {
+summary.tseLCA_distal <- function(object, digits = 4, ...) {
   fam <- if (!is.null(object$family)) object$family else "gaussian"
-  cat("-- teLCA Three-Step Distal Outcome Model -------------------\n")
+  cat("-- tseLCA Three-Step Distal Outcome Model -------------------\n")
   cat(sprintf("Latent classes : %d\n", object$n_classes))
   cat(sprintf("Family         : %s\n", fam))
   cat("\nDistal outcome estimates by class:\n")
@@ -2190,10 +2212,11 @@ summary.teLCA_distal <- function(object, digits = 4, ...) {
   invisible(object)
 }
 
+#' @rdname summary.tseLCA_measurement
 #' @export
-summary.teLCA_both <- function(object, digits = 4, ...) {
+summary.tseLCA_both <- function(object, digits = 4, ...) {
   fam <- if (!is.null(object$family)) object$family else "gaussian"
-  cat("-- teLCA Three-Step Model: Covariate + Distal Outcome -----\n")
+  cat("-- tseLCA Three-Step Model: Covariate + Distal Outcome -----\n")
   cat(sprintf("Latent classes : %d\n", object$n_classes))
   cat(sprintf("Family         : %s\n", fam))
   cat(sprintf("Log-likelihood : %.4f\n", object$covariate$llik))
@@ -2221,18 +2244,30 @@ summary.teLCA_both <- function(object, digits = 4, ...) {
 
 # -- coef ----------------------------------------------------------------------
 
+#' Extract coefficients from a tseLCA model object
+#'
+#' @param object A `tseLCA` object returned by [tseLCA::three_step()].
+#' @param which Character. For covariate and both models: `"three_step"`
+#'   (default) or `"two_step"`. For both models also accepts `"covariate"`,
+#'   `"distal"`, or `"both"`.
+#' @param step  Character. For `tseLCA_both`: `"three_step"` (default) or
+#'   `"two_step"`.
+#' @param ... Further arguments (currently unused).
+#' @return The coefficient matrix (covariate models), named numeric vector
+#'   (distal models), or a named list of both (measurement or both models).
 #' @examples
 #' d    <- generate_data(100, "high", "covariate", seed = 1)
 #' fit_m <- three_step(d, paste0("Y", 1:6), n_classes = 3)
 #' coef(fit_m)   # returns list with $prevalences and $item_probs
 #' @export
-coef.teLCA_measurement <- function(object, ...) {
+coef.tseLCA_measurement <- function(object, ...) {
   list(
     prevalences = object$measurement_model$fit0$vPi,
     item_probs = object$measurement_model$fit0$mPhi
   )
 }
 
+#' @rdname coef.tseLCA_measurement
 #' @examples
 #' \donttest{
 #' d   <- generate_data(200, "high", "covariate", seed = 1)
@@ -2242,7 +2277,7 @@ coef.teLCA_measurement <- function(object, ...) {
 #' coef(fit, which = "two_step")  # two-step starting values
 #' }
 #' @export
-coef.teLCA_covariate <- function(
+coef.tseLCA_covariate <- function(
   object,
   which = c("three_step", "two_step"),
   ...
@@ -2257,6 +2292,7 @@ coef.teLCA_covariate <- function(
   object$three_step
 }
 
+#' @rdname coef.tseLCA_measurement
 #' @examples
 #' \donttest{
 #' d   <- generate_data(200, "high", "distal", seed = 2)
@@ -2265,10 +2301,11 @@ coef.teLCA_covariate <- function(
 #' coef(fit)   # named vector of class means
 #' }
 #' @export
-coef.teLCA_distal <- function(object, ...) {
+coef.tseLCA_distal <- function(object, ...) {
   object$three_step
 }
 
+#' @rdname coef.tseLCA_measurement
 #' @examples
 #' \donttest{
 #' d   <- generate_data(200, "high", "covariate", seed = 1)
@@ -2281,7 +2318,7 @@ coef.teLCA_distal <- function(object, ...) {
 #' coef(fit, which = "both")
 #' }
 #' @export
-coef.teLCA_both <- function(
+coef.tseLCA_both <- function(
   object,
   which = c("covariate", "distal", "both"),
   step = c("three_step", "two_step"),
@@ -2309,18 +2346,29 @@ coef.teLCA_both <- function(
 
 # -- vcov ----------------------------------------------------------------------
 
+#' Extract the variance-covariance matrix from a tseLCA model object
+#'
+#' @param object A `tseLCA` object returned by [tseLCA::three_step()].
+#' @param which Character. `"three_step"` (default) or `"two_step"` for
+#'   covariate models; `"covariate"`, `"distal"`, or `"both"` for both models.
+#' @param step  Character. For `tseLCA_both`: `"three_step"` (default) or
+#'   `"two_step"`.
+#' @param ... Further arguments (currently unused).
+#' @return A named square matrix. The two-step vcov is only available when
+#'   `get.twostep.vcov = TRUE` was set in [tseLCA::three_step()].
 #' @examples
 #' d    <- generate_data(100, "high", "covariate", seed = 1)
 #' fit_m <- three_step(d, paste0("Y", 1:6), n_classes = 3)
 #' vcov(fit_m)   # returns NULL with a message
 #' @export
-vcov.teLCA_measurement <- function(object, ...) {
+vcov.tseLCA_measurement <- function(object, ...) {
   message(
     "No variance-covariance matrix available for measurement-only models."
   )
   invisible(NULL)
 }
 
+#' @rdname vcov.tseLCA_measurement
 #' @examples
 #' \donttest{
 #' d   <- generate_data(200, "high", "covariate", seed = 1)
@@ -2329,7 +2377,7 @@ vcov.teLCA_measurement <- function(object, ...) {
 #' vcov(fit)   # Q*(T-1) x Q*(T-1) vcov matrix with named rows/cols
 #' }
 #' @export
-vcov.teLCA_covariate <- function(
+vcov.tseLCA_covariate <- function(
   object,
   which = c("three_step", "two_step"),
   ...
@@ -2347,6 +2395,7 @@ vcov.teLCA_covariate <- function(
   object$three_step_vcov
 }
 
+#' @rdname vcov.tseLCA_measurement
 #' @examples
 #' \donttest{
 #' d   <- generate_data(200, "high", "distal", seed = 2)
@@ -2355,10 +2404,11 @@ vcov.teLCA_covariate <- function(
 #' vcov(fit)   # T x T vcov matrix with mu_C1..mu_CT row/col names
 #' }
 #' @export
-vcov.teLCA_distal <- function(object, ...) {
+vcov.tseLCA_distal <- function(object, ...) {
   object$three_step_vcov
 }
 
+#' @rdname vcov.tseLCA_measurement
 #' @examples
 #' \donttest{
 #' d   <- generate_data(200, "high", "covariate", seed = 1)
@@ -2370,7 +2420,7 @@ vcov.teLCA_distal <- function(object, ...) {
 #' vcov(fit, which = "distal")
 #' }
 #' @export
-vcov.teLCA_both <- function(
+vcov.tseLCA_both <- function(
   object,
   which = c("covariate", "distal", "both"),
   step = c("three_step", "two_step"),
@@ -2405,24 +2455,24 @@ vcov.teLCA_both <- function(
 # Extra arguments (horiz, clab, ...) are passed straight through.
 
 .get_fit0 <- function(x) {
-  # Extract the raw multiLCA fit0 object from any teLCA subclass.
-  if (inherits(x, "teLCA_both")) {
+  # Extract the raw multiLCA fit0 object from any tseLCA subclass.
+  if (inherits(x, "tseLCA_both")) {
     x$covariate$measurement_model$fit0
-  } else if (inherits(x, c("teLCA_covariate", "teLCA_distal"))) {
+  } else if (inherits(x, c("tseLCA_covariate", "tseLCA_distal"))) {
     x$measurement_model$fit0
   } else {
-    # teLCA_measurement
+    # tseLCA_measurement
     x$measurement_model$fit0
   }
 }
 
-#' Plot item-response probability profiles for a teLCA model
+#' Plot item-response probability profiles for a tseLCA model
 #'
 #' Delegates to `plot.multiLCA` from \pkg{multilevLCA}, which draws the
 #' class-specific item-response probability profiles from the Step-1
 #' measurement model.
 #'
-#' @param x    A `teLCA` object returned by [teLCA::three_step()].
+#' @param x    A `tseLCA` object returned by [tseLCA::three_step()].
 #' @param horiz Logical. If `TRUE`, item labels are drawn horizontally.
 #' @param clab  Optional character vector of length T giving class labels.
 #' @param ...  Further arguments passed to `plot.multiLCA`.
@@ -2439,28 +2489,28 @@ vcov.teLCA_both <- function(
 #' plot(fit_m, clab = c("Low risk", "Mixed", "High risk"))
 #' }
 #' @export
-plot.teLCA_measurement <- function(x, horiz = FALSE, clab = NULL, ...) {
+plot.tseLCA_measurement <- function(x, horiz = FALSE, clab = NULL, ...) {
   plot(.get_fit0(x), horiz = horiz, clab = clab, ...)
   invisible(NULL)
 }
 
-#' @rdname plot.teLCA_measurement
+#' @rdname plot.tseLCA_measurement
 #' @export
-plot.teLCA_covariate <- function(x, horiz = FALSE, clab = NULL, ...) {
+plot.tseLCA_covariate <- function(x, horiz = FALSE, clab = NULL, ...) {
   plot(.get_fit0(x), horiz = horiz, clab = clab, ...)
   invisible(NULL)
 }
 
-#' @rdname plot.teLCA_measurement
+#' @rdname plot.tseLCA_measurement
 #' @export
-plot.teLCA_distal <- function(x, horiz = FALSE, clab = NULL, ...) {
+plot.tseLCA_distal <- function(x, horiz = FALSE, clab = NULL, ...) {
   plot(.get_fit0(x), horiz = horiz, clab = clab, ...)
   invisible(NULL)
 }
 
-#' @rdname plot.teLCA_measurement
+#' @rdname plot.tseLCA_measurement
 #' @export
-plot.teLCA_both <- function(x, horiz = FALSE, clab = NULL, ...) {
+plot.tseLCA_both <- function(x, horiz = FALSE, clab = NULL, ...) {
   plot(.get_fit0(x), horiz = horiz, clab = clab, ...)
   invisible(NULL)
 }
