@@ -1734,7 +1734,8 @@ three_step <- function(
         llik = total.llik,
         AIC = total.AIC,
         BIC = total.BIC,
-        n_classes = T
+        n_classes = T,
+        estimator = if (use.bch) "BCH" else "ML"
       ),
       class = c("tseLCA_covariate", "tseLCA")
     )
@@ -1935,6 +1936,7 @@ three_step <- function(
     out <- s3.distal.list
     out$family <- family
     out$n_classes <- T
+    out$estimator <- if (use.bch) "BCH" else "ML"
     class(out) <- c("tseLCA_distal", "tseLCA")
     return(out)
   }
@@ -1947,7 +1949,8 @@ three_step <- function(
     covariate = s3.covariate,
     distal = s3.distal.list,
     family = family,
-    n_classes = T
+    n_classes = T,
+    estimator = if (use.bch) "BCH" else "ML"
   )
   class(out) <- c("tseLCA_both", "tseLCA")
   return(out)
@@ -2076,10 +2079,12 @@ print.tseLCA_measurement <- function(x, ...) {
 #' }
 #' @export
 print.tseLCA_covariate <- function(x, digits = 4, ...) {
+  est <- if (!is.null(x$estimator)) x$estimator else "ML"
   cat("tseLCA -- three-step covariate model\n")
   cat(sprintf(
-    "  Classes: %d   Log-lik: %.4f   AIC: %.2f   BIC: %.2f\n",
+    "  Classes: %d   Estimator: %s   Log-lik: %.4f   AIC: %.2f   BIC: %.2f\n",
     x$n_classes,
+    est,
     x$llik,
     x$AIC,
     x$BIC
@@ -2100,8 +2105,14 @@ print.tseLCA_covariate <- function(x, digits = 4, ...) {
 #' @export
 print.tseLCA_distal <- function(x, digits = 4, ...) {
   fam <- if (!is.null(x$family)) x$family else "gaussian"
+  est <- if (!is.null(x$estimator)) x$estimator else "ML"
   cat("tseLCA -- three-step distal outcome model\n")
-  cat(sprintf("  Classes: %d   Family: %s\n", x$n_classes, fam))
+  cat(sprintf(
+    "  Classes: %d   Estimator: %s   Family: %s\n",
+    x$n_classes,
+    est,
+    fam
+  ))
   cat("\nDistal outcome means by class:\n")
   .print_table(.distal_table(x, fam), digits = digits)
   invisible(x)
@@ -2111,8 +2122,14 @@ print.tseLCA_distal <- function(x, digits = 4, ...) {
 #' @export
 print.tseLCA_both <- function(x, digits = 4, ...) {
   fam <- if (!is.null(x$family)) x$family else "gaussian"
+  est <- if (!is.null(x$estimator)) x$estimator else "ML"
   cat("tseLCA -- three-step model with covariate and distal outcome\n")
-  cat(sprintf("  Classes: %d   Family: %s\n", x$n_classes, fam))
+  cat(sprintf(
+    "  Classes: %d   Estimator: %s   Family: %s\n",
+    x$n_classes,
+    est,
+    fam
+  ))
   cat(sprintf(
     "  Log-lik: %.4f   AIC: %.2f   BIC: %.2f\n",
     x$covariate$llik,
@@ -2171,8 +2188,10 @@ summary.tseLCA_measurement <- function(object, ...) {
 #' }
 #' @export
 summary.tseLCA_covariate <- function(object, digits = 4, ...) {
+  est <- if (!is.null(object$estimator)) object$estimator else "ML"
   cat("-- tseLCA Three-Step Covariate Model -----------------------\n")
   cat(sprintf("Latent classes : %d\n", object$n_classes))
+  cat(sprintf("Estimator      : %s\n", est))
   cat(sprintf("Log-likelihood : %.4f\n", object$llik))
   cat(sprintf("AIC            : %.4f\n", object$AIC))
   cat(sprintf("BIC            : %.4f\n", object$BIC))
@@ -2204,8 +2223,10 @@ summary.tseLCA_covariate <- function(object, digits = 4, ...) {
 #' @export
 summary.tseLCA_distal <- function(object, digits = 4, ...) {
   fam <- if (!is.null(object$family)) object$family else "gaussian"
+  est <- if (!is.null(object$estimator)) object$estimator else "ML"
   cat("-- tseLCA Three-Step Distal Outcome Model -------------------\n")
   cat(sprintf("Latent classes : %d\n", object$n_classes))
+  cat(sprintf("Estimator      : %s\n", est))
   cat(sprintf("Family         : %s\n", fam))
   cat("\nDistal outcome estimates by class:\n")
   .print_table(.distal_table(object, fam), digits = digits)
@@ -2216,8 +2237,10 @@ summary.tseLCA_distal <- function(object, digits = 4, ...) {
 #' @export
 summary.tseLCA_both <- function(object, digits = 4, ...) {
   fam <- if (!is.null(object$family)) object$family else "gaussian"
+  est <- if (!is.null(object$estimator)) object$estimator else "ML"
   cat("-- tseLCA Three-Step Model: Covariate + Distal Outcome -----\n")
   cat(sprintf("Latent classes : %d\n", object$n_classes))
+  cat(sprintf("Estimator      : %s\n", est))
   cat(sprintf("Family         : %s\n", fam))
   cat(sprintf("Log-likelihood : %.4f\n", object$covariate$llik))
   cat(sprintf("AIC            : %.4f\n", object$covariate$AIC))
