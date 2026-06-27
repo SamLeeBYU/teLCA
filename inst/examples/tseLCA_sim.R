@@ -24,11 +24,10 @@ r_opts <- options(
 # Loading libraries and installing if unavailable
 
 # Install the development version from GitHub
-if (!require("pak")) {
-  install.packages("pak")
-}
-
 if (!require("tseLCA")) {
+  if (!require("pak")) {
+    install.packages("pak")
+  }
   pak::pak("SamLeeBYU/tseLCA")
 }
 
@@ -70,12 +69,23 @@ if (!file.exists(dataset_path)) {
 # (different seed per replicate x condition), so no measurement models
 # can be shared.
 #
+# We call multiLCA to obtain two-step vcov estimates.
+# While multiLCA cannot accomodate fixed parameter values as input,
+# we create covariate-adjusted predictions for the latent class to obtain
+# consistent results for multiLCA in the presence of low-separation.
+#
+# The alternative would be to call multiLCA a bunch of times and take the model
+# with the best log-likelihood (which is what we already do for the measurement model).
+# This saves some computation time.
+#
 # Structure mirrors datasets: measurement_models[[scenario]][[sep]][[n]][[rep]]
 
 measurement_path <- file.path(output.dir, "measurement_models.rds")
 
 if (!file.exists(measurement_path)) {
-  message("Fitting measurement models... This will take several hours.")
+  message(
+    "Fitting measurement models... This will take several hours due to low-separation cases."
+  )
 
   scenarios <- c("covariate", "distal")
   sep_levels <- c("low", "mid", "high")
@@ -99,6 +109,13 @@ if (!file.exists(measurement_path)) {
     )
   )
 
+  mGamma.init <- do.call(rbind, bk2018_params$covariate_params)[, -1L]
+  p.xz.sim <- function(Z_mat, params) {
+    eta_full <- cbind(0, Z_mat %*% params)
+    row_max <- apply(eta_full, 1, max)
+    exp_eta <- exp(eta_full - row_max)
+    exp_eta / rowSums(exp_eta)
+  }
   for (sc in scenarios) {
     measurement_models[[sc]] <- list()
     for (sep in sep_levels) {
@@ -121,15 +138,64 @@ if (!file.exists(measurement_path)) {
           )
 
           reps_fit[[r]] <- tryCatch(
-            three_step(
-              data = reps_data[[r]],
-              Y.names = paste0("Y", 1:6),
-              n_classes = 3L,
-              maxIter.measurement = 4000,
-              iter.measurement = 15L,
-              R2.threshold = 0.5,
-              verbose = FALSE
-            ),
+            {
+              m.r <- three_step(
+                data = reps_data[[r]],
+                Y.names = paste0("Y", 1:6),
+                n_classes = 3L,
+                maxIter.measurement = 5000,
+                iter.measurement = 20L,
+                R2.threshold = 0.6,
+                verbose = FALSE
+              )$measurement_model
+              if (sc == "covariate") {
+                c.fitZ <- fitZ_from_fit0(
+                  fit0 = m.r$fit0,
+                  data = reps_data[[r]],
+                  Y.names = paste0("Y", 1:6),
+                  Zp.names = "Zp",
+                  maxIter = 500,
+                  starting_val = mGamma.init
+                )
+
+                pi_adj <- p.xz.sim(cbind(1, reps_data[[r]]$Zp), c.fitZ$mGamma)
+
+                Y_mat <- as.matrix(reps_data[[r]][, paste0("Y", 1:6)])
+                mPhi.init <- m.r$fit0$mPhi
+                log_lik_items <- Y_mat %*%
+                  log(mPhi.init) +
+                  (1 - Y_mat) %*% log(1 - mPhi.init)
+                log_W <- log(pi_adj) + log_lik_items
+                log_W <- log_W -
+                  apply(log_W, 1, function(x) {
+                    m <- max(x)
+                    m + log(sum(exp(x - m)))
+                  })
+                W_init <- exp(log_W)
+
+                #Covariate-adjusted classes
+                reps_data[[r]]$startval <- apply(W_init, 1, which.max)
+                has_all_classes <- length(unique(reps_data[[r]]$startval)) == 3L
+                c.r <- multilevLCA::multiLCA(
+                  data = reps_data[[r]],
+                  Y = paste0("Y", 1:6),
+                  iT = 3L,
+                  Z = "Zp",
+                  startval = if (has_all_classes) "startval" else NULL,
+                  extout = TRUE,
+                  verbose = FALSE
+                )
+                #c.r$LLKSeries[nrow(c.r$LLKSeries)]
+                m.r$fitZ <- c.r
+
+                m.r$fitZ_converged <- tail(c.r$LLKSeries, 2) |>
+                  diff() |>
+                  abs() <
+                  1e-8
+                m.r$fitZ_iters <- c.r$iter
+              }
+              m.r
+            },
             error = function(e) {
               cli::cli_alert_warning(sprintf(
                 "three_step failed: scenario=%s sep=%s n=%s rep=%d: %s",
@@ -144,7 +210,7 @@ if (!file.exists(measurement_path)) {
           )
         }
 
-        measurement_models[[sc]][[sep]][[nn]] <- reps_fit$measurement_model
+        measurement_models[[sc]][[sep]][[nn]] <- reps_fit
       }
     }
   }
