@@ -71,7 +71,7 @@ if (!file.exists(dataset_path)) {
 #
 # We call multiLCA to obtain two-step vcov estimates.
 # While multiLCA cannot accomodate fixed parameter values as input,
-# we create covariate-adjusted predictions for the latent class to obtain
+# we create covariate-adjusted predictions for the latent class (passed in as starting values) to obtain
 # consistent results for multiLCA in the presence of low-separation.
 #
 # The alternative would be to call multiLCA a bunch of times and take the model
@@ -82,26 +82,60 @@ if (!file.exists(dataset_path)) {
 
 measurement_path <- file.path(output.dir, "measurement_models.rds")
 
-if (!file.exists(measurement_path)) {
-  message(
-    "Fitting measurement models... This will take several hours due to low-separation cases."
+scenarios <- c("covariate", "distal")
+sep_levels <- c("low", "mid", "high")
+sample_sizes <- c("500", "1000", "2000")
+
+if (file.exists(measurement_path)) {
+  cli::cli_alert_info(
+    "Loading existing measurement models from: {measurement_path}"
+  )
+  measurement_models <- readRDS(measurement_path)
+} else {
+  measurement_models <- list()
+}
+
+# Identify which (sc, sep, nn) conditions still need work
+n_rep <- length(datasets[[scenarios[1]]][[sep_levels[1]]][[sample_sizes[1]]])
+
+pending <- list()
+for (sc in scenarios) {
+  for (sep in sep_levels) {
+    for (nn in sample_sizes) {
+      existing <- measurement_models[[sc]][[sep]][[nn]]
+      n_done <- if (is.null(existing)) {
+        0L
+      } else {
+        sum(!vapply(existing, is.null, logical(1L)))
+      }
+      if (n_done < n_rep) {
+        pending[[length(pending) + 1L]] <- list(
+          sc = sc,
+          sep = sep,
+          nn = nn,
+          n_done = n_done
+        )
+      }
+    }
+  }
+}
+
+if (length(pending) == 0L) {
+  cli::cli_alert_success("All conditions complete. Nothing to run.")
+} else {
+  cli::cli_alert_info(
+    "Found {length(pending)} condition(s) with incomplete reps. Resuming..."
   )
 
-  scenarios <- c("covariate", "distal")
-  sep_levels <- c("low", "mid", "high")
-  sample_sizes <- c("500", "1000", "2000")
-
-  total_conditions <- length(scenarios) *
-    length(sep_levels) *
-    length(sample_sizes)
-  n_rep <- length(datasets[[scenarios[1]]][[sep_levels[1]]][[sample_sizes[1]]])
-  total_reps <- total_conditions * n_rep
-
-  measurement_models <- list()
+  total_remaining <- sum(vapply(
+    pending,
+    function(p) n_rep - p$n_done,
+    integer(1L)
+  ))
 
   cli::cli_progress_bar(
     name = "Fitting measurement models",
-    total = total_reps,
+    total = total_remaining,
     format = paste0(
       "{cli::pb_name} | {cli::pb_bar} {cli::pb_percent} | ",
       "Rep {cli::pb_current}/{cli::pb_total} | ",
@@ -109,6 +143,7 @@ if (!file.exists(measurement_path)) {
     )
   )
 
+  # Shared objects needed for covariate warm-start
   mGamma.init <- do.call(rbind, bk2018_params$covariate_params)[, -1L]
   p.xz.sim <- function(Z_mat, params) {
     eta_full <- cbind(0, Z_mat %*% params)
@@ -116,112 +151,123 @@ if (!file.exists(measurement_path)) {
     exp_eta <- exp(eta_full - row_max)
     exp_eta / rowSums(exp_eta)
   }
-  for (sc in scenarios) {
-    measurement_models[[sc]] <- list()
-    for (sep in sep_levels) {
-      measurement_models[[sc]][[sep]] <- list()
-      for (nn in sample_sizes) {
-        reps_data <- datasets[[sc]][[sep]][[nn]]
-        n_rep <- length(reps_data)
-        reps_fit <- vector("list", n_rep)
 
-        for (r in seq_len(n_rep)) {
-          cli::cli_progress_update(
-            status = sprintf(
-              "scenario=%-10s sep=%-4s n=%-5s rep=%d/%d",
-              sc,
-              sep,
-              nn,
-              r,
-              n_rep
-            )
-          )
+  for (cond in pending) {
+    sc <- cond$sc
+    sep <- cond$sep
+    nn <- cond$nn
 
-          reps_fit[[r]] <- tryCatch(
-            {
-              m.r <- three_step(
-                data = reps_data[[r]],
-                Y.names = paste0("Y", 1:6),
-                n_classes = 3L,
-                maxIter.measurement = 5000,
-                iter.measurement = 20L,
-                R2.threshold = 0.6,
-                verbose = FALSE
-              )$measurement_model
-              if (sc == "covariate") {
-                c.fitZ <- fitZ_from_fit0(
-                  fit0 = m.r$fit0,
-                  data = reps_data[[r]],
-                  Y.names = paste0("Y", 1:6),
-                  Zp.names = "Zp",
-                  maxIter = 500,
-                  starting_val = mGamma.init
-                )
+    reps_data <- datasets[[sc]][[sep]][[nn]]
 
-                pi_adj <- p.xz.sim(cbind(1, reps_data[[r]]$Zp), c.fitZ$mGamma)
-
-                Y_mat <- as.matrix(reps_data[[r]][, paste0("Y", 1:6)])
-                mPhi.init <- m.r$fit0$mPhi
-                log_lik_items <- Y_mat %*%
-                  log(mPhi.init) +
-                  (1 - Y_mat) %*% log(1 - mPhi.init)
-                log_W <- log(pi_adj) + log_lik_items
-                log_W <- log_W -
-                  apply(log_W, 1, function(x) {
-                    m <- max(x)
-                    m + log(sum(exp(x - m)))
-                  })
-                W_init <- exp(log_W)
-
-                #Covariate-adjusted classes
-                reps_data[[r]]$startval <- apply(W_init, 1, which.max)
-                has_all_classes <- length(unique(reps_data[[r]]$startval)) == 3L
-                c.r <- multilevLCA::multiLCA(
-                  data = reps_data[[r]],
-                  Y = paste0("Y", 1:6),
-                  iT = 3L,
-                  Z = "Zp",
-                  startval = if (has_all_classes) "startval" else NULL,
-                  extout = TRUE,
-                  verbose = FALSE
-                )
-                #c.r$LLKSeries[nrow(c.r$LLKSeries)]
-                m.r$fitZ <- c.r
-
-                m.r$fitZ_converged <- tail(c.r$LLKSeries, 2) |>
-                  diff() |>
-                  abs() <
-                  1e-8
-                m.r$fitZ_iters <- c.r$iter
-              }
-              m.r
-            },
-            error = function(e) {
-              cli::cli_alert_warning(sprintf(
-                "three_step failed: scenario=%s sep=%s n=%s rep=%d: %s",
-                sc,
-                sep,
-                nn,
-                r,
-                conditionMessage(e)
-              ))
-              NULL
-            }
-          )
-        }
-
-        measurement_models[[sc]][[sep]][[nn]] <- reps_fit
-      }
+    reps_fit <- measurement_models[[sc]][[sep]][[nn]]
+    if (is.null(reps_fit)) {
+      reps_fit <- vector("list", n_rep)
     }
+
+    for (r in seq_len(n_rep)) {
+      if (!is.null(reps_fit[[r]])) {
+        next
+      }
+
+      set.seed(
+        which(scenarios == sc) *
+          1e6 +
+          which(sep_levels == sep) * 1e4 +
+          as.integer(nn) +
+          r
+      )
+
+      cli::cli_progress_update(
+        status = sprintf(
+          "scenario=%-10s sep=%-4s n=%-5s rep=%d/%d",
+          sc,
+          sep,
+          nn,
+          r,
+          n_rep
+        )
+      )
+
+      reps_fit[[r]] <- tryCatch(
+        {
+          m.r <- three_step(
+            data = reps_data[[r]],
+            Y.names = paste0("Y", 1:6),
+            n_classes = 3L,
+            maxIter.measurement = 5000,
+            iter.measurement = 20L,
+            R2.threshold = 0.6,
+            verbose = FALSE
+          )$measurement_model
+
+          if (sc == "covariate") {
+            c.fitZ <- fitZ_from_fit0(
+              fit0 = m.r$fit0,
+              data = reps_data[[r]],
+              Y.names = paste0("Y", 1:6),
+              Zp.names = "Zp",
+              maxIter = 500,
+              starting_val = mGamma.init
+            )
+
+            Y_mat <- as.matrix(reps_data[[r]][, paste0("Y", 1:6)])
+            mPhi.init <- m.r$fit0$mPhi
+
+            pi_adj <- p.xz.sim(cbind(1, reps_data[[r]]$Zp), c.fitZ$mGamma)
+            log_lik_items <- Y_mat %*%
+              log(mPhi.init) +
+              (1 - Y_mat) %*% log(1 - mPhi.init)
+            log_W <- log(pi_adj) + log_lik_items
+            log_W <- log_W -
+              apply(log_W, 1, function(x) {
+                m <- max(x)
+                m + log(sum(exp(x - m)))
+              })
+            W_init <- exp(log_W)
+
+            reps_data[[r]]$startval <- apply(W_init, 1, which.max)
+            has_all_classes <- length(unique(reps_data[[r]]$startval)) == 3L
+
+            c.r <- multilevLCA::multiLCA(
+              data = reps_data[[r]],
+              Y = paste0("Y", 1:6),
+              iT = 3L,
+              Z = "Zp",
+              startval = if (has_all_classes) "startval" else NULL,
+              extout = TRUE,
+              verbose = FALSE
+            )
+
+            m.r$fitZ <- c.r
+            m.r$fitZ_converged <- abs(diff(tail(c.r$LLKSeries, 2))) < 1e-8
+            m.r$fitZ_iters <- c.r$iter
+          }
+
+          m.r
+        },
+        error = function(e) {
+          cli::cli_alert_warning(sprintf(
+            "three_step failed: scenario=%s sep=%s n=%s rep=%d: %s",
+            sc,
+            sep,
+            nn,
+            r,
+            conditionMessage(e)
+          ))
+          NULL
+        }
+      )
+    }
+
+    measurement_models[[sc]][[sep]][[nn]] <- reps_fit
+    saveRDS(measurement_models, file = measurement_path)
+    cli::cli_alert_success(
+      "Saved: scenario={sc} sep={sep} n={nn} ({n_rep} reps)"
+    )
   }
 
   cli::cli_progress_done()
-
-  saveRDS(measurement_models, file = measurement_path)
-  cli::cli_alert_success("Measurement models saved to: {measurement_path}")
-} else {
-  cli::cli_alert_info(
-    "Loading existing measurement models from: {measurement_path}"
+  cli::cli_alert_success(
+    "All conditions complete. Final save: {measurement_path}"
   )
-  measurement_models <- readRDS(measurement_path)
 }
