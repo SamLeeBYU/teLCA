@@ -78,6 +78,12 @@ if (!file.exists(dataset_path)) {
 # with the best log-likelihood (which is what we already do for the measurement model).
 # This saves some computation time.
 #
+# Also note that the warning, "Measurement model still failed to converge even after running more iterations. Consider increasing maxIter.measurement and or measurement.tol"
+# may trigger in the low separation cases. This is not an issue (this just means that *one* out of the 20 extra measurement models didn't meet the convergence criterion).
+# as long as at least one (and preferably the other 19) models converge, we should settle on a well-converged measurement model for step 1.
+#
+# A poorly converged measurement model can severely bias two-step and three-step estimates.
+#
 # Structure mirrors datasets: measurement_models[[scenario]][[sep]][[n]][[rep]]
 
 measurement_path <- file.path(output.dir, "measurement_models.rds")
@@ -271,3 +277,7 @@ if (length(pending) == 0L) {
     "All conditions complete. Final save: {measurement_path}"
   )
 }
+
+###################################################
+### three-step estimation
+###################################################

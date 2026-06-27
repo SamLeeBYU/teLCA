@@ -54,14 +54,7 @@ if (!require("pak")) {
 pak::pak("SamLeeBYU/tseLCA")
 ```
 
-Then read the introductory vignette:
-
-``` r
-vignette.file <- system.file("doc", "tseLCA-workflow.html", package="tseLCA")
-browseURL(vignette.file)
-```
-
-Or simply view the vignette on this package's webpage here: <https://SamLeeBYU.github.io/tseLCA/articles/tseLCA-workflow.html>
+Then read the introductory vignette on this package's webpage here: <https://SamLeeBYU.github.io/tseLCA/articles/tseLCA-workflow.html>
 
 ## Example
 

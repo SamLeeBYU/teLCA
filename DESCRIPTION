@@ -1,18 +1,34 @@
 Package: tseLCA
 Type: Package
 Title: Three-Step Estimation for Latent Class Analysis
-Version: 0.1.3
-Authors@R: person("Sam", "Lee", email = "samlee@arizona.edu", role = c("aut", "cre"))
+Version: 0.1.4
+Authors@R: c(
+    person("Sam", "Lee", email = "samlee@arizona.edu", role = c("aut", "cre"), 
+           comment = c(ORCID = "0009-0007-2977-6661")),
+    person("Jay", "Goodliffe", email = "goodliffe@byu.edu", role = "ctb")
+    )
 Description: Implements BCH and ML three-step estimators for latent class
     analysis (LCA) with covariates and distal outcomes, following Bakk, Tekle &
-    Vermunt (2013), Bakk & Kuha (2018), and Bakk, Lyrvall et al. (2025). The
-    package uses multilevLCA for Step-1 measurement model estimation and
-    provides correct sandwich variance estimation that propagates measurement
-    uncertainty from the first-step LCA through classification-error correction
-    in the final step. Supports polytomous items, missing data via FIML, and
-    Gaussian, Poisson, and binomial distal outcome families. A data-generating
-    process replicating the Bakk & Kuha (2018) simulation study is included.
+    Vermunt (2013) <doi:10.1177/0081175012470644>, Bakk & Kuha (2018) 
+    <doi:10.1007/s11336-017-9592-7>, and Lyrvall et al. (2025) 
+    <doi:10.1080/00273171.2025.2473935>. Unlike 'poLCA', which relies on 
+    one-step estimation and is thus unable to accommodate a measurement model 
+    from a different sample, this package utilizes a stepwise approach to 
+    prevent the structural model from influencing the latent class formation. 
+    While building on 'multilevLCA' for the initial Step-1 measurement model 
+    estimation, unlike 'multilevLCA', this package provides support for  
+    Gaussian, Poisson, and binomial distal outcome families. Following 
+    Bakk, Oberski, and Vermunt (2014) <https://www.jstor.org/stable/24573086>, 
+    it implements correct sandwich variance estimation that propagates 
+    measurement uncertainty from the first-step LCA through 
+    classification-error correction in the final step. Supports polytomous 
+    items and missing data in the measurement model via FIML. A 
+    data-generating process replicating the Bakk & Kuha (2018) simulation 
+    study is included.
 License: GPL (>= 3)
+Author: Sam Lee [aut, cre],
+        Jay Goodliffe [ctb]
+Maintainer: Sam Lee <samlee@arizona.edu>
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Depends:
@@ -27,7 +43,7 @@ Suggests:
     rmarkdown
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0
-URL: https://SamLeeBYU.github.io/tseLCA/, https://samleebyu.github.io/tseLCA/
+URL: https://samleebyu.github.io/tseLCA/, https://github.com/SamLeeBYU/tseLCA
 BugReports: https://github.com/SamLeeBYU/tseLCA/issues
 VignetteBuilder: 
     knitr,

@@ -146,6 +146,7 @@ three-step approaches. \emph{Political Analysis}, 18(4), 450--469.
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://samleebyu.github.io/tseLCA/}
   \item \url{https://github.com/SamLeeBYU/tseLCA}
   \item Report bugs at \url{https://github.com/SamLeeBYU/tseLCA/issues}
 }

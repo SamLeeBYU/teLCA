@@ -510,9 +510,9 @@ matplot(
   ylab = "Probability of latent class membership",
   main = "Party ID as a predictor of candidate affinity class",
 )
-text(5.9, 0.40, "Other")
-text(5.4, 0.75, "Bush affinity")
-text(1.8, 0.65, "Gore affinity")
+text(3.9, 0.60, "Other")
+text(6.2, 0.6, "Bush affinity")
+text(2.0, 0.65, "Gore affinity")
 
 ```
 
