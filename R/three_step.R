@@ -224,9 +224,9 @@ lca_step2 <- function(
   theta2 <- theta2_from_theta1(theta1)
   p.wx_mat <- gamma_vec_to_pwx(theta2)
 
-  J.2 <- NULL
   if (!use.simple.cov) {
-    # fit0$Varmat (Sigma_1) is already in unconstrained u-space -- it is the
+    # fit0$Varmat is already in u-space. compute_J_unc_analytical computes
+    # d theta2 / d u, returned as a closure for callers to apply on subsets.    # fit0$Varmat (Sigma_1) is already in unconstrained u-space -- it is the
     # inverse outer-product of scores w.r.t. u, i.e. E[dl/du (dl/du)']^{-1}.
     # Therefore J.2 = d theta2 / d u  directly, with no need to chain through
     # d u / d theta1.  The old J_theta1_to_u factor is dropped entirely.
@@ -336,18 +336,6 @@ lca_step2 <- function(
       }
       J
     }
-
-    J_unc <- compute_J_unc_analytical(
-      p.xy,
-      Y.obs,
-      if (is.null(mDesign)) matrix(1L, nrow(Y.obs), ncol(Y.obs)) else mDesign,
-      theta1,
-      ivItemcat,
-      T
-    )
-    # Sigma_1 = fit0$Varmat is already in u-space, so J.2 = d theta2 / d u
-    # directly -- no J_theta1_to_u factor needed.
-    J.2 <- J_unc
   }
 
   list(
@@ -357,13 +345,10 @@ lca_step2 <- function(
     p.wx_mat = p.wx_mat,
     gamma_vec_to_pwx = gamma_vec_to_pwx,
     theta2_from_theta1 = theta2_from_theta1,
-    J.2 = J.2,
     p.xy = p.xy,
-    compute_J_unc = if (use.simple.cov) {
-      NULL
-    } else {
-      compute_J_unc_analytical
-    }
+    # compute_J_unc is NULL when use.simple.cov = TRUE -- callers check
+    # !is.null(s2$compute_J_unc) before computing J.2 on their subsets.
+    compute_J_unc = if (!use.simple.cov) compute_J_unc_analytical else NULL
   )
 }
 
@@ -927,39 +912,40 @@ lca_step1_vcov <- function(
     mDesign.exp,
     fit0,
     ivItemcat,
-    use.freq
+    use.freq,
+    boundary.tol
   )$Varmat
 
-  N <- nrow(Y.exp)
-  T <- length(fit0$vPi)
-  K <- ncol(Y.exp) #sum(K_h)
+  # N <- nrow(Y.exp)
+  # T <- length(fit0$vPi)
+  # K <- ncol(Y.exp) #sum(K_h)
 
-  # Number of free rows per item in mPhi
-  n_free <- ivItemcat - 1L
+  # # Number of free rows per item in mPhi
+  # n_free <- ivItemcat - 1L
 
-  starts <- c(
-    1L,
-    cumsum(ifelse(ivItemcat == 2L, 1L, ivItemcat))[-length(ivItemcat)] + 1L
-  )
+  # starts <- c(
+  #   1L,
+  #   cumsum(ifelse(ivItemcat == 2L, 1L, ivItemcat))[-length(ivItemcat)] + 1L
+  # )
 
-  free_idx <- unlist(mapply(
-    \(s, K_h) if (K_h == 2L) s else (s + 1L):(s + K_h - 1L),
-    starts,
-    ivItemcat,
-    SIMPLIFY = FALSE
-  ))
+  # free_idx <- unlist(mapply(
+  #   \(s, K_h) if (K_h == 2L) s else (s + 1L):(s + K_h - 1L),
+  #   starts,
+  #   ivItemcat,
+  #   SIMPLIFY = FALSE
+  # ))
 
-  phi_free <- fit0$mPhi[free_idx, ]
+  # phi_free <- fit0$mPhi[free_idx, ]
 
-  theta1 <- c(
-    fit0$vPi[2:T],
-    phi_free
-  )
-  is_bdry <- theta1 > (1 - boundary.tol) | theta1 < boundary.tol
-  if (any(is_bdry)) {
-    Sigma1[is_bdry, ] <- 0
-    Sigma1[, is_bdry] <- 0
-  }
+  # theta1 <- c(
+  #   fit0$vPi[2:T],
+  #   phi_free
+  # )
+  # is_bdry <- theta1 > (1 - boundary.tol) | theta1 < boundary.tol
+  # if (any(is_bdry)) {
+  #   Sigma1[is_bdry, ] <- 0
+  #   Sigma1[, is_bdry] <- 0
+  # }
   Sigma1
 }
 
@@ -1426,13 +1412,37 @@ three_step <- function(
   # Subset s2 outputs to the rows used in each Step 3 model.
   # s2 was estimated on all keep_Y rows; Step 3 models only use complete-Z rows.
   s2_for_cov <- if (!is.null(Z_mat)) {
+    # Recompute J.2 on the Z-complete subset (keep_step3_Z_in_Y rows).
+    # C_mat in lca_vcov sums over N_Z rows; using s2$J.2 (all N_Y rows)
+    # would mismatch the normalisation when N_Z < N_Y (missing covariates).
+    # Skip entirely when use.simple.cov = TRUE -- J.2 is never used then.
+    J.2_cov <- if (!is.null(s2$compute_J_unc)) {
+      Y_cov <- Y.obs[keep_step3_Z_in_Y, , drop = FALSE]
+      mDes_cov <- if (!is.null(mDesign)) {
+        mDesign[keep_step3_Z_in_Y, , drop = FALSE]
+      } else {
+        matrix(1L, nrow(Y_cov), ncol(Y_cov))
+      }
+      p_xy_cov <- s2$p.xy[keep_step3_Z_in_Y, , drop = FALSE]
+      s2$compute_J_unc(
+        p_xy_cov,
+        Y_cov,
+        mDes_cov,
+        s2$theta1,
+        ivItemcat,
+        T
+      )
+    } else {
+      NULL
+    }
+
     list(
       theta1 = s2$theta1,
       theta2 = s2$theta2,
       p.wx_mat = s2$p.wx_mat,
       gamma_vec_to_pwx = s2$gamma_vec_to_pwx,
       theta2_from_theta1 = s2$theta2_from_theta1,
-      J.2 = s2$J.2,
+      J.2 = J.2_cov,
       w.is = s2$w.is[keep_step3_Z_in_Y, , drop = FALSE],
       post = if (!is.null(s2$post)) {
         s2$post[keep_step3_Z_in_Y, , drop = FALSE]
@@ -1445,11 +1455,11 @@ three_step <- function(
   }
 
   s2_for_dis <- if (!is.null(Z0_mat)) {
-    # J.2 must be computed on the Z0-complete subset (keep_step3_Z0_in_Y rows)
-    # because C1_mat in lca_vcov_distal sums over those rows only.
-    # Using s2$J.2 (computed on all N_Y rows) would mismatch the normalisation
-    # when N_Z0 < N_Y (missing distal outcomes), causing SE underestimation.
-    J.2_dis <- if (!is.null(s2$J.2)) {
+    # Recompute J.2 on the Z0-complete subset (keep_step3_Z0_in_Y rows).
+    # C1_mat in lca_vcov_distal sums over N_Z0 rows; using s2$J.2 (all N_Y
+    # rows) would mismatch the normalisation when N_Z0 < N_Y.
+    # Skip when use.simple.cov = TRUE or use.bch = TRUE.
+    J.2_dis <- if (!is.null(s2$compute_J_unc)) {
       Y_dis <- Y.obs[keep_step3_Z0_in_Y, , drop = FALSE]
       mDes_dis <- if (!is.null(mDesign)) {
         mDesign[keep_step3_Z0_in_Y, , drop = FALSE]
@@ -1612,7 +1622,13 @@ three_step <- function(
       coefs = coefs,
       three_step.score = three_step.score,
       H.3.inv = s3$H.3.inv,
-      Sigma.1 = lca_step1_vcov(Y.obs, mDesign, fit0, ivItemcat),
+      Sigma.1 = lca_step1_vcov(
+        Y.obs,
+        mDesign,
+        fit0,
+        ivItemcat,
+        boundary.tol = boundary.tol
+      ),
       theta2 = s2_for_cov$theta2,
       J.2 = s2_for_cov$J.2,
       p.wx_mat = s2_for_cov$p.wx_mat,
@@ -1914,7 +1930,8 @@ three_step <- function(
           NULL
         },
         fit0,
-        ivItemcat
+        ivItemcat,
+        boundary.tol = boundary.tol
       ),
       s2 = s2_for_dis,
       Sigma.3 = if (!is.null(Zp.names)) Sigma.3 else NULL,
