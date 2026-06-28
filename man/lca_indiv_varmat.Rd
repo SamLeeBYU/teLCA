@@ -10,7 +10,8 @@ lca_indiv_varmat(
   fit0,
   ivItemcat,
   boundary.tol = 0.01,
-  use.freq = TRUE
+  use.freq = TRUE,
+  u_post = NULL
 )
 }
 \arguments{
@@ -27,6 +28,11 @@ lca_indiv_varmat(
 
 \item{use.freq}{Collapse duplicate score rows before cross-product.
 Default \code{TRUE}.}
+
+\item{u_post}{Optional N x T matrix of posterior class probabilities.
+When supplied (e.g. extracted from \code{fit0$mU} via
+\code{extract_Y_from_mU}), \code{compute_posteriors} is skipped.
+Default \code{NULL}.}
 }
 \value{
 A list containing \code{Infomat}, \code{Varmat},

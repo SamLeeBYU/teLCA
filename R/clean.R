@@ -404,3 +404,66 @@ permute_fit0_classes <- function(fit0, ref_idx) {
   fit0$vPi <- fit0$vPi[ord]
   fit0
 }
+
+#' Extract Y.exp, mDesign, posteriors from a multilevLCA mU matrix
+#'
+#' `fit0$mU` from \pkg{multilevLCA} stores both the observed response patterns
+#' and the posterior class memberships in a single N x (H + T) matrix, where
+#' the first H columns are the raw item responses (with `NA` for missing data)
+#' and the last T columns are the posterior class probabilities.
+#'
+#' This function reconstructs the expanded one-hot `Y.exp`, the missing-data
+#' design matrix `mDesign`, and the posterior matrix `u_post` that
+#' `lca_indiv_varmat` expects, so that `Sigma.1` is always computed from the
+#' Step-1 sample regardless of which sample is used for structural estimation.
+#' Extracting posteriors directly from `mU` also avoids a redundant call to
+#' `compute_posteriors`.
+#'
+#' @param fit0       Raw multilevLCA fit object with `$mU`, `$mPhi`, `$vPi`.
+#' @param ivItemcat  Integer vector of category counts per item (length H).
+#'   If `NULL`, inferred from the non-NA values in the Y columns of `$mU`.
+#'
+#' @return A list with:
+#' \describe{
+#'   \item{Y.exp}{N x K_total expanded one-hot matrix (NAs replaced with 0).}
+#'   \item{mDesign}{N x K_total design/mask matrix. `NULL` if no missing data.}
+#'   \item{ivItemcat}{Integer vector of category counts per item.}
+#'   \item{u_post}{N x T posterior class probability matrix from `fit0$mU`.}
+#' }
+#' @keywords internal
+extract_Y_from_mU <- function(fit0, ivItemcat = NULL) {
+  mU <- fit0$mU
+  if (is.null(mU)) {
+    stop(
+      "fit0$mU is NULL -- multilevLCA must be run with mU stored. ",
+      "Re-estimate the measurement model.",
+      call. = FALSE
+    )
+  }
+
+  T <- length(fit0$vPi)
+  H <- ncol(mU) - T
+  mY <- apply(mU[, seq_len(H), drop = FALSE], 2L, as.integer)
+  u_post <- mU[, (H + 1L):(H + T), drop = FALSE]
+  mode(u_post) <- "double"
+
+  if (is.null(ivItemcat)) {
+    ivItemcat <- apply(mY, 2L, \(x) length(na.omit(unique(x))))
+  }
+
+  if (anyNA(mY)) {
+    Y_exp <- expand_Y(mY, ivItemcat)
+    mDesign <- (!is.na(Y_exp)) * 1L
+    Y_exp[is.na(Y_exp)] <- 0L
+  } else {
+    Y_exp <- expand_Y(mY, ivItemcat)
+    mDesign <- NULL
+  }
+
+  list(
+    Y.exp = Y_exp,
+    mDesign = mDesign,
+    ivItemcat = ivItemcat,
+    u_post = u_post
+  )
+}

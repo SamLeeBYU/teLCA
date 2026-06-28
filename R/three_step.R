@@ -899,55 +899,6 @@ lca_step3 <- function(
 
 
 # -- Variance estimation (Bakk et al., 2014) ----------------------------------
-lca_step1_vcov <- function(
-  Y.exp,
-  mDesign.exp,
-  fit0,
-  ivItemcat,
-  boundary.tol = 1e-2,
-  use.freq = TRUE
-) {
-  Sigma1 <- lca_indiv_varmat(
-    Y.exp,
-    mDesign.exp,
-    fit0,
-    ivItemcat,
-    use.freq,
-    boundary.tol
-  )$Varmat
-
-  # N <- nrow(Y.exp)
-  # T <- length(fit0$vPi)
-  # K <- ncol(Y.exp) #sum(K_h)
-
-  # # Number of free rows per item in mPhi
-  # n_free <- ivItemcat - 1L
-
-  # starts <- c(
-  #   1L,
-  #   cumsum(ifelse(ivItemcat == 2L, 1L, ivItemcat))[-length(ivItemcat)] + 1L
-  # )
-
-  # free_idx <- unlist(mapply(
-  #   \(s, K_h) if (K_h == 2L) s else (s + 1L):(s + K_h - 1L),
-  #   starts,
-  #   ivItemcat,
-  #   SIMPLIFY = FALSE
-  # ))
-
-  # phi_free <- fit0$mPhi[free_idx, ]
-
-  # theta1 <- c(
-  #   fit0$vPi[2:T],
-  #   phi_free
-  # )
-  # is_bdry <- theta1 > (1 - boundary.tol) | theta1 < boundary.tol
-  # if (any(is_bdry)) {
-  #   Sigma1[is_bdry, ] <- 0
-  #   Sigma1[, is_bdry] <- 0
-  # }
-  Sigma1
-}
 
 lca_vcov <- function(
   coefs,
@@ -1497,6 +1448,16 @@ three_step <- function(
     NULL
   }
 
+  # Compute Step-1 sample inputs for Sigma.1 once, shared across covariate
+  # and distal vcov calls. Uses fit0$mU (the Step-1 sample stored by
+  # multilevLCA) when available, so Sigma.1 is always based on the
+  # measurement model's actual sample regardless of structural sample.
+  step1_Y <- if (!is.null(fit0$mU)) {
+    extract_Y_from_mU(fit0, ivItemcat)
+  } else {
+    list(Y.exp = Y.obs, mDesign = mDesign, ivItemcat = ivItemcat)
+  }
+
   #For covariate estimation
   if (!is.null(Z_mat)) {
     p.xz <- function(params) {
@@ -1622,14 +1583,14 @@ three_step <- function(
       coefs = coefs,
       three_step.score = three_step.score,
       H.3.inv = s3$H.3.inv,
-      Sigma.1 = lca_step1_vcov(
-        Y.obs,
-        mDesign,
+      Sigma.1 = lca_indiv_varmat(
+        step1_Y$Y.exp,
+        step1_Y$mDesign,
         fit0,
-        ivItemcat,
-        boundary.tol = boundary.tol
-      ),
-      theta2 = s2_for_cov$theta2,
+        step1_Y$ivItemcat,
+        boundary.tol = boundary.tol,
+        u_post = step1_Y$u_post
+      )$Varmat,
       J.2 = s2_for_cov$J.2,
       p.wx_mat = s2_for_cov$p.wx_mat,
       w.is = s2_for_cov$w.is,
@@ -1922,17 +1883,14 @@ three_step <- function(
       p.zx = p.zx,
       family = family,
       H.3.inv = s3.distal$H.3.inv,
-      Sigma.1 = lca_step1_vcov(
-        Y.obs[keep_step3_Z0_in_Y, , drop = FALSE],
-        if (!is.null(mDesign)) {
-          mDesign[keep_step3_Z0_in_Y, , drop = FALSE]
-        } else {
-          NULL
-        },
+      Sigma.1 = lca_indiv_varmat(
+        step1_Y$Y.exp,
+        step1_Y$mDesign,
         fit0,
-        ivItemcat,
-        boundary.tol = boundary.tol
-      ),
+        step1_Y$ivItemcat,
+        boundary.tol = boundary.tol,
+        u_post = step1_Y$u_post
+      )$Varmat,
       s2 = s2_for_dis,
       Sigma.3 = if (!is.null(Zp.names)) Sigma.3 else NULL,
       s3.par = if (!is.null(Zp.names)) s3$res$par else NULL,

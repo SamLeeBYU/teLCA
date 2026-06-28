@@ -66,6 +66,10 @@
 #'   \code{1e-2}.
 #' @param use.freq    Collapse duplicate score rows before cross-product.
 #'   Default \code{TRUE}.
+#' @param u_post      Optional N x T matrix of posterior class probabilities.
+#'   When supplied (e.g. extracted from \code{fit0$mU} via
+#'   \code{extract_Y_from_mU}), \code{compute_posteriors} is skipped.
+#'   Default \code{NULL}.
 #'
 #' @return List with \code{$Infomat}, \code{$Varmat}, \code{$SEs},
 #'   \code{$mScore}.
@@ -75,7 +79,8 @@ lca_indiv_varmat <- function(
   fit0,
   ivItemcat,
   boundary.tol = 1e-2,
-  use.freq = TRUE
+  use.freq = TRUE,
+  u_post = NULL # optional: pre-computed N x T posteriors (e.g. from mU)
 ) {
   pi_ <- fit0$vPi
   phi <- fit0$mPhi
@@ -87,20 +92,14 @@ lca_indiv_varmat <- function(
   }
 
   # ---- Boundary flags --------------------------------------------------------
-  # pi_bdry: length T. Reference class (t=1) is not a free parameter.
   pi_bdry <- pi_ <= boundary.tol | pi_ >= (1 - boundary.tol)
-
-  # phi_bdry: n_mPhi_rows x T, where n_mPhi_rows = sum(ifelse(K==2, 1, K)).
-  # Rows align with mPhi row order.
   phi_bdry <- phi <= boundary.tol | phi >= (1 - boundary.tol)
 
+  # Clamp boundary parameters before computing posteriors
   pi_[pi_bdry] <- pmax(pmin(pi_[pi_bdry], 1 - 1e-6), 1e-6)
   phi[phi_bdry] <- pmax(pmin(phi[phi_bdry], 1 - 1e-6), 1e-6)
 
-  # ---- Build theta1 and compute posteriors via compute_posteriors ------------
-  # theta1 = c(pi_2..pi_T, phi_free) -- the same flattened free-parameter
-  # vector used throughout lca_step2. We extract phi_free from mPhi using
-  # the same free_idx logic as lca_step2.
+  # ---- Build theta1 and compute posteriors -----------------------------------
   starts <- c(
     1L,
     cumsum(ifelse(ivItemcat == 2L, 1L, ivItemcat))[-length(ivItemcat)] + 1L
@@ -112,9 +111,13 @@ lca_indiv_varmat <- function(
     SIMPLIFY = FALSE
   ))
   phi_free <- phi[free_idx, , drop = FALSE]
-  theta1 <- c(pi_[-1L], phi_free)
 
-  u_post <- compute_posteriors(Y.exp, mDesign.exp, theta1, ivItemcat, T)
+  # Use pre-computed posteriors when available (e.g. extracted from fit0$mU),
+  # otherwise compute them from theta1.
+  if (is.null(u_post)) {
+    theta1 <- c(pi_[-1L], phi_free)
+    u_post <- compute_posteriors(Y.exp, mDesign.exp, theta1, ivItemcat, T)
+  }
 
   # ---- Expand phi for residual computation -----------------------------------
   phi_exp <- expand_Phi(phi, ivItemcat) # K_total x T
