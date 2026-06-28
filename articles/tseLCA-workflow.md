@@ -207,9 +207,9 @@ d.low.fitZ <- fitZ_from_fit0(
   starting_val = d.fitZ$mGamma
 )
 d.low.fitZ$mGamma
-#>                   C2        C3
-#> Intercept  0.1647684 -3.396233
-#> Zp        -0.5668117  0.937924
+#>                   C2         C3
+#> Intercept  0.1647683 -3.3962308
+#> Zp        -0.5668125  0.9379235
 ```
 
 ------------------------------------------------------------------------
@@ -630,21 +630,21 @@ summary(d.low.three_step.prop2)
 #> -- tseLCA Three-Step Covariate Model -----------------------
 #> Latent classes : 3
 #> Estimator      : ML
-#> Log-likelihood : -1986.2340
-#> AIC            : 4052.4680
-#> BIC            : 4221.0523
+#> Log-likelihood : -1986.2348
+#> AIC            : 4052.4695
+#> BIC            : 4221.0538
 #> 
 #> Two-step (starting) estimates:
 #>                C2      C3
-#> Intercept  1.3687 -4.0525
+#> Intercept  1.3688 -4.0524
 #> Zp        -0.3242  1.0992
 #> 
 #> Three-step estimates:
 #>              Estimate Std.Error z.value     p.value
-#> Intercept:C2   1.3449    1.1548  1.1646 0.2442     
+#> Intercept:C2   1.3450    1.1548  1.1647 0.2441     
 #> Zp:C2         -0.2669    0.5540 -0.4817 0.6300     
-#> Intercept:C3  -4.9820    1.8208 -2.7361 0.0062  ** 
-#> Zp:C3          1.2694    0.3157  4.0206 < 0.001 ***
+#> Intercept:C3  -4.9819    1.8209 -2.7360 0.0062  ** 
+#> Zp:C3          1.2693    0.3157  4.0205 < 0.001 ***
 #> ---
 #> Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -675,21 +675,21 @@ summary(d.low.three_step.prop3)
 #> -- tseLCA Three-Step Covariate Model -----------------------
 #> Latent classes : 3
 #> Estimator      : ML
-#> Log-likelihood : -1986.2340
-#> AIC            : 4052.4680
-#> BIC            : 4221.0523
+#> Log-likelihood : -1986.2348
+#> AIC            : 4052.4695
+#> BIC            : 4221.0538
 #> 
 #> Two-step (starting) estimates:
 #>                C2      C3
-#> Intercept  1.3687 -4.0525
+#> Intercept  1.3688 -4.0524
 #> Zp        -0.3242  1.0992
 #> 
 #> Three-step estimates:
 #>              Estimate Std.Error z.value     p.value
-#> Intercept:C2   1.3449    1.1548  1.1646 0.2442     
+#> Intercept:C2   1.3450    1.1548  1.1647 0.2441     
 #> Zp:C2         -0.2669    0.5540 -0.4817 0.6300     
-#> Intercept:C3  -4.9820    1.8208 -2.7361 0.0062  ** 
-#> Zp:C3          1.2694    0.3157  4.0206 < 0.001 ***
+#> Intercept:C3  -4.9819    1.8209 -2.7360 0.0062  ** 
+#> Zp:C3          1.2693    0.3157  4.0205 < 0.001 ***
 #> ---
 #> Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -1126,9 +1126,10 @@ summary(d.covariate.three_step)
 #> Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-Note that with covariates in the model, the standard errors above are
-systematically smaller for distal outcome estimation than if there were
-no covariates in the model (see below).
+Note that with covariates in a model with high separation, the standard
+errors above should, on average, by systematically smaller for distal
+outcome estimation than if there were no covariates in the model (see
+below).
 
 ``` r
 
