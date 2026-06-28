@@ -279,5 +279,376 @@ if (length(pending) == 0L) {
 }
 
 ###################################################
-### three-step estimation
+### sim.cond: evaluate one simulation condition
 ###################################################
+#
+# cond: character(3), e.g. c("covariate", "low", "500")
+#
+# Returns a data.frame with one row per estimator and columns:
+#   estimator, bias, rmse, coverage, se_sd_ratio, n_ok
+#
+# Covariate scenario: 5 estimators
+#   modal.ml, modal.bch, prop.ml, prop.bch, two_step
+#   Target parameter: Zp:C3 slope (true = 1), index 4 in coef vector
+#
+# Distal scenario: 4 estimators
+#   modal.ml, modal.bch, prop.ml, prop.bch
+#   Target parameter: mu_C3 (true = 0), index 3 in coef vector
+
+sim.cond <- function(
+  datasets,
+  measurement_models,
+  cond = c("covariate", "low", "500")
+) {
+  sets <- datasets[[cond[1]]][[cond[2]]][[cond[3]]]
+  m.mods <- measurement_models[[cond[1]]][[cond[2]]][[cond[3]]]
+  R <- length(sets)
+
+  cli::cli_h1(sprintf(
+    "Condition: scenario={.val %s}  sep={.val %s}  n={.val %s}  ({R} reps)",
+    cond[1],
+    cond[2],
+    cond[3]
+  ))
+
+  # ── Covariate scenario ────────────────────────────────────────────────────
+  if (cond[1] == "covariate") {
+    true_val <- 1 # Zp:C3 slope
+    param_idx <- 4L # [Int:C2, Zp:C2, Int:C3, Zp:C3]
+
+    estimators <- c("modal.ml", "modal.bch", "prop.ml", "prop.bch", "two_step")
+    n_ok <- matrix(
+      FALSE,
+      nrow = R,
+      ncol = length(estimators),
+      dimnames = list(NULL, estimators)
+    )
+    ests <- matrix(
+      NA_real_,
+      nrow = R,
+      ncol = length(estimators),
+      dimnames = list(NULL, estimators)
+    )
+    ses <- matrix(
+      NA_real_,
+      nrow = R,
+      ncol = length(estimators),
+      dimnames = list(NULL, estimators)
+    )
+
+    pb <- cli::cli_progress_bar(
+      name = "Replicates",
+      total = R,
+      format = "{cli::pb_bar} {cli::pb_current}/{cli::pb_total} | {cli::pb_eta_str} remaining | failures: {.val {sum(!n_ok[seq_len(max(1L, cli::pb_current)), 'modal.ml'])}}"
+    )
+
+    for (s in seq_len(R)) {
+      dat.s <- sets[[s]]
+      m.s <- m.mods[[s]]
+
+      if (is.null(m.s) || isFALSE(m.s$fitZ_converged)) {
+        cli::cli_progress_update()
+        next
+      }
+
+      # ── modal ML ────────────────────────────────────────────────────────
+      fit <- tryCatch(
+        three_step(
+          data = dat.s,
+          Y.names = paste0("Y", 1:6),
+          Zp.names = "Zp",
+          n_classes = 3,
+          step1 = m.s,
+          use.modal.assignment = TRUE,
+          use.bch = FALSE
+        ),
+        error = function(e) {
+          cli::cli_alert_warning("rep {s} modal.ml: {conditionMessage(e)}")
+          NULL
+        }
+      )
+      if (!is.null(fit) && !anyNA(fit$three_step)) {
+        n_ok[s, "modal.ml"] <- TRUE
+        ests[s, "modal.ml"] <- as.vector(fit$three_step)[param_idx]
+        ses[s, "modal.ml"] <- sqrt(diag(fit$three_step_vcov))[param_idx]
+        if (!is.null(fit$two_step) && !anyNA(fit$two_step)) {
+          n_ok[s, "two_step"] <- TRUE
+          ests[s, "two_step"] <- as.vector(fit$two_step)[param_idx]
+          if (!is.null(fit$two_step_vcov)) {
+            ses[s, "two_step"] <- sqrt(diag(fit$two_step_vcov))[param_idx]
+          }
+        }
+      }
+
+      # ── modal BCH ───────────────────────────────────────────────────────
+      fit <- tryCatch(
+        {
+          if (as.integer(cond[3]) >= 1000L || cond[2] != "low") {
+            three_step(
+              data = dat.s,
+              Y.names = paste0("Y", 1:6),
+              Zp.names = "Zp",
+              n_classes = 3,
+              step1 = m.s,
+              use.bch = TRUE,
+              em.maxIter = 500L
+            )
+          } else {
+            NULL
+          }
+        },
+        error = function(e) {
+          # cli::cli_alert_warning(sprintf("rep %d: %s", s, conditionMessage(e)))
+          NULL
+        }
+      )
+      if (!is.null(fit) && !anyNA(fit$three_step)) {
+        n_ok[s, "modal.bch"] <- TRUE
+        ests[s, "modal.bch"] <- as.vector(fit$three_step)[param_idx]
+        ses[s, "modal.bch"] <- sqrt(diag(fit$three_step_vcov))[param_idx]
+      }
+
+      # ── proportional ML ──────────────────────────────────────────────────
+      fit <- tryCatch(
+        three_step(
+          data = dat.s,
+          Y.names = paste0("Y", 1:6),
+          Zp.names = "Zp",
+          n_classes = 3,
+          step1 = m.s,
+          use.modal.assignment = FALSE,
+          use.bch = FALSE
+        ),
+        error = function(e) {
+          cli::cli_alert_warning("rep {s} prop.ml: {conditionMessage(e)}")
+          NULL
+        }
+      )
+      if (!is.null(fit) && !anyNA(fit$three_step)) {
+        n_ok[s, "prop.ml"] <- TRUE
+        ests[s, "prop.ml"] <- as.vector(fit$three_step)[param_idx]
+        ses[s, "prop.ml"] <- sqrt(diag(fit$three_step_vcov))[param_idx]
+      }
+
+      # ── proportional BCH ─────────────────────────────────────────────────
+      fit <- tryCatch(
+        {
+          if (as.integer(cond[3]) >= 1000L || cond[2] != "low") {
+            three_step(
+              data = dat.s,
+              Y.names = paste0("Y", 1:6),
+              Zp.names = "Zp",
+              n_classes = 3,
+              step1 = m.s,
+              use.modal.assignment = FALSE,
+              use.bch = TRUE,
+              em.maxIter = 500L
+            )
+          } else {
+            NULL
+          }
+        },
+        error = function(e) {
+          # cli::cli_alert_warning(sprintf("rep %d: %s", s, conditionMessage(e)))
+          NULL
+        }
+      )
+      if (!is.null(fit) && !anyNA(fit$three_step)) {
+        n_ok[s, "prop.bch"] <- TRUE
+        ests[s, "prop.bch"] <- as.vector(fit$three_step)[param_idx]
+        ses[s, "prop.bch"] <- sqrt(diag(fit$three_step_vcov))[param_idx]
+      }
+
+      cli::cli_progress_update()
+    }
+
+    cli::cli_progress_done()
+
+    # ── Distal scenario ───────────────────────────────────────────────────────
+  } else if (cond[1] == "distal") {
+    true_val <- 0 # mu_C3
+    param_idx <- 3L # [mu_C1, mu_C2, mu_C3]
+
+    estimators <- c("modal.ml", "modal.bch", "prop.ml", "prop.bch")
+    n_ok <- matrix(
+      FALSE,
+      nrow = R,
+      ncol = length(estimators),
+      dimnames = list(NULL, estimators)
+    )
+    ests <- matrix(
+      NA_real_,
+      nrow = R,
+      ncol = length(estimators),
+      dimnames = list(NULL, estimators)
+    )
+    ses <- matrix(
+      NA_real_,
+      nrow = R,
+      ncol = length(estimators),
+      dimnames = list(NULL, estimators)
+    )
+
+    pb <- cli::cli_progress_bar(
+      name = "Replicates",
+      total = R,
+      format = "{cli::pb_bar} {cli::pb_current}/{cli::pb_total} | {cli::pb_eta_str} remaining"
+    )
+
+    for (s in seq_len(R)) {
+      dat.s <- sets[[s]]
+      m.s <- m.mods[[s]]
+
+      if (is.null(m.s)) {
+        cli::cli_progress_update()
+        next
+      }
+
+      # ── modal ML ────────────────────────────────────────────────────────
+      fit <- tryCatch(
+        three_step(
+          data = dat.s,
+          Y.names = paste0("Y", 1:6),
+          Zo.name = "Zo",
+          n_classes = 3,
+          step1 = m.s,
+          family = "gaussian",
+          use.modal.assignment = TRUE,
+          use.bch = FALSE
+        ),
+        error = function(e) {
+          cli::cli_alert_warning("rep {s} modal.ml: {conditionMessage(e)}")
+          NULL
+        }
+      )
+      if (!is.null(fit) && !anyNA(fit$three_step)) {
+        n_ok[s, "modal.ml"] <- TRUE
+        ests[s, "modal.ml"] <- fit$three_step[param_idx]
+        ses[s, "modal.ml"] <- sqrt(diag(fit$three_step_vcov))[param_idx]
+      }
+
+      # ── modal BCH ───────────────────────────────────────────────────────
+      fit <- tryCatch(
+        three_step(
+          data = dat.s,
+          Y.names = paste0("Y", 1:6),
+          Zo.name = "Zo",
+          n_classes = 3,
+          step1 = m.s,
+          family = "gaussian",
+          use.modal.assignment = TRUE,
+          use.bch = TRUE
+        ),
+        error = function(e) {
+          #cli::cli_alert_warning("rep {s} modal.bch: {conditionMessage(e)}")
+          NULL
+        }
+      )
+      if (!is.null(fit) && !anyNA(fit$three_step)) {
+        n_ok[s, "modal.bch"] <- TRUE
+        ests[s, "modal.bch"] <- fit$three_step[param_idx]
+        ses[s, "modal.bch"] <- sqrt(diag(fit$three_step_vcov))[param_idx]
+      }
+
+      # ── proportional ML ──────────────────────────────────────────────────
+      fit <- tryCatch(
+        three_step(
+          data = dat.s,
+          Y.names = paste0("Y", 1:6),
+          Zo.name = "Zo",
+          n_classes = 3,
+          step1 = m.s,
+          family = "gaussian",
+          use.modal.assignment = FALSE,
+          use.bch = FALSE
+        ),
+        error = function(e) {
+          cli::cli_alert_warning("rep {s} prop.ml: {conditionMessage(e)}")
+          NULL
+        }
+      )
+      if (!is.null(fit) && !anyNA(fit$three_step)) {
+        n_ok[s, "prop.ml"] <- TRUE
+        ests[s, "prop.ml"] <- fit$three_step[param_idx]
+        ses[s, "prop.ml"] <- sqrt(diag(fit$three_step_vcov))[param_idx]
+      }
+
+      # ── proportional BCH ─────────────────────────────────────────────────
+      fit <- tryCatch(
+        three_step(
+          data = dat.s,
+          Y.names = paste0("Y", 1:6),
+          Zo.name = "Zo",
+          n_classes = 3,
+          step1 = m.s,
+          family = "gaussian",
+          use.modal.assignment = FALSE,
+          use.bch = TRUE
+        ),
+        error = function(e) {
+          #cli::cli_alert_warning("rep {s} prop.bch: {conditionMessage(e)}")
+          NULL
+        }
+      )
+      if (!is.null(fit) && !anyNA(fit$three_step)) {
+        n_ok[s, "prop.bch"] <- TRUE
+        ests[s, "prop.bch"] <- fit$three_step[param_idx]
+        ses[s, "prop.bch"] <- sqrt(diag(fit$three_step_vcov))[param_idx]
+      }
+
+      cli::cli_progress_update()
+    }
+
+    cli::cli_progress_done()
+  } else {
+    stop("cond[1] must be 'covariate' or 'distal'.", call. = FALSE)
+  }
+
+  # ── Compute metrics ─────────────────────────────────────────────────────────
+  results <- lapply(estimators, function(est) {
+    ok <- n_ok[, est]
+    e <- ests[ok, est]
+    se <- ses[ok, est]
+    n <- sum(ok)
+
+    if (n == 0L) {
+      cli::cli_alert_danger("{est}: 0 successful replicates")
+      return(data.frame(
+        estimator = est,
+        bias = NA,
+        rmse = NA,
+        coverage = NA,
+        se_sd_ratio = NA,
+        n_ok = 0L
+      ))
+    }
+
+    err <- e - true_val
+    bias <- mean(err)
+    rmse <- sqrt(mean(err^2))
+    coverage <- mean(abs(err) <= 1.96 * se, na.rm = TRUE)
+    se_sd <- mean(se, na.rm = TRUE) / sd(e)
+
+    cli::cli_alert_success(
+      "{est}: n_ok={n}  bias={round(bias,4)}  rmse={round(rmse,4)}  cov={round(coverage,3)}  se/sd={round(se_sd,3)}"
+    )
+
+    data.frame(
+      estimator = est,
+      bias = bias,
+      rmse = rmse,
+      coverage = coverage,
+      se_sd_ratio = se_sd,
+      n_ok = n
+    )
+  })
+
+  out <- do.call(rbind, results)
+  out$scenario <- cond[1]
+  out$separation <- cond[2]
+  out$n <- cond[3]
+  rownames(out) <- NULL
+  out
+}
+
+sim.cond(datasets, measurement_models, cond = c("covariate", "low", "1000"))

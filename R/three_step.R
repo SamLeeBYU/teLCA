@@ -226,120 +226,10 @@ lca_step2 <- function(
 
   J.2 <- NULL
   if (!use.simple.cov) {
-    rho_to_logit <- function(rho) log(rho[-1] / rho[1])
-    logit_to_rho <- function(alpha) {
-      d <- 1 + sum(exp(alpha))
-      c(1 / d, exp(alpha) / d)
-    }
-    phi_to_logit <- function(phi) log(phi / (1 - phi))
-    logit_to_phi <- function(beta) 1 / (1 + exp(-beta))
-
-    # Jacobian of log-ratio transform for a K-simplex:
-    # u_k = log(phi_k / phi_1), k = 2..K  =>  du_k/dphi_j
-    # Returns (K-1) x (K-1) matrix
-    simplex_jac_free <- function(phi_vec) {
-      # phi_vec: full K_h-vector including reference phi_1
-      K_h <- length(phi_vec)
-      J <- matrix(1 / phi_vec[1L], K_h - 1L, K_h - 1L) # fill with 1/phi_1
-      diag(J) <- diag(J) + 1 / phi_vec[-1L] # add 1/phi_{k+1} on diagonal
-      J
-    }
-
-    theta1_to_u <- function(th1) {
-      rho <- c(1 - sum(th1[1:(T - 1L)]), th1[1:(T - 1L)])
-      phi_mat <- matrix(th1[T:length(th1)], nrow = nrow(phi_free), ncol = T)
-      u_phi <- vector("list", length(ivItemcat))
-      row_idx <- 1L
-      for (h in seq_along(ivItemcat)) {
-        K_h <- ivItemcat[h]
-        if (K_h == 2L) {
-          u_phi[[h]] <- phi_to_logit(phi_mat[row_idx, ])
-          row_idx <- row_idx + 1L
-        } else {
-          rows_h <- row_idx:(row_idx + K_h - 2L)
-          free_h <- phi_mat[rows_h, , drop = FALSE] # (K_h-1) x T
-          # prepend reference category to get full simplex, then log-ratio transform
-          full_h <- rbind(1 - colSums(free_h), free_h) # K_h x T
-          u_phi[[h]] <- apply(full_h, 2, rho_to_logit) # (K_h-1) x T
-          row_idx <- row_idx + K_h - 1L
-        }
-      }
-      c(rho_to_logit(rho), unlist(u_phi))
-    }
-
-    u_to_theta1 <- function(u) {
-      rho <- logit_to_rho(u[1:(T - 1L)])
-      u_phi <- u[T:length(u)]
-      phi_list <- vector("list", length(ivItemcat))
-      idx <- 1L
-      for (h in seq_along(ivItemcat)) {
-        K_h <- ivItemcat[h]
-        if (K_h == 2L) {
-          phi_list[[h]] <- logit_to_phi(u_phi[idx:(idx + T - 1L)])
-          idx <- idx + T
-        } else {
-          # (K_h-1)*T free params, reconstruct K_h x T block
-          n_free_h <- (K_h - 1L) * T
-          u_block <- matrix(u_phi[idx:(idx + n_free_h - 1L)], nrow = K_h - 1L)
-          phi_block <- apply(u_block, 2, logit_to_rho) # K_h x T
-          phi_list[[h]] <- phi_block[-1L, ] # drop ref row
-          idx <- idx + n_free_h
-        }
-      }
-      c(rho[-1L], do.call(rbind, phi_list))
-    }
-
-    J_theta1_to_u <- function(th1, eps = boundary.tol) {
-      rho <- c(1 - sum(th1[1:(T - 1L)]), th1[1:(T - 1L)])
-      phi_mat <- matrix(th1[T:length(th1)], nrow = nrow(phi_free), ncol = T)
-      n <- length(th1)
-      J <- matrix(0, n, n)
-
-      # rho block: (T-1) x (T-1)
-      rho1 <- rho[1L]
-      for (k in seq_len(T - 1L)) {
-        for (j in seq_len(T - 1L)) {
-          J[k, j] <- (k == j) / rho[k + 1L] + 1 / rho1
-        }
-      }
-
-      # phi blocks: one per item
-      u_row <- T # current row in J (u-space), 1-indexed
-      phi_row <- 1L # current row in phi_mat
-      j_col <- T # current col in J (theta1-space)
-
-      for (h in seq_along(ivItemcat)) {
-        K_h <- ivItemcat[h]
-        if (K_h == 2L) {
-          # one free phi per class => T diagonal entries
-          phi_h <- phi_mat[phi_row, ]
-          is_bdry <- phi_h > (1 - eps) | phi_h < eps
-          derivs <- ifelse(is_bdry, 0, 1 / (phi_h * (1 - phi_h)))
-          for (t in seq_len(T)) {
-            J[u_row + t - 1L, j_col + t - 1L] <- derivs[t]
-          }
-          u_row <- u_row + T
-          phi_row <- phi_row + 1L
-          j_col <- j_col + T
-        } else {
-          # K_h - 1 free phis per class => (K_h-1)*T block
-          for (t in seq_len(T)) {
-            phi_ht <- c(
-              1 - sum(phi_mat[phi_row:(phi_row + K_h - 2L), t]),
-              phi_mat[phi_row:(phi_row + K_h - 2L), t]
-            )
-            Jh <- simplex_jac_free(phi_ht) # (K_h-1) x (K_h-1)
-            u_idx <- u_row + seq_len(K_h - 1L) - 1L
-            j_idx <- j_col + seq_len(K_h - 1L) - 1L
-            J[u_idx, j_idx] <- Jh
-            u_row <- u_row + (K_h - 1L)
-            j_col <- j_col + (K_h - 1L)
-          }
-          phi_row <- phi_row + K_h - 1L
-        }
-      }
-      J
-    }
+    # fit0$Varmat (Sigma_1) is already in unconstrained u-space -- it is the
+    # inverse outer-product of scores w.r.t. u, i.e. E[dl/du (dl/du)']^{-1}.
+    # Therefore J.2 = d theta2 / d u  directly, with no need to chain through
+    # d u / d theta1.  The old J_theta1_to_u factor is dropped entirely.
 
     compute_J_unc_analytical <- function(
       p_ik,
@@ -455,7 +345,9 @@ lca_step2 <- function(
       ivItemcat,
       T
     )
-    J.2 <- J_unc %*% J_theta1_to_u(theta1)
+    # Sigma_1 = fit0$Varmat is already in u-space, so J.2 = d theta2 / d u
+    # directly -- no J_theta1_to_u factor needed.
+    J.2 <- J_unc
   }
 
   list(
@@ -561,10 +453,10 @@ lca_step3.distal <- function(
     w_colsums <- colSums(w.it)
 
     if (any(w_colsums < 0)) {
-      warning(
+      stop(
         "BCH weights have negative column sums for at least one class. ",
         "The variance-covariance matrix will not be positive semi-definite. ",
-        "SEs should be interpreted with caution. Consider use.bch = FALSE."
+        "Consider use.bch = FALSE."
       )
     }
 
@@ -798,6 +690,24 @@ lca_step3 <- function(
         }
       }
 
+      if (
+        nr >= max(em.maxIter / 5, 1) &&
+          inherits(
+            tryCatch(chol(H), error = function(e) e),
+            "error"
+          )
+      ) {
+        stop(
+          sprintf(
+            "BCH Newton-Raphson failed after %d iterations: Hessian is not positive semi-definite. ",
+            nr
+          ),
+          "This typically occurs under low class separation. ",
+          "Try use.bch = FALSE to use the ML estimator instead. Or you can try increasing em.maxIter...",
+          call. = FALSE
+        )
+      }
+
       direction <- tryCatch(
         qr.solve(-H, grad_vec),
         error = function(e) rep(0, Q * (T - 1))
@@ -826,7 +736,7 @@ lca_step3 <- function(
         }
         break
       }
-      if (nr == em.maxIter) warning("BCH NR reached maximum iterations.")
+      if (nr == em.maxIter) stop("BCH NR reached maximum iterations.")
     }
     #print(H)
   } else {
@@ -999,31 +909,59 @@ lca_step3 <- function(
 
 # -- Variance estimation (Bakk et al., 2014) ----------------------------------
 lca_step1_vcov <- function(
+  Y.exp,
+  mDesign.exp,
   fit0,
-  theta1,
-  boundary.tol
+  ivItemcat,
+  boundary.tol = 1e-2,
+  use.freq = TRUE
 ) {
-  H.1.inv <- fit0$Varmat
-  J.1 <- fit0$mScore
+  Sigma1 <- lca_indiv_varmat(
+    Y.exp,
+    mDesign.exp,
+    fit0,
+    ivItemcat,
+    use.freq
+  )$Varmat
 
+  N <- nrow(Y.exp)
+  T <- length(fit0$vPi)
+  K <- ncol(Y.exp) #sum(K_h)
+
+  # Number of free rows per item in mPhi
+  n_free <- ivItemcat - 1L
+
+  starts <- c(
+    1L,
+    cumsum(ifelse(ivItemcat == 2L, 1L, ivItemcat))[-length(ivItemcat)] + 1L
+  )
+
+  free_idx <- unlist(mapply(
+    \(s, K_h) if (K_h == 2L) s else (s + 1L):(s + K_h - 1L),
+    starts,
+    ivItemcat,
+    SIMPLIFY = FALSE
+  ))
+
+  phi_free <- fit0$mPhi[free_idx, ]
+
+  theta1 <- c(
+    fit0$vPi[2:T],
+    phi_free
+  )
   is_bdry <- theta1 > (1 - boundary.tol) | theta1 < boundary.tol
   if (any(is_bdry)) {
-    H.1.inv[is_bdry, ] <- 0
-    H.1.inv[, is_bdry] <- 0
-    J.1[, is_bdry] <- 0
+    Sigma1[is_bdry, ] <- 0
+    Sigma1[, is_bdry] <- 0
   }
-
-  Sigma.1 <- (H.1.inv %*% crossprod(J.1) %*% H.1.inv)
-
-  Sigma.1
+  Sigma1
 }
 
 lca_vcov <- function(
   coefs,
   three_step.score,
   H.3.inv,
-  fit0,
-  theta1,
+  Sigma.1,
   theta2,
   J.2,
   p.wx_mat,
@@ -1032,15 +970,12 @@ lca_vcov <- function(
   n_classes,
   p.xz,
   s2,
-  boundary.tol,
   use.simple.cov
 ) {
   J.3 <- three_step.score(c(coefs))
 
   Sigma.3.robust <- H.3.inv %*% crossprod(J.3) %*% H.3.inv
   if (!use.simple.cov) {
-    Sigma.1 <- lca_step1_vcov(fit0, theta1, boundary.tol)
-
     # -- Analytic C_mat = d/d theta2 [colSums(score_3)] ----------------------------
 
     T_ <- n_classes
@@ -1128,20 +1063,19 @@ lca_vcov <- function(
 lca_vcov_distal <- function(
   mu_hat,
   three_step.score,
-  pi_adj, # N x T class probabilities at converged gamma (or flat vPi)
-  w.is, # N x T assignment indicator matrix
-  p.wx_mat, # T x T misclassification matrix
-  p.zx, # function: params -> N x T log-density matrix
-  family, # "gaussian", "poisson", or "binomial"
+  pi_adj,
+  w.is,
+  p.wx_mat,
+  p.zx,
+  family,
   H.3.inv,
-  fit0,
+  Sigma.1,
   s2,
-  Sigma.3 = NULL, # covariate vcov, only needed when Zp present
-  s3.par = NULL, # gamma estimates, only needed when Zp present
-  p.xz.cov = NULL, # p.xz function for covariate model
-  Z_mat_cov = NULL, # N x Q covariate design matrix
+  Sigma.3 = NULL,
+  s3.par = NULL,
+  p.xz.cov = NULL,
+  Z_mat_cov = NULL,
   T,
-  boundary.tol,
   use.simple.cov,
   use.bch
 ) {
@@ -1156,7 +1090,6 @@ lca_vcov_distal <- function(
     return(result)
   }
 
-  Sigma.1 <- lca_step1_vcov(fit0, s2$theta1, boundary.tol)
   N <- nrow(w.is)
   pwx <- p.wx_mat # T x T
 
@@ -1649,8 +1582,7 @@ three_step <- function(
       coefs = coefs,
       three_step.score = three_step.score,
       H.3.inv = s3$H.3.inv,
-      fit0 = fit0,
-      theta1 = s2_for_cov$theta1,
+      Sigma.1 = lca_step1_vcov(Y.obs, mDesign, fit0, ivItemcat),
       theta2 = s2_for_cov$theta2,
       J.2 = s2_for_cov$J.2,
       p.wx_mat = s2_for_cov$p.wx_mat,
@@ -1659,7 +1591,6 @@ three_step <- function(
       n_classes = n_classes,
       p.xz = p.xz,
       s2 = s2_for_cov,
-      boundary.tol = boundary.tol,
       use.simple.cov = use.simple.cov || use.bch
     )
     Sigma.3.covariate <- Sigma.3
@@ -1945,7 +1876,7 @@ three_step <- function(
       p.zx = p.zx,
       family = family,
       H.3.inv = s3.distal$H.3.inv,
-      fit0 = fit0,
+      Sigma.1 = lca_step1_vcov(Y.obs, mDesign, fit0, ivItemcat),
       s2 = s2_for_dis,
       Sigma.3 = if (!is.null(Zp.names)) Sigma.3 else NULL,
       s3.par = if (!is.null(Zp.names)) s3$res$par else NULL,
@@ -1964,7 +1895,6 @@ three_step <- function(
         NULL
       },
       T = T,
-      boundary.tol = boundary.tol,
       use.simple.cov = use.simple.cov,
       use.bch = use.bch
     )

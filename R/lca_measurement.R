@@ -10,64 +10,138 @@
 
 # -- lca_step1 -----------------------------------------------------------------
 
-#' Individual-level BHHH Varmat matching tseLCA's lca_em.cpp
+#' Individual-level BHHH Varmat for binary and polytomous LCA
 #'
-#' Computes the standard outer-product (BHHH) sandwich variance on the N
-#' individual observations, exactly replicating what LCA_tseLCA returns in
-#' $Varmat and $mScore.
+#' Computes the outer-product (BHHH) information matrix and variance-covariance
+#' matrix for LCA measurement model parameters in the unconstrained
+#' (logit/log-ratio) space, matching \pkg{multilevLCA}'s \code{$Varmat}.
 #'
-#' Infomat = S'S / N,   Varmat = psinv(Infomat) / N = \eqn{(S'S)^{-1}}
+#' The score in unconstrained space is
+#' \eqn{s_{it} = u_{it}(y_i - d_i \circ p_{it})},
+#' where \eqn{d_i} is the missing-data design indicator matrix.
 #'
-#' @param mY    N x H raw 0/1 matrix (original, not one-hot expanded)
-#' @param T     Number of classes
-#' @param pi    Length-T class prevalences  (at converged estimates)
-#' @param phi   H x T item-response probabilities (at converged estimates)
-#'             NOTE: pass the n_free x T matrix from fit0$mPhi, i.e. one row
-#'             per item (P(Y=1|t) for binary items)
+#' @param Y.exp Expanded indicator matrix (N x sum(K_h)).
+#' @param mDesign.exp Expanded design matrix (same dimensions as \code{Y.exp}),
+#'   or \code{NULL} for complete data.
+#' @param fit0 Step-1 measurement model.
+#' @param ivItemcat Number of categories for each item.
+#' @param use.freq Logical. Collapse duplicate score vectors before computing
+#'   the BHHH information matrix.
 #'
-#' @return list with $Infomat, $Varmat, $SEs, $mScore (N x p score matrix)
-lca_indiv_varmat <- function(mY, T, pi, phi) {
-  N <- nrow(mY)
-  H <- ncol(mY)
+#' @return A list containing \code{Infomat}, \code{Varmat},
+#'   \code{SEs}, and the individual score matrix \code{mScore}.
+lca_indiv_varmat <- function(
+  Y.exp,
+  mDesign.exp,
+  fit0,
+  ivItemcat,
+  use.freq = TRUE
+) {
+  pi_ <- fit0$vPi
+  phi <- fit0$mPhi
 
-  # -- Posteriors at converged estimates ----------------------------------------
-  log_phi <- log(phi) # H x T
-  log_1mphi <- log(1 - phi) # H x T
+  T <- length(pi_)
+  N <- nrow(Y.exp)
 
-  # N x T: log p(Y | X=t)
-  log_pY_t <- mY %*% log_phi + (1L - mY) %*% log_1mphi
-
-  # log-sum-exp over classes
-  log_joint <- sweep(log_pY_t, 2L, log(pi), "+") # N x T
-  row_max <- apply(log_joint, 1L, max)
-  log_marg <- row_max + log(rowSums(exp(log_joint - row_max)))
-  u <- exp(log_joint - log_marg) # N x T posteriors
-
-  # -- Score at individual observations -----------------------------------------
-  # Pi score: u_{it} - pi_t  for t = 2..T   [N x (T-1)]
-  pi_score <- sweep(u[, -1L, drop = FALSE], 2L, pi[-1L], "-")
-
-  # Phi score: u_{it} * (y_{ih} - phi_{ht})  for all h, t   [N x H*T]
-  # Column order: class-major (all H items for t=1, then t=2, ..., t=T)
-  phi_score <- matrix(0, N, H * T)
-  for (t in seq_len(T)) {
-    idx <- ((t - 1L) * H + 1L):(t * H)
-    resid <- sweep(mY, 2L, phi[, t], "-") # N x H: y_{ih} - phi_{ht}
-    phi_score[, idx] <- u[, t] * resid # N x H (u_{it} broadcasts)
+  if (is.null(mDesign.exp)) {
+    mDesign.exp <- matrix(1L, nrow = N, ncol = ncol(Y.exp))
   }
 
-  S <- cbind(pi_score, phi_score) # N x p
+  phi_exp <- expand_Phi(phi, ivItemcat)
 
-  # -- Infomat and Varmat (tseLCA convention) ------------------------------------
-  # Matches C++: Infomat = S'S/N, Varmat = psinv(Infomat)/N = \eqn{(S'S)^{-1}}
-  Infomat <- crossprod(S) / N
-  Varmat <- qr.solve(Infomat) / N
-  SEs <- sqrt(diag(Varmat))
+  log_pY_t <- (mDesign.exp * Y.exp) %*% log(phi_exp)
+
+  log_joint <- sweep(log_pY_t, 2L, log(pi_), "+")
+
+  row_max <- apply(log_joint, 1L, max)
+  log_marg <- row_max + log(rowSums(exp(log_joint - row_max)))
+
+  u_post <- exp(log_joint - log_marg)
+
+  free_cols <- integer(0L)
+  col_start <- 1L
+
+  for (h in seq_along(ivItemcat)) {
+    K_h <- ivItemcat[h]
+
+    if (K_h > 1L) {
+      free_cols <- c(free_cols, (col_start + 1L):(col_start + K_h - 1L))
+    }
+
+    col_start <- col_start + K_h
+  }
+
+  n_free_phi <- length(free_cols)
+
+  s_u_pi <- sweep(
+    u_post[, -1L, drop = FALSE],
+    2L,
+    pi_[-1L],
+    "-"
+  )
+
+  s_u_phi <- matrix(0, N, n_free_phi * T)
+
+  Y_free <- Y.exp[, free_cols, drop = FALSE]
+  D_free <- mDesign.exp[, free_cols, drop = FALSE]
+
+  for (t in seq_len(T)) {
+    idx <- ((t - 1L) * n_free_phi + 1L):(t * n_free_phi)
+
+    resid <- Y_free -
+      D_free *
+        matrix(
+          phi_exp[free_cols, t],
+          nrow = N,
+          ncol = n_free_phi,
+          byrow = TRUE
+        )
+
+    s_u_phi[, idx] <- u_post[, t] * resid
+  }
+
+  S <- cbind(s_u_pi, s_u_phi)
+
+  # ---------------------------------------------------------------------------
+  # BHHH information matrix
+  # ---------------------------------------------------------------------------
+  #This is how multiLCA computes the covariance matrix of the measurement model
+  if (use.freq) {
+    S_char <- apply(S, 1L, paste, collapse = "\r")
+
+    uniq <- !duplicated(S_char)
+    freq <- tabulate(match(S_char, S_char[uniq]))
+
+    Infomat <- crossprod(
+      S[uniq, , drop = FALSE] * sqrt(freq)
+    ) /
+      N
+  } else {
+    Infomat <- crossprod(S) / N
+  }
+
+  Varmat <- tryCatch(
+    qr.solve(Infomat) / N,
+
+    error = function(e) {
+      warning(
+        "lca_indiv_varmat: Infomat is singular; returning NA matrix. ",
+        "Check for boundary parameters or near-empty classes.",
+        call. = FALSE
+      )
+
+      matrix(
+        NA_real_,
+        nrow(Infomat),
+        ncol(Infomat)
+      )
+    }
+  )
 
   list(
     Infomat = Infomat,
     Varmat = Varmat,
-    SEs = SEs,
+    SEs = sqrt(diag(Varmat)),
     mScore = S
   )
 }

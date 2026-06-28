@@ -2,29 +2,34 @@
 % Please edit documentation in R/lca_measurement.R
 \name{lca_indiv_varmat}
 \alias{lca_indiv_varmat}
-\title{Individual-level BHHH Varmat matching tseLCA's lca_em.cpp}
+\title{Individual-level BHHH Varmat for binary and polytomous LCA}
 \usage{
-lca_indiv_varmat(mY, T, pi, phi)
+lca_indiv_varmat(Y.exp, mDesign.exp, fit0, ivItemcat, use.freq = TRUE)
 }
 \arguments{
-\item{mY}{N x H raw 0/1 matrix (original, not one-hot expanded)}
+\item{Y.exp}{Expanded indicator matrix (N x sum(K_h)).}
 
-\item{T}{Number of classes}
+\item{mDesign.exp}{Expanded design matrix (same dimensions as \code{Y.exp}),
+or \code{NULL} for complete data.}
 
-\item{pi}{Length-T class prevalences  (at converged estimates)}
+\item{fit0}{Step-1 measurement model.}
 
-\item{phi}{H x T item-response probabilities (at converged estimates)
-NOTE: pass the n_free x T matrix from fit0$mPhi, i.e. one row
-per item (P(Y=1|t) for binary items)}
+\item{ivItemcat}{Number of categories for each item.}
+
+\item{use.freq}{Logical. Collapse duplicate score vectors before computing
+the BHHH information matrix.}
 }
 \value{
-list with $Infomat, $Varmat, $SEs, $mScore (N x p score matrix)
+A list containing \code{Infomat}, \code{Varmat},
+\code{SEs}, and the individual score matrix \code{mScore}.
 }
 \description{
-Computes the standard outer-product (BHHH) sandwich variance on the N
-individual observations, exactly replicating what LCA_tseLCA returns in
-$Varmat and $mScore.
+Computes the outer-product (BHHH) information matrix and variance-covariance
+matrix for LCA measurement model parameters in the unconstrained
+(logit/log-ratio) space, matching \pkg{multilevLCA}'s \code{$Varmat}.
 }
 \details{
-Infomat = S'S / N,   Varmat = psinv(Infomat) / N = \eqn{(S'S)^{-1}}
+The score in unconstrained space is
+\eqn{s_{it} = u_{it}(y_i - d_i \circ p_{it})},
+where \eqn{d_i} is the missing-data design indicator matrix.
 }

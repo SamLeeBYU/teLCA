@@ -70,10 +70,12 @@ three_step(
 
 \item{em.maxIter}{Maximum EM iterations for Step 3.}
 
-\item{get.twostep.vcov}{Logical. If \code{TRUE}, call
-\code{\link[=fitZ_from_multiLCA]{fitZ_from_multiLCA()}} to obtain multilevLCA's corrected standard errors
-for the two-step gamma estimates and store them in \verb{$two_step_vcov}.
-Requires \pkg{multilevLCA}. Default \code{FALSE}.}
+\item{get.twostep.vcov}{Logical. If \code{TRUE}, obtain multilevLCA's
+bias-corrected variance-covariance matrix for the two-step gamma
+estimates and store it in \verb{$two_step_vcov}. If the \code{fitZ} object passed
+via \code{step1} already contains a \code{Varmat_cor} (from a prior
+\code{fitZ_from_multiLCA} or plain \code{multiLCA} call), it is attached
+automatically even when \code{get.twostep.vcov = FALSE}. Default \code{FALSE}.}
 
 \item{rebase}{Character (e.g. \code{"C1"}, \code{"C2"}) or integer specifying which
 latent class to use as the reference category in the multinomial logit
