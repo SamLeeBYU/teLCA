@@ -152,10 +152,12 @@
 
 
 <dt id="arg-get-twostep-vcov">get.twostep.vcov<a class="anchor" aria-label="anchor" href="#arg-get-twostep-vcov"></a></dt>
-<dd><p>Logical. If <code>TRUE</code>, call
-<code><a href="fitZ_from_multiLCA.html">fitZ_from_multiLCA()</a></code> to obtain multilevLCA's corrected standard errors
-for the two-step gamma estimates and store them in <code>$two_step_vcov</code>.
-Requires <span class="pkg">multilevLCA</span>. Default <code>FALSE</code>.</p></dd>
+<dd><p>Logical. If <code>TRUE</code>, obtain multilevLCA's
+bias-corrected variance-covariance matrix for the two-step gamma
+estimates and store it in <code>$two_step_vcov</code>. If the <code>fitZ</code> object passed
+via <code>step1</code> already contains a <code>Varmat_cor</code> (from a prior
+<code>fitZ_from_multiLCA</code> or plain <code>multiLCA</code> call), it is attached
+automatically even when <code>get.twostep.vcov = FALSE</code>. Default <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-rebase">rebase<a class="anchor" aria-label="anchor" href="#arg-rebase"></a></dt>
@@ -283,10 +285,10 @@ Behavioral Research</em>. <a href="https://doi.org/10.1080/00273171.2025.2473935
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Three-step estimates:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>              Estimate Std.Error z.value     p.value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept:C2   1.9436    0.6833  2.8446 0.0044  ** </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Zp:C2         -0.7810    0.2805 -2.7840 0.0054  ** </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept:C3  -5.3427    2.4344 -2.1947 0.0282  *  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Zp:C3          1.4236    0.6050  2.3530 0.0186  *  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept:C2   1.9436    0.4771  4.0742 &lt; 0.001 ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Zp:C2         -0.7810    0.1855 -4.2091 &lt; 0.001 ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept:C3  -5.3427    1.2445 -4.2931 &lt; 0.001 ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Zp:C3          1.4236    0.3179  4.4777 &lt; 0.001 ***</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span>
 <span class="r-in"><span></span></span>

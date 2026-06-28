@@ -115,11 +115,12 @@ three_step(
 
 - get.twostep.vcov:
 
-  Logical. If `TRUE`, call
-  [`fitZ_from_multiLCA()`](https://samleebyu.github.io/tseLCA/reference/fitZ_from_multiLCA.md)
-  to obtain multilevLCA's corrected standard errors for the two-step
-  gamma estimates and store them in `$two_step_vcov`. Requires
-  multilevLCA. Default `FALSE`.
+  Logical. If `TRUE`, obtain multilevLCA's bias-corrected
+  variance-covariance matrix for the two-step gamma estimates and store
+  it in `$two_step_vcov`. If the `fitZ` object passed via `step1`
+  already contains a `Varmat_cor` (from a prior `fitZ_from_multiLCA` or
+  plain `multiLCA` call), it is attached automatically even when
+  `get.twostep.vcov = FALSE`. Default `FALSE`.
 
 - rebase:
 
@@ -250,10 +251,10 @@ summary(fit_cor)
 #> 
 #> Three-step estimates:
 #>              Estimate Std.Error z.value     p.value
-#> Intercept:C2   1.9436    0.6833  2.8446 0.0044  ** 
-#> Zp:C2         -0.7810    0.2805 -2.7840 0.0054  ** 
-#> Intercept:C3  -5.3427    2.4344 -2.1947 0.0282  *  
-#> Zp:C3          1.4236    0.6050  2.3530 0.0186  *  
+#> Intercept:C2   1.9436    0.4771  4.0742 < 0.001 ***
+#> Zp:C2         -0.7810    0.1855 -4.2091 < 0.001 ***
+#> Intercept:C3  -5.3427    1.2445 -4.2931 < 0.001 ***
+#> Zp:C3          1.4236    0.3179  4.4777 < 0.001 ***
 #> ---
 #> Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 

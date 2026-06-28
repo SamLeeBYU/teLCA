@@ -22,8 +22,10 @@
 <url><loc>https://samleebyu.github.io/tseLCA/reference/lca_step1.html</loc></url>
 <url><loc>https://samleebyu.github.io/tseLCA/reference/make_rho.html</loc></url>
 <url><loc>https://samleebyu.github.io/tseLCA/reference/mnl_probs.html</loc></url>
+<url><loc>https://samleebyu.github.io/tseLCA/reference/normalise_fitZ_names.html</loc></url>
 <url><loc>https://samleebyu.github.io/tseLCA/reference/parse_rebase.html</loc></url>
 <url><loc>https://samleebyu.github.io/tseLCA/reference/permute_fit0_classes.html</loc></url>
+<url><loc>https://samleebyu.github.io/tseLCA/reference/permute_fitZ_classes.html</loc></url>
 <url><loc>https://samleebyu.github.io/tseLCA/reference/plot.tseLCA_measurement.html</loc></url>
 <url><loc>https://samleebyu.github.io/tseLCA/reference/print.tseLCA_measurement.html</loc></url>
 <url><loc>https://samleebyu.github.io/tseLCA/reference/summary.tseLCA_measurement.html</loc></url>
