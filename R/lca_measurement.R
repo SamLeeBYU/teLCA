@@ -30,64 +30,140 @@
 #'
 #' @return A list containing \code{Infomat}, \code{Varmat},
 #'   \code{SEs}, and the individual score matrix \code{mScore}.
+#' Individual-level BHHH Varmat for binary and polytomous LCA
+#'
+#' Computes the outer-product (BHHH) information matrix and variance-covariance
+#' matrix for LCA measurement model parameters in the unconstrained
+#' (logit/log-ratio) space.
+#'
+#' Assumes \code{fit0$mPhi} has the following structure (from multilevLCA):
+#' \itemize{
+#'   \item Dichotomous item h (\code{ivItemcat[h] == 2}): 1 row =
+#'     \eqn{P(Y=1|C)}. The base level \eqn{P(Y=0|C)} is excluded.
+#'   \item Polytomous item h (\code{ivItemcat[h] > 2}): \code{K_h} rows =
+#'     \eqn{P(Y=0|C), \ldots, P(Y=K_h-1|C)}. The base level IS included.
+#' }
+#' \code{expand_Y} produces one-hot columns in the same order so that
+#' \code{expand_Phi(fit0$mPhi, ivItemcat)} aligns column-wise with
+#' \code{expand_Y(mY, ivItemcat)}.
+#'
+#' Free (estimable) parameters per item:
+#' \itemize{
+#'   \item Dichotomous: the single row of \code{mPhi} (\eqn{P(Y=1|C)}).
+#'   \item Polytomous: rows 2..K_h of \code{mPhi} (\eqn{P(Y=1|C), \ldots}).
+#'     Row 1 (\eqn{P(Y=0|C)}) is the reference and is not a free parameter.
+#' }
+#'
+#' Boundary parameters (within \code{boundary.tol} of 0 or 1) are treated as
+#' fixed: their score columns are zeroed so they do not contribute to the
+#' information matrix.
+#'
+#' @param Y.exp       Expanded one-hot matrix (N x sum(K_h)).
+#' @param mDesign.exp Expanded design matrix (same dims), or \code{NULL}.
+#' @param fit0        Step-1 fit with \code{$vPi} and \code{$mPhi}.
+#' @param ivItemcat   Integer vector of category counts per item.
+#' @param boundary.tol Scalar tolerance for boundary detection. Default
+#'   \code{1e-2}.
+#' @param use.freq    Collapse duplicate score rows before cross-product.
+#'   Default \code{TRUE}.
+#'
+#' @return List with \code{$Infomat}, \code{$Varmat}, \code{$SEs},
+#'   \code{$mScore}.
 lca_indiv_varmat <- function(
   Y.exp,
   mDesign.exp,
   fit0,
   ivItemcat,
+  boundary.tol = 1e-2,
   use.freq = TRUE
 ) {
   pi_ <- fit0$vPi
   phi <- fit0$mPhi
-
   T <- length(pi_)
   N <- nrow(Y.exp)
 
   if (is.null(mDesign.exp)) {
-    mDesign.exp <- matrix(1L, nrow = N, ncol = ncol(Y.exp))
+    mDesign.exp <- matrix(1L, N, ncol(Y.exp))
   }
 
-  phi_exp <- expand_Phi(phi, ivItemcat)
+  # ---- Boundary flags --------------------------------------------------------
+  # pi_bdry: length T. Reference class (t=1) is not a free parameter.
+  pi_bdry <- pi_ <= boundary.tol | pi_ >= (1 - boundary.tol)
 
-  log_pY_t <- (mDesign.exp * Y.exp) %*% log(phi_exp)
+  # phi_bdry: n_mPhi_rows x T, where n_mPhi_rows = sum(ifelse(K==2, 1, K)).
+  # Rows align with mPhi row order.
+  phi_bdry <- phi <= boundary.tol | phi >= (1 - boundary.tol)
 
-  log_joint <- sweep(log_pY_t, 2L, log(pi_), "+")
+  pi_[pi_bdry] <- pmax(pmin(pi_[pi_bdry], 1 - 1e-6), 1e-6)
+  phi[phi_bdry] <- pmax(pmin(phi[phi_bdry], 1 - 1e-6), 1e-6)
 
-  row_max <- apply(log_joint, 1L, max)
-  log_marg <- row_max + log(rowSums(exp(log_joint - row_max)))
+  # ---- Build theta1 and compute posteriors via compute_posteriors ------------
+  # theta1 = c(pi_2..pi_T, phi_free) -- the same flattened free-parameter
+  # vector used throughout lca_step2. We extract phi_free from mPhi using
+  # the same free_idx logic as lca_step2.
+  starts <- c(
+    1L,
+    cumsum(ifelse(ivItemcat == 2L, 1L, ivItemcat))[-length(ivItemcat)] + 1L
+  )
+  free_idx <- unlist(mapply(
+    \(s, K_h) if (K_h == 2L) s else (s + 1L):(s + K_h - 1L),
+    starts,
+    ivItemcat,
+    SIMPLIFY = FALSE
+  ))
+  phi_free <- phi[free_idx, , drop = FALSE]
+  theta1 <- c(pi_[-1L], phi_free)
 
-  u_post <- exp(log_joint - log_marg)
+  u_post <- compute_posteriors(Y.exp, mDesign.exp, theta1, ivItemcat, T)
+
+  # ---- Expand phi for residual computation -----------------------------------
+  phi_exp <- expand_Phi(phi, ivItemcat) # K_total x T
+
+  # ---- Build free_cols (columns of phi_exp for free parameters) -------------
+  # free_cols: indices into phi_exp rows for the free categories.
+  # phi_exp has K_total rows; free categories are the non-reference rows
+  # within each item block. The mapping from free_idx (mPhi rows) to
+  # phi_exp rows differs between dichotomous and polytomous items:
+  #
+  #   Dichotomous (K=2): phi_exp block = [P(Y=0), P(Y=1)], 2 rows.
+  #     free_idx points to the single mPhi row = P(Y=1) = phi_exp row 2
+  #     within the block (col_start + 1).
+  #
+  #   Polytomous (K>2): phi_exp block = [P(Y=0)..P(Y=K-1)], K rows.
+  #     free_idx points to mPhi rows 2..K within the block (P(Y=1)..P(Y=K-1))
+  #     = phi_exp rows col_start+1 .. col_start+K-1.
+  #
+  # In both cases the free phi_exp rows are exactly col_start+1..col_start+K-1
+  # (dropping col_start = reference P(Y=0) for binary and polytomous alike).
 
   free_cols <- integer(0L)
   col_start <- 1L
-
   for (h in seq_along(ivItemcat)) {
     K_h <- ivItemcat[h]
-
-    if (K_h > 1L) {
-      free_cols <- c(free_cols, (col_start + 1L):(col_start + K_h - 1L))
-    }
-
+    free_cols <- c(free_cols, (col_start + 1L):(col_start + K_h - 1L))
     col_start <- col_start + K_h
   }
+  n_free_phi <- length(free_cols) # = sum(ivItemcat - 1) = nrow(phi_free) for all items
 
-  n_free_phi <- length(free_cols)
+  # phi_bdry_free: n_free_phi x T, boundary flags for free phi parameters.
+  # free_idx already selects the free mPhi rows in item order, so:
+  phi_bdry_free <- phi_bdry[free_idx, , drop = FALSE]
 
-  s_u_pi <- sweep(
-    u_post[, -1L, drop = FALSE],
-    2L,
-    pi_[-1L],
-    "-"
-  )
+  # ---- Pi scores (T-1 columns, one per non-reference class t=2..T) -----------
+  s_u_pi <- sweep(u_post[, -1L, drop = FALSE], 2L, pi_[-1L], "-")
+  pi_free_bdry <- pi_bdry[-1L] # drop reference class t=1
+  if (any(pi_free_bdry)) {
+    s_u_pi[, pi_free_bdry] <- 0
+  }
 
-  s_u_phi <- matrix(0, N, n_free_phi * T)
-
+  # ---- Phi scores (n_free_phi * T columns, class-major) ----------------------
   Y_free <- Y.exp[, free_cols, drop = FALSE]
   D_free <- mDesign.exp[, free_cols, drop = FALSE]
 
+  s_u_phi <- matrix(0, N, n_free_phi * T)
+
   for (t in seq_len(T)) {
     idx <- ((t - 1L) * n_free_phi + 1L):(t * n_free_phi)
-
     resid <- Y_free -
       D_free *
         matrix(
@@ -96,47 +172,57 @@ lca_indiv_varmat <- function(
           ncol = n_free_phi,
           byrow = TRUE
         )
+    s_col <- u_post[, t] * resid
 
-    s_u_phi[, idx] <- u_post[, t] * resid
+    # Zero boundary free parameters for this class
+    bdry_t <- phi_bdry_free[, t]
+    if (any(bdry_t)) {
+      s_col[, bdry_t] <- 0
+    }
+
+    s_u_phi[, idx] <- s_col
   }
 
-  S <- cbind(s_u_pi, s_u_phi)
+  S <- cbind(s_u_pi, s_u_phi) # N x p
 
-  # ---------------------------------------------------------------------------
-  # BHHH information matrix
-  # ---------------------------------------------------------------------------
-  #This is how multiLCA computes the covariance matrix of the measurement model
+  # ---- Identify active (non-boundary) columns --------------------------------
+  # Boundary parameters have all-zero score columns -- removing them before
+  # qr.solve avoids rank deficiency, then we restore zero rows/cols after.
+  active <- which(colSums(S != 0) > 0L)
+  p_full <- ncol(S)
+
+  # ---- BHHH information matrix (on active columns only) ----------------------
+  S_active <- S[, active, drop = FALSE]
+
   if (use.freq) {
-    S_char <- apply(S, 1L, paste, collapse = "\r")
-
+    S_char <- apply(S_active, 1L, paste, collapse = "\r")
     uniq <- !duplicated(S_char)
     freq <- tabulate(match(S_char, S_char[uniq]))
-
-    Infomat <- crossprod(
-      S[uniq, , drop = FALSE] * sqrt(freq)
-    ) /
-      N
+    Infomat_active <- crossprod(S_active[uniq, , drop = FALSE] * sqrt(freq)) / N
   } else {
-    Infomat <- crossprod(S) / N
+    Infomat_active <- crossprod(S_active) / N
   }
 
-  Varmat <- tryCatch(
-    qr.solve(Infomat) / N,
-
+  Varmat_active <- tryCatch(
+    qr.solve(Infomat_active) / N,
     error = function(e) {
       warning(
-        "lca_indiv_varmat: Infomat is singular; returning NA matrix. ",
-        "Check for boundary parameters or near-empty classes.",
+        "lca_indiv_varmat: Infomat is singular even after removing boundary ",
+        "parameters; returning NA matrix. Check for near-empty classes.",
         call. = FALSE
       )
-
-      matrix(
-        NA_real_,
-        nrow(Infomat),
-        ncol(Infomat)
-      )
+      matrix(NA_real_, length(active), length(active))
     }
   )
+
+  # ---- Restore full-size Infomat and Varmat ----------------------------------
+  # Boundary parameters get zero rows/cols in Infomat (no information)
+  # and zero rows/cols in Varmat (variance treated as zero / fixed).
+  Infomat <- matrix(0, p_full, p_full)
+  Infomat[active, active] <- Infomat_active
+
+  Varmat <- matrix(0, p_full, p_full)
+  Varmat[active, active] <- Varmat_active
 
   list(
     Infomat = Infomat,
