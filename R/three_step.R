@@ -357,7 +357,9 @@ lca_step2 <- function(
     p.wx_mat = p.wx_mat,
     gamma_vec_to_pwx = gamma_vec_to_pwx,
     theta2_from_theta1 = theta2_from_theta1,
-    J.2 = J.2
+    J.2 = J.2,
+    p.xy = p.xy,
+    compute_J_unc = compute_J_unc_analytical
   )
 }
 
@@ -1439,13 +1441,37 @@ three_step <- function(
   }
 
   s2_for_dis <- if (!is.null(Z0_mat)) {
+    # J.2 must be computed on the Z0-complete subset (keep_step3_Z0_in_Y rows)
+    # because C1_mat in lca_vcov_distal sums over those rows only.
+    # Using s2$J.2 (computed on all N_Y rows) would mismatch the normalisation
+    # when N_Z0 < N_Y (missing distal outcomes), causing SE underestimation.
+    J.2_dis <- if (!is.null(s2$J.2)) {
+      Y_dis <- Y.obs[keep_step3_Z0_in_Y, , drop = FALSE]
+      mDes_dis <- if (!is.null(mDesign)) {
+        mDesign[keep_step3_Z0_in_Y, , drop = FALSE]
+      } else {
+        matrix(1L, nrow(Y_dis), ncol(Y_dis))
+      }
+      p_xy_dis <- s2$p.xy[keep_step3_Z0_in_Y, , drop = FALSE]
+      s2$compute_J_unc(
+        p_xy_dis,
+        Y_dis,
+        mDes_dis,
+        s2$theta1,
+        ivItemcat,
+        T
+      )
+    } else {
+      NULL
+    }
+
     list(
       theta1 = s2$theta1,
       theta2 = s2$theta2,
       p.wx_mat = s2$p.wx_mat,
       gamma_vec_to_pwx = s2$gamma_vec_to_pwx,
       theta2_from_theta1 = s2$theta2_from_theta1,
-      J.2 = s2$J.2,
+      J.2 = J.2_dis,
       w.is = s2$w.is[keep_step3_Z0_in_Y, , drop = FALSE],
       post = if (!is.null(s2$post)) {
         s2$post[keep_step3_Z0_in_Y, , drop = FALSE]
@@ -1876,7 +1902,16 @@ three_step <- function(
       p.zx = p.zx,
       family = family,
       H.3.inv = s3.distal$H.3.inv,
-      Sigma.1 = lca_step1_vcov(Y.obs, mDesign, fit0, ivItemcat),
+      Sigma.1 = lca_step1_vcov(
+        Y.obs[keep_step3_Z0_in_Y, , drop = FALSE],
+        if (!is.null(mDesign)) {
+          mDesign[keep_step3_Z0_in_Y, , drop = FALSE]
+        } else {
+          NULL
+        },
+        fit0,
+        ivItemcat
+      ),
       s2 = s2_for_dis,
       Sigma.3 = if (!is.null(Zp.names)) Sigma.3 else NULL,
       s3.par = if (!is.null(Zp.names)) s3$res$par else NULL,

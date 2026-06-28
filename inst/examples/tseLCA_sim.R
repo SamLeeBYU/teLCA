@@ -801,6 +801,6 @@ run_simulation <- function(
 sim.results <- run_simulation(
   datasets,
   measurement_models,
-  out_path = "tseCLA_output/simulation/sim-results.rds",
+  out_path = "tseLCA_output/simulation/sim-results.rds",
   n_cores = 1
 )
