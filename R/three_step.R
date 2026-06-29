@@ -1584,6 +1584,7 @@ three_step <- function(
   # fits also carry this metadata.
   s1$Y.names <- Y.names
   s1$ivItemcat <- ivItemcat
+  s1$ref_idx <- ref_idx
 
   # -- Early return if no covariates -------------------------------------------
   if (is.null(Zp.names) && is.null(Zo.name)) {
@@ -1715,14 +1716,19 @@ three_step <- function(
     NULL
   }
 
-  # Compute Step-1 sample inputs for Sigma.1 once, shared across covariate
-  # and distal vcov calls. Uses fit0$mU (the Step-1 sample stored by
-  # multilevLCA) when available, so Sigma.1 is always based on the
-  # measurement model's actual sample regardless of structural sample.
+  # Extract Step-1 sample inputs for Sigma.1. Uses fit0$mU when available.
+  # fit0 has already been rebased (permute_fit0_classes), but mU retains the
+  # original multilevLCA column ordering. Reorder u_post to match rebased fit0.
   step1_Y <- if (!is.null(fit0$mU)) {
-    extract_Y_from_mU(fit0, ivItemcat)
+    raw <- extract_Y_from_mU(fit0, ivItemcat)
+    if (ref_idx != 1L) {
+      T_ <- n_classes
+      ord <- c(ref_idx, seq_len(T_)[-ref_idx])
+      raw$u_post <- raw$u_post[, ord, drop = FALSE]
+    }
+    raw
   } else {
-    list(Y.exp = Y.obs, mDesign = mDesign, ivItemcat = ivItemcat)
+    list(Y.exp = Y.obs, mDesign = mDesign, ivItemcat = ivItemcat, u_post = NULL)
   }
 
   #For covariate estimation
@@ -2725,8 +2731,22 @@ vcov.tseLCA_measurement <- function(object, boundary.tol = 1e-2, ...) {
   }
 
   # ---- Compute Varmat from mU if available, else return NULL -----------------
+  # fit0 is already rebased, but mU retains the original class column ordering.
+  # Use stored ref_idx to reorder u_post columns to match rebased fit0.
+  ref_idx <- if (!is.null(object$measurement_model$ref_idx)) {
+    object$measurement_model$ref_idx
+  } else {
+    1L
+  }
+
   step1_Y <- if (!is.null(fit0$mU)) {
-    extract_Y_from_mU(fit0, ivItemcat)
+    raw <- extract_Y_from_mU(fit0, ivItemcat)
+    if (ref_idx != 1L) {
+      T_ <- length(fit0$vPi)
+      ord <- c(ref_idx, seq_len(T_)[-ref_idx])
+      raw$u_post <- raw$u_post[, ord, drop = FALSE]
+    }
+    raw
   } else {
     message(
       "vcov.tseLCA_measurement: fit0$mU not found. ",
