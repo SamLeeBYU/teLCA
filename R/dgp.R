@@ -51,10 +51,10 @@ bk2018_params <- list(
   # Intercepts b02 ~ 2.3446, b03 ~ -3.6554 are the unique solution to
   # colMeans(P(X|Zp)) = (1/3, 1/3, 1/3) for Zp ~ Uniform\{1..5\} and slopes
   # b = (0, -1, 1).  Derived once by numerical optimisation; hardcoded here
-  # so the package does not run an optimiser at load time.
+  # so the package does not run an optimizer at load time.
   covariate_params = list(
-    b0 = c(0, 2.3445911086, -3.6553700529), # intercepts (ref class = 0)
-    b = c(0, -1, 1) # slopes     (ref class = 0)
+    b0 = c(0, 2.3445911086, -3.6553700529), # intercepts (ref class = 1)
+    b = c(0, -1, 1) # slopes     (ref class = 1)
   ),
 
   distal_params = list(
@@ -72,12 +72,12 @@ bk2018_params <- list(
 #'
 #' The three-class structure is:
 #' \itemize{
-#'   \item Class 1: `pi` on all 6 items (high responders).
-#'   \item Class 2: `pi` on items 1-3, `1 - pi` on items 4-6 (mixed).
-#'   \item Class 3: `1 - pi` on all 6 items (low responders).
+#'   \item Class 1: `pi_` on all 6 items (high responders).
+#'   \item Class 2: `pi_` on items 1-3, `1 - pi_` on items 4-6 (mixed).
+#'   \item Class 3: `1 - pi_` on all 6 items (low responders).
 #' }
 #'
-#' @param pi Numeric scalar in (0.5, 1). Probability of the "likely" response.
+#' @param pi_ Numeric scalar in (0.5, 1). Probability of the "likely" response.
 #'   Use `bk2018_params$separation_levels` for the three simulation levels.
 #'
 #' @return A 3 x 6 numeric matrix.
@@ -88,14 +88,14 @@ bk2018_params <- list(
 #' # Low separation
 #' make_rho(0.7)
 #' @export
-make_rho <- function(pi) {
-  if (!is.numeric(pi) || length(pi) != 1L || pi <= 0.5 || pi >= 1) {
-    stop("`pi` must be a single numeric value in (0.5, 1).", call. = FALSE)
+make_rho <- function(pi_) {
+  if (!is.numeric(pi_) || length(pi_) != 1L || pi_ <= 0.5 || pi_ >= 1) {
+    stop("`pi_` must be a single numeric value in (0.5, 1).", call. = FALSE)
   }
-  p_low <- 1 - pi
+  p_low <- 1 - pi_
   rbind(
-    class1 = rep(pi, 6),
-    class2 = c(rep(pi, 3), rep(p_low, 3)),
+    class1 = rep(pi_, 6),
+    class2 = c(rep(pi_, 3), rep(p_low, 3)),
     class3 = rep(p_low, 6)
   )
 }
@@ -103,45 +103,57 @@ make_rho <- function(pi) {
 
 # -- Structural model helpers --------------------------------------------------
 
-#' Compute multinomial logistic class probabilities given a covariate
+#' Compute multinomial logistic class probabilities given covariates
 #'
 #' Evaluates P(X = t | Zp) for each observation using a multinomial logit
-#' with one covariate and class-specific intercepts and slopes.
+#' with one or more covariates and class-specific intercepts and slopes.
 #'
-#' @param Zp     Numeric vector of length n. Covariate values.
+#' @param Zp Numeric vector of length n, or numeric matrix of dimension
+#'   n x P, where P is the number of covariates.  A vector is treated as a
+#'   single covariate (P = 1).
 #' @param params List with elements `$b0` (length-T intercepts, reference = 0)
-#'   and `$b` (length-T slopes, reference = 0).  See `bk2018_params$covariate_params`.
+#'   and `$b` (length-T slopes when P = 1, or P x T slope matrix when P > 1,
+#'   reference class = 1).  See `bk2018_params$covariate_params`.
 #'
 #' @return An n x T matrix of class probabilities (rows sum to 1).
 #' @examples
-#' # Class membership probabilities for Zp = 1..5
+#' # Single covariate: class membership probabilities for Zp = 1..5
 #' mnl_probs(1:5, bk2018_params$covariate_params)
+#'
+#' # Multiple covariates (n = 5, P = 2)
+#' Zp_mat <- matrix(rnorm(10), nrow = 5, ncol = 2)
+#' params2 <- list(b0 = c(0, 0.5, -0.5), b = matrix(rnorm(6), nrow = 2, ncol = 3))
+#' mnl_probs(Zp_mat, params2)
 #' @export
 mnl_probs <- function(Zp, params) {
-  n <- length(Zp)
+  if (is.vector(Zp)) {
+    Zp <- matrix(Zp, ncol = 1L)
+  }
+  n <- nrow(Zp)
   T_ <- length(params$b0)
-  eta <- outer(Zp, params$b) +
+  B <- matrix(params$b, nrow = ncol(Zp), ncol = T_) # P x T
+  eta <- Zp %*%
+    B + # n x T
     matrix(params$b0, nrow = n, ncol = T_, byrow = TRUE)
   eta <- eta - apply(eta, 1L, max) # numerical stability
   exp_eta <- exp(eta)
   exp_eta / rowSums(exp_eta) # n x T
 }
 
-
 # -- Drawing functions ---------------------------------------------------------
 
 #' Draw latent class memberships from their marginal distribution
 #'
 #' @param n  Integer. Sample size.
-#' @param pi Numeric vector of length T. Class proportions (must sum to 1).
+#' @param pi_ Numeric vector of length T. Class proportions (must sum to 1).
 #'
 #' @return Integer vector of length n with values in `1:T`.
 #' @examples
 #' # Draw 100 class labels from equal prevalences
 #' draw_classes(100, c(1/3, 1/3, 1/3))
 #' @export
-draw_classes <- function(n, pi) {
-  sample(seq_along(pi), size = n, replace = TRUE, prob = pi)
+draw_classes <- function(n, pi_) {
+  sample(seq_along(pi_), size = n, replace = TRUE, prob = pi)
 }
 
 
@@ -157,12 +169,12 @@ draw_classes <- function(n, pi) {
 #' draw_indicators(X, rho)
 #' @export
 draw_indicators <- function(X, rho) {
-  n <- length(X)
-  K <- ncol(rho)
-  Y <- matrix(NA_integer_, nrow = n, ncol = K)
-  for (i in seq_len(n)) {
-    Y[i, ] <- rbinom(K, size = 1L, prob = rho[X[i], ])
-  }
+  prob_mat <- rho[X, ] # n x K, P(Y_k=1|X_i) for each obs
+  Y <- matrix(
+    rbinom(length(prob_mat), size = 1L, prob = prob_mat),
+    nrow = length(X)
+  )
+  storage.mode(Y) <- "integer"
   Y
 }
 
@@ -188,19 +200,16 @@ draw_Zp <- function(n) {
 #'
 #' @return Integer vector of length n with class labels in `1:T`.
 #' @examples
-#' Zp <- draw_Zp(100)
+#' Zp <- draw_Zp(1000)
 #' X  <- draw_classes_given_Zp(Zp, bk2018_params$covariate_params)
-#' table(X)
+#' table(X) # Should be roughly uniform
 #' @export
 draw_classes_given_Zp <- function(Zp, params) {
   probs <- mnl_probs(Zp, params) # n x T
-  vapply(
-    seq_len(nrow(probs)),
-    function(i) sample(ncol(probs), 1L, prob = probs[i, ]),
-    integer(1L)
-  )
+  cdf <- t(apply(probs, 1L, cumsum))
+  u <- runif(nrow(probs))
+  .rowSums(u < cdf, nrow(cdf), ncol(cdf)) + 1L # first class where U < CDF
 }
-
 
 #' Draw a continuous distal outcome given true class memberships (scenario "distal")
 #'
