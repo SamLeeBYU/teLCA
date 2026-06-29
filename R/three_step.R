@@ -963,6 +963,7 @@ lca_step3 <- function(
 #'
 #' @return List with \code{$Infomat}, \code{$Varmat}, \code{$SEs},
 #'   \code{$mScore}.
+#' @keywords internal
 lca_indiv_varmat <- function(
   Y.exp,
   mDesign.exp,
@@ -1405,8 +1406,23 @@ lca_vcov_distal <- function(
 #'   estimation of structural models for latent classes. *Multivariate
 #'   Behavioral Research*. \doi{10.1080/00273171.2025.2473935}
 #'
-#' @return A list containing `$measurement_model`, `$covariate` (if
-#'   `Zp.names` supplied), and/or `$distal` (if `Zo.name` supplied).
+#' @return An S3 object of class `tseLCA` with subclass depending on which
+#'   models were estimated:
+#'   \describe{
+#'     \item{`tseLCA_measurement`}{Measurement model only. Contains
+#'       `$measurement_model`, `$llik`, `$AIC`, `$BIC`, `$R2entr`,
+#'       `$n_classes`, `$posteriors` (N x T soft posterior matrix),
+#'       `$classifications` (length-N modal class vector).}
+#'     \item{`tseLCA_covariate`}{Covariate model. Adds `$three_step` (gamma
+#'       coefficient matrix), `$three_step_vcov`, `$two_step`,
+#'       `$two_step_vcov`, `$estimator`, `$entropy.R2` (covariate-adjusted
+#'       entropy R^2), `$posteriors`, `$classifications`.}
+#'     \item{`tseLCA_distal`}{Distal outcome model. Contains `$three_step`
+#'       (class means or log-rates), `$three_step_vcov`, `$family`,
+#'       `$estimator`, `$posteriors`, `$classifications`.}
+#'     \item{`tseLCA_both`}{Both models. Top-level `$covariate` and `$distal`
+#'       sub-lists plus shared `$posteriors`, `$classifications`, `$estimator`.}
+#'   }
 #' @examples
 #' d <- generate_data(n = 200, separation = "high",
 #'                    scenario = "covariate", seed = 1)
@@ -1563,8 +1579,24 @@ three_step <- function(
   keep_step3_Z0_in_Y <- cd$keep_step3_Z0_in_Y
   keep_step3_Z0 <- cd$keep_step3_Z0
 
+  # Augment s1 with Y.names and ivItemcat so vcov.tseLCA_measurement can
+  # build named rows/columns. Done before early return so measurement-only
+  # fits also carry this metadata.
+  s1$Y.names <- Y.names
+  s1$ivItemcat <- ivItemcat
+
   # -- Early return if no covariates -------------------------------------------
   if (is.null(Zp.names) && is.null(Zo.name)) {
+    # Extract posteriors and modal classifications from fit0$mU
+    mU_posts <- if (!is.null(s1$fit0$mU)) {
+      K_total <- sum(ivItemcat)
+      n_mU_Y <- sum(ifelse(ivItemcat == 2L, 1L, ivItemcat))
+      posts <- s1$fit0$mU[, (n_mU_Y + 1L):(n_mU_Y + n_classes), drop = FALSE]
+      mode(posts) <- "double"
+      posts
+    } else {
+      NULL
+    }
     return(structure(
       list(
         measurement_model = s1,
@@ -1572,7 +1604,9 @@ three_step <- function(
         AIC = s1$fit0$AIC,
         BIC = s1$fit0$BIC,
         R2entr = s1$fit0$R2entr,
-        n_classes = n_classes
+        n_classes = n_classes,
+        posteriors = mU_posts,
+        classifications = if (!is.null(mU_posts)) max.col(mU_posts) else NULL
       ),
       class = c("tseLCA_measurement", "tseLCA")
     ))
@@ -1943,6 +1977,38 @@ three_step <- function(
       NULL
     }
 
+    # -- Covariate-adjusted entropy R^2 ------------------------------------------
+    # Measures how much the items reduce classification uncertainty *beyond*
+    # what the covariates already explain.
+    #   error_prior = H(X|Z):   average entropy of P(X|Z_i) under fitted gamma
+    #   error_post  = H(X|Y,Z): average entropy of P(X|Y_i,Z_i), recomputed
+    #                            with the covariate-adjusted prior via
+    #                            compute_pwx_adj (soft posterior assignment)
+    #   R^2 = (H(X|Z) - H(X|Y,Z)) / H(X|Z)
+    .h <- function(p) {
+      p <- p[p > sqrt(.Machine$double.eps)]
+      -sum(p * log(p))
+    }
+    pi_adj_cov <- p.xz(matrix(s3$res$par, ncol = T - 1L)) # N x T
+
+    error_prior <- mean(apply(pi_adj_cov, 1L, .h))
+
+    adj_res <- compute_pwx_adj(
+      Y.obs = Y_cc,
+      fit0 = fit0,
+      ivItemcat = ivItemcat,
+      mDesign = mDes_cc,
+      use.modal.assignment = FALSE,
+      pi_adj = pi_adj_cov
+    )
+    error_post <- mean(apply(adj_res$post, 1L, .h))
+
+    entropy.R2 <- if (error_prior > 1e-8) {
+      (error_prior - error_post) / error_prior
+    } else {
+      1.0 # covariates already explain all class membership
+    }
+
     s3.covariate <- structure(
       list(
         measurement_model = s1,
@@ -1956,7 +2022,10 @@ three_step <- function(
         AIC = total.AIC,
         BIC = total.BIC,
         n_classes = T,
-        estimator = if (use.bch) "BCH" else "ML"
+        estimator = if (use.bch) "BCH" else "ML",
+        entropy.R2 = entropy.R2,
+        posteriors = s2$p.xy,
+        classifications = max.col(s2$p.xy)
       ),
       class = c("tseLCA_covariate", "tseLCA")
     )
@@ -2168,6 +2237,8 @@ three_step <- function(
     out$family <- family
     out$n_classes <- T
     out$estimator <- if (use.bch) "BCH" else "ML"
+    out$posteriors <- s2$p.xy
+    out$classifications <- max.col(s2$p.xy)
     class(out) <- c("tseLCA_distal", "tseLCA")
     return(out)
   }
@@ -2181,7 +2252,9 @@ three_step <- function(
     distal = s3.distal.list,
     family = family,
     n_classes = T,
-    estimator = if (use.bch) "BCH" else "ML"
+    estimator = if (use.bch) "BCH" else "ML",
+    posteriors = s2$p.xy,
+    classifications = max.col(s2$p.xy)
   )
   class(out) <- c("tseLCA_both", "tseLCA")
   return(out)
@@ -2320,6 +2393,9 @@ print.tseLCA_covariate <- function(x, digits = 4, ...) {
     x$AIC,
     x$BIC
   ))
+  if (!is.null(x$entropy.R2)) {
+    cat(sprintf("  Entropy R\u00b2 (covariate-adjusted): %.4f\n", x$entropy.R2))
+  }
   cat("\nCovariate coefficients (three-step):\n")
   .print_table(.covariate_table(x), digits = digits)
   invisible(x)
@@ -2426,6 +2502,12 @@ summary.tseLCA_covariate <- function(object, digits = 4, ...) {
   cat(sprintf("Log-likelihood : %.4f\n", object$llik))
   cat(sprintf("AIC            : %.4f\n", object$AIC))
   cat(sprintf("BIC            : %.4f\n", object$BIC))
+  if (!is.null(object$entropy.R2)) {
+    cat(sprintf(
+      "Entropy R\u00b2     : %.4f  (covariate-adjusted)\n",
+      object$entropy.R2
+    ))
+  }
 
   if (!is.null(object$two_step)) {
     ts <- object$two_step
@@ -2602,24 +2684,113 @@ coef.tseLCA_both <- function(
 
 #' Extract the variance-covariance matrix from a tseLCA model object
 #'
+#' For measurement models, returns the BHHH variance-covariance matrix in
+#' the unconstrained log-ratio parameterisation (NOT the probability scale).
+#' Row and column names identify each parameter as
+#' `log(pi_t/pi_1)` (class prevalences) or
+#' `log(P(Y=k|C_t)/P(Y=0|C_t))` (item-response probabilities).
+#' An attribute `"parameterisation"` is attached to remind the user of the
+#' scale.
+#'
 #' @param object A `tseLCA` object returned by [tseLCA::three_step()].
+#' @param boundary.tol Scalar. Parameters within this tolerance of 0 or 1
+#'   are treated as fixed. Default \code{1e-2}.
 #' @param which Character. `"three_step"` (default) or `"two_step"` for
 #'   covariate models; `"covariate"`, `"distal"`, or `"both"` for both models.
 #' @param step  Character. For `tseLCA_both`: `"three_step"` (default) or
 #'   `"two_step"`.
 #' @param ... Further arguments (currently unused).
-#' @return A named square matrix. The two-step vcov is only available when
-#'   `get.twostep.vcov = TRUE` was set in [tseLCA::three_step()].
+#' @return A named square matrix in the unconstrained log-ratio
+#'   parameterisation. Row/column names identify each parameter as
+#'   `log(pi_t/pi_1)` or `log(P(Y=k|C_t)/P(Y=0|C_t))`. An attribute
+#'   `"parameterisation"` is attached as a reminder. Returns `NULL`
+#'   invisibly if `fit0$mU` is not available. For structural models,
+#'   returns the Step-3 vcov matrix; the two-step vcov is only available
+#'   when `get.twostep.vcov = TRUE`.
 #' @examples
 #' d    <- generate_data(100, "high", "covariate", seed = 1)
 #' fit_m <- three_step(d, paste0("Y", 1:6), n_classes = 3)
-#' vcov(fit_m)   # returns NULL with a message
+#' V <- vcov(fit_m)
+#' # Names show log-ratio parameterisation:
+#' rownames(V)
+#' attr(V, "parameterisation")
 #' @export
-vcov.tseLCA_measurement <- function(object, ...) {
-  message(
-    "No variance-covariance matrix available for measurement-only models."
-  )
-  invisible(NULL)
+vcov.tseLCA_measurement <- function(object, boundary.tol = 1e-2, ...) {
+  fit0 <- object$measurement_model$fit0
+  ivItemcat <- object$measurement_model$ivItemcat
+  Y.names <- object$measurement_model$Y.names
+
+  if (is.null(fit0)) {
+    stop("No fit0 found in measurement_model.", call. = FALSE)
+  }
+
+  # ---- Compute Varmat from mU if available, else return NULL -----------------
+  step1_Y <- if (!is.null(fit0$mU)) {
+    extract_Y_from_mU(fit0, ivItemcat)
+  } else {
+    message(
+      "vcov.tseLCA_measurement: fit0$mU not found. ",
+      "Re-estimate with multilevLCA to obtain the measurement vcov."
+    )
+    return(invisible(NULL))
+  }
+
+  V <- lca_indiv_varmat(
+    step1_Y$Y.exp,
+    step1_Y$mDesign,
+    fit0,
+    step1_Y$ivItemcat,
+    boundary.tol = boundary.tol,
+    u_post = step1_Y$u_post
+  )$Varmat
+
+  # ---- Build parameter names -------------------------------------------------
+  # Parameter ordering matches lca_indiv_varmat:
+  #   Pi block   (T-1 params): log(pi_t / pi_1),  t = 2..T
+  #   Phi block  (n_free_phi * T params, class-major):
+  #     for t=1..T: for each item h, log(P(Y=k|C_t) / P(Y=0|C_t)), k=1..K_h-1
+  #
+  # Note: parameters are log-ratio transforms of the probability parameters,
+  # NOT the probabilities themselves.
+
+  T <- length(fit0$vPi)
+  H <- length(ivItemcat)
+  classes <- paste0("C", seq_len(T))
+
+  # Pi names: log(pi_t/pi_1) for t=2..T
+  pi_names <- paste0("log(pi_", classes[-1L], "/pi_", classes[1L], ")")
+
+  # Phi names per item: log(P(Y=k|C_t)/P(Y=0|C_t)) for free k, all classes
+  item_labels <- if (!is.null(Y.names)) Y.names else paste0("Y", seq_len(H))
+
+  phi_names <- character(0L)
+  for (t in seq_len(T)) {
+    for (h in seq_len(H)) {
+      K_h <- ivItemcat[h]
+      for (k in seq_len(K_h - 1L)) {
+        phi_names <- c(
+          phi_names,
+          sprintf(
+            "log(P(%s=%d|%s)/P(%s=0|%s))",
+            item_labels[h],
+            k,
+            classes[t],
+            item_labels[h],
+            classes[t]
+          )
+        )
+      }
+    }
+  }
+
+  all_names <- c(pi_names, phi_names)
+  rownames(V) <- all_names
+  colnames(V) <- all_names
+
+  attr(V, "parameterisation") <-
+    "log-ratio (unconstrained); NOT probabilities"
+
+  V
 }
 
 #' @rdname vcov.tseLCA_measurement

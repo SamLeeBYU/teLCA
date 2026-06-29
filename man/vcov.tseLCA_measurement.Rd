@@ -7,7 +7,7 @@
 \alias{vcov.tseLCA_both}
 \title{Extract the variance-covariance matrix from a tseLCA model object}
 \usage{
-\method{vcov}{tseLCA_measurement}(object, ...)
+\method{vcov}{tseLCA_measurement}(object, boundary.tol = 0.01, ...)
 
 \method{vcov}{tseLCA_covariate}(object, which = c("three_step", "two_step"), ...)
 
@@ -23,6 +23,9 @@
 \arguments{
 \item{object}{A \code{tseLCA} object returned by \code{\link[=three_step]{three_step()}}.}
 
+\item{boundary.tol}{Scalar. Parameters within this tolerance of 0 or 1
+are treated as fixed. Default \code{1e-2}.}
+
 \item{...}{Further arguments (currently unused).}
 
 \item{which}{Character. \code{"three_step"} (default) or \code{"two_step"} for
@@ -32,16 +35,30 @@ covariate models; \code{"covariate"}, \code{"distal"}, or \code{"both"} for both
 \code{"two_step"}.}
 }
 \value{
-A named square matrix. The two-step vcov is only available when
-\code{get.twostep.vcov = TRUE} was set in \code{\link[=three_step]{three_step()}}.
+A named square matrix in the unconstrained log-ratio
+parameterisation. Row/column names identify each parameter as
+\code{log(pi_t/pi_1)} or \code{log(P(Y=k|C_t)/P(Y=0|C_t))}. An attribute
+\code{"parameterisation"} is attached as a reminder. Returns \code{NULL}
+invisibly if \code{fit0$mU} is not available. For structural models,
+returns the Step-3 vcov matrix; the two-step vcov is only available
+when \code{get.twostep.vcov = TRUE}.
 }
 \description{
-Extract the variance-covariance matrix from a tseLCA model object
+For measurement models, returns the BHHH variance-covariance matrix in
+the unconstrained log-ratio parameterisation (NOT the probability scale).
+Row and column names identify each parameter as
+\code{log(pi_t/pi_1)} (class prevalences) or
+\code{log(P(Y=k|C_t)/P(Y=0|C_t))} (item-response probabilities).
+An attribute \code{"parameterisation"} is attached to remind the user of the
+scale.
 }
 \examples{
 d    <- generate_data(100, "high", "covariate", seed = 1)
 fit_m <- three_step(d, paste0("Y", 1:6), n_classes = 3)
-vcov(fit_m)   # returns NULL with a message
+V <- vcov(fit_m)
+# Names show log-ratio parameterisation:
+rownames(V)
+attr(V, "parameterisation")
 \donttest{
 d   <- generate_data(200, "high", "covariate", seed = 1)
 fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,

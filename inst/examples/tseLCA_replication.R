@@ -144,7 +144,7 @@ message(
 
 #Three-step estimation can be done with one tseLCA function call
 #This estimates the measurement model if one is not provided
-# (can be turned off with use.two.step=FALSE)
+# (two-step estimation for initial values for three-step estimation can be turned off with use.two.step=FALSE)
 d.three_step <- three_step(
   data = d,
   Y.names = paste0("Y", 1:6),

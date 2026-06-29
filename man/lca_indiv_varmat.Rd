@@ -78,3 +78,4 @@ The score in unconstrained space is
 \eqn{s_{it} = u_{it}(y_i - d_i \circ p_{it})},
 where \eqn{d_i} is the missing-data design indicator matrix.
 }
+\keyword{internal}

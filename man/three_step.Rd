@@ -89,8 +89,23 @@ becomes column 1 before any structural estimation. Default \code{"C1"}.}
 \item{verbose}{Logical. Print progress messages.}
 }
 \value{
-A list containing \verb{$measurement_model}, \verb{$covariate} (if
-\code{Zp.names} supplied), and/or \verb{$distal} (if \code{Zo.name} supplied).
+An S3 object of class \code{tseLCA} with subclass depending on which
+models were estimated:
+\describe{
+\item{\code{tseLCA_measurement}}{Measurement model only. Contains
+\verb{$measurement_model}, \verb{$llik}, \verb{$AIC}, \verb{$BIC}, \verb{$R2entr},
+\verb{$n_classes}, \verb{$posteriors} (N x T soft posterior matrix),
+\verb{$classifications} (length-N modal class vector).}
+\item{\code{tseLCA_covariate}}{Covariate model. Adds \verb{$three_step} (gamma
+coefficient matrix), \verb{$three_step_vcov}, \verb{$two_step},
+\verb{$two_step_vcov}, \verb{$estimator}, \verb{$entropy.R2} (covariate-adjusted
+entropy R^2), \verb{$posteriors}, \verb{$classifications}.}
+\item{\code{tseLCA_distal}}{Distal outcome model. Contains \verb{$three_step}
+(class means or log-rates), \verb{$three_step_vcov}, \verb{$family},
+\verb{$estimator}, \verb{$posteriors}, \verb{$classifications}.}
+\item{\code{tseLCA_both}}{Both models. Top-level \verb{$covariate} and \verb{$distal}
+sub-lists plus shared \verb{$posteriors}, \verb{$classifications}, \verb{$estimator}.}
+}
 }
 \description{
 Three-step LCA estimation with covariates and/or distal outcomes
