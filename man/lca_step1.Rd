@@ -32,27 +32,26 @@ lca_step1(
 
 \item{Zp.names}{Character vector of covariate column names, or \code{NULL}.}
 
-\item{maxIter.measurement}{Maximum EM iterations. Default \code{5000L}.}
+\item{maxIter.measurement}{Maximum EM iterations before giving up on convergence. Default \code{5000L}.}
 
 \item{measurement.tol}{Convergence tolerance. Default \code{1e-8}.}
 
-\item{covariate.tol}{Convergence tolerance for the \code{fitZ} BFGS M-step.}
+\item{covariate.tol}{Convergence tolerance for the \code{fitZ} M-step. Default \code{1e-6}.}
 
-\item{iter.measurement}{Number of random restarts when entropy R\eqn{^2} is low.}
+\item{iter.measurement}{Number of random restarts when entropy R\eqn{^2} is low. Default \code{10}.}
 
-\item{R2.threshold}{Entropy R\eqn{^2} below which restarts are triggered.}
+\item{R2.threshold}{Entropy R\eqn{^2} below which restarts are triggered. Default \code{0.7}.}
 
-\item{use.two.step}{Logical. If \code{TRUE}, also estimate \code{fitZ} via
-\code{fitZ_from_fit0()}.}
+\item{use.two.step}{Logical. If \code{TRUE}, also estimate \code{fitZ} with \code{fitZ_from_fit0()} if \code{Zp.names} is applied. Default \code{TRUE}.}
 
-\item{estimate.one.step}{Logical. If \code{FALSE}, skip the unconditional EM and
-only compute \code{fitZ}.}
+\item{estimate.one.step}{Logical. If \code{FALSE}, skip the unconditional EM and only compute \code{fitZ}. Default \code{TRUE}.}
 
-\item{incomplete}{Logical. FIML for partially missing indicators.}
+\item{incomplete}{Logical. FIML for partially missing indicators. See the
+\code{Missing Data} section of \code{vignette("tseLCA", package = "tseLCA")}. Default \code{FALSE}.}
 
-\item{maxIter.fitZ}{Maximum BFGS-EM iterations for \code{fitZ_from_fit0()}.}
+\item{maxIter.fitZ}{Maximum EM iterations for \code{fitZ_from_fit0()}. Default \code{200}.}
 
-\item{include.intercept}{Logical. Prepend intercept to covariate design matrix.}
+\item{include.intercept}{Logical. Prepend intercept to covariate design matrix. Default \code{TRUE}.}
 
 \item{rebase}{Character or integer specifying the reference latent class.
 Use \code{"C1"}, \code{"C2"}, etc. or an integer index. Default \code{"C1"}. The
@@ -62,13 +61,13 @@ the reference for all downstream multinomial logit parameterizations.}
 \item{verbose}{Logical. Print progress messages. Default \code{FALSE}.}
 }
 \value{
-A list with \verb{$fit0} (multilevLCA measurement model) and \verb{$fitZ}
-(two-step covariate model from \code{fitZ_from_fit0}, or \code{NULL}).
+A list with \verb{$fit0} (\code{\link[multilevLCA:multiLCA]{multilevLCA::multiLCA()}} measurement model) and \verb{$fitZ}
+(two-step covariate model from \code{\link[=fitZ_from_fit0]{fitZ_from_fit0()}}, or \code{NULL}).
 }
 \description{
-Estimates the latent class measurement model via \pkg{multilevLCA} and,
+Estimates the latent class measurement model with \pkg{multilevLCA} and
 optionally, fixes \code{mPhi} and estimates covariate effects (two-step
-initialization) via \code{fitZ_from_fit0()}.
+initialization) with \code{fitZ_from_fit0()}.
 }
 \examples{
 \donttest{

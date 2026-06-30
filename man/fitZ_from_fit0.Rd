@@ -27,13 +27,14 @@ fitZ_from_fit0(
 
 \item{Zp.names}{Character vector of covariate column names.}
 
-\item{tol}{Convergence tolerance.}
+\item{tol}{Convergence tolerance. Default \code{1e-6}.}
 
-\item{maxIter}{Maximum EM iterations.}
+\item{maxIter}{Maximum EM iterations. Default \code{200}.}
 
-\item{incomplete}{Logical.}
+\item{incomplete}{Logical. FIML for partially missing indicators. See the
+\code{Missing Data} section of \code{vignette("tseLCA", package = "tseLCA")}. Default \code{FALSE}.}
 
-\item{include.intercept}{Logical.}
+\item{include.intercept}{Logical. Prepend intercept to covariate design matrix. Default \code{TRUE}.}
 
 \item{rebase}{Character or integer. Reference class for the multinomial logit
 parameterization (e.g. \code{"C1"}, \code{"C2"}, or an integer). Default \code{"C1"}.
@@ -45,8 +46,26 @@ is consistent.}
 \item{verbose}{Logical. Print convergence messages. Default \code{FALSE}.}
 }
 \value{
-A list with \verb{$mGamma} (Q x (T-1)), \verb{$mPhi}, \verb{$vOmega},
-\verb{$LLKSeries}, \verb{$converged}, \verb{$n_obs}.
+A list with the following elements:
+\describe{
+\item{\code{mGamma}}{Q x (T-1) numeric matrix of multinomial logit
+coefficients, where Q is the number of columns in the covariate design
+matrix (including intercept if \code{include.intercept = TRUE}). Rows are
+named by covariate, columns by non-reference class (e.g. \code{"C2"},
+\code{"C3"}).}
+\item{\code{mPhi}}{Expanded item parameter matrix (items x classes), fixed at
+\code{fit0$mPhi} throughout estimation.}
+\item{\code{vOmega}}{Length-T vector of marginal class proportions implied by
+the final \code{mGamma}, computed as column means of the fitted class
+probability matrix.}
+\item{\code{LLKSeries}}{Single-column matrix of observed-data log-likelihoods,
+one row per EM iteration. Useful for diagnosing convergence.}
+\item{\code{converged}}{Logical. \code{TRUE} if the EM loop exited before
+\code{maxIter} iterations or if the final log-likelihood change was below
+\code{tol}.}
+\item{\code{n_obs}}{Integer. Number of observations used in estimation after
+listwise deletion on covariates.}
+}
 }
 \description{
 Fixes \code{mPhi} at \code{fit0$mPhi} and estimates multinomial logit coefficients

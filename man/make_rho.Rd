@@ -4,10 +4,10 @@
 \alias{make_rho}
 \title{Build the item-response probability matrix for the simulation}
 \usage{
-make_rho(pi)
+make_rho(pi_)
 }
 \arguments{
-\item{pi}{Numeric scalar in (0.5, 1). Probability of the "likely" response.
+\item{pi_}{Numeric scalar in (0.5, 1). Probability of the "likely" response.
 Use \code{bk2018_params$separation_levels} for the three simulation levels.}
 }
 \value{
@@ -19,9 +19,9 @@ Returns a T x K matrix \code{rho} where \verb{rho[t, k] = P(Y_k = 1 | X = t)}.
 \details{
 The three-class structure is:
 \itemize{
-\item Class 1: \code{pi} on all 6 items (high responders).
-\item Class 2: \code{pi} on items 1-3, \code{1 - pi} on items 4-6 (mixed).
-\item Class 3: \code{1 - pi} on all 6 items (low responders).
+\item Class 1: \code{pi_} on all 6 items (high responders).
+\item Class 2: \code{pi_} on items 1-3, \code{1 - pi_} on items 4-6 (mixed).
+\item Class 3: \code{1 - pi_} on all 6 items (low responders).
 }
 }
 \examples{

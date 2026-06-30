@@ -2,7 +2,7 @@
 % Please edit documentation in R/three_step.R
 \name{lca_indiv_varmat}
 \alias{lca_indiv_varmat}
-\title{Individual-level BHHH Varmat for binary and polytomous LCA}
+\title{Individual-level BHHH variance matrix for binary and polytomous LCA}
 \usage{
 lca_indiv_varmat(
   Y.exp,
@@ -15,19 +15,20 @@ lca_indiv_varmat(
 )
 }
 \arguments{
-\item{Y.exp}{Expanded one-hot matrix (N x sum(K_h)).}
+\item{Y.exp}{N x sum(K_h) expanded one-hot indicator matrix.}
 
-\item{mDesign.exp}{Expanded design matrix (same dims), or \code{NULL}.}
+\item{mDesign.exp}{Expanded design matrix (same dimensions as \code{Y.exp}),
+or \code{NULL} for complete data.}
 
-\item{fit0}{Step-1 fit with \code{$vPi} and \code{$mPhi}.}
+\item{fit0}{Step-1 fit object with \code{$vPi} and \code{$mPhi}.}
 
 \item{ivItemcat}{Integer vector of category counts per item.}
 
 \item{boundary.tol}{Scalar tolerance for boundary detection. Default
 \code{1e-2}.}
 
-\item{use.freq}{Collapse duplicate score rows before cross-product.
-Default \code{TRUE}.}
+\item{use.freq}{Logical. Collapse duplicate score rows before computing
+the cross-product, weighting by frequency. Default \code{TRUE}.}
 
 \item{u_post}{Optional N x T matrix of posterior class probabilities.
 When supplied (e.g. extracted from \code{fit0$mU} via
@@ -35,38 +36,21 @@ When supplied (e.g. extracted from \code{fit0$mU} via
 Default \code{NULL}.}
 }
 \value{
-A list containing \code{Infomat}, \code{Varmat},
-\code{SEs}, and the individual score matrix \code{mScore}.
-Individual-level BHHH Varmat for binary and polytomous LCA
-
-Computes the outer-product (BHHH) information matrix and variance-covariance
-matrix for LCA measurement model parameters in the unconstrained
-(logit/log-ratio) space.
-
-Assumes \code{fit0$mPhi} has the following structure (from multilevLCA):
-\itemize{
-\item Dichotomous item h (\code{ivItemcat[h] == 2}): 1 row =
-\eqn{P(Y=1|C)}. The base level \eqn{P(Y=0|C)} is excluded.
-\item Polytomous item h (\code{ivItemcat[h] > 2}): \code{K_h} rows =
-\eqn{P(Y=0|C), \ldots, P(Y=K_h-1|C)}. The base level IS included.
+A list with the following elements:
+\describe{
+\item{\code{Infomat}}{Square BHHH information matrix of dimension p x p,
+where p = (T-1) + sum(ivItemcat - 1) * T is the total number of free
+parameters. Boundary parameters have zero rows and columns.}
+\item{\code{Varmat}}{Inverse of \code{Infomat} divided by N, giving the
+asymptotic variance-covariance matrix on the same scale as
+\pkg{multilevLCA}'s \code{$Varmat}. Boundary parameters have zero
+rows and columns.}
+\item{\code{SEs}}{Numeric vector of length p. Square root of the diagonal of
+\code{Varmat}; zero for boundary parameters.}
+\item{\code{mScore}}{N x p matrix of individual score contributions in the
+unconstrained parameterization, used for sandwich variance propagation
+in \code{lca_vcov} and \code{lca_vcov_distal}.}
 }
-\code{expand_Y} produces one-hot columns in the same order so that
-\code{expand_Phi(fit0$mPhi, ivItemcat)} aligns column-wise with
-\code{expand_Y(mY, ivItemcat)}.
-
-Free (estimable) parameters per item:
-\itemize{
-\item Dichotomous: the single row of \code{mPhi} (\eqn{P(Y=1|C)}).
-\item Polytomous: rows 2..K_h of \code{mPhi} (\eqn{P(Y=1|C), \ldots}).
-Row 1 (\eqn{P(Y=0|C)}) is the reference and is not a free parameter.
-}
-
-Boundary parameters (within \code{boundary.tol} of 0 or 1) are treated as
-fixed: their score columns are zeroed so they do not contribute to the
-information matrix.
-
-List with \code{$Infomat}, \code{$Varmat}, \code{$SEs},
-\code{$mScore}.
 }
 \description{
 Computes the outer-product (BHHH) information matrix and variance-covariance
@@ -77,5 +61,21 @@ matrix for LCA measurement model parameters in the unconstrained
 The score in unconstrained space is
 \eqn{s_{it} = u_{it}(y_i - d_i \circ p_{it})},
 where \eqn{d_i} is the missing-data design indicator matrix.
+
+Assumes \code{fit0$mPhi} follows the \pkg{multilevLCA} storage convention:
+\itemize{
+\item Dichotomous item h (\code{ivItemcat[h] == 2}): 1 row =
+\eqn{P(Y=1|C)}; the base level \eqn{P(Y=0|C)} is excluded.
+\item Polytomous item h (\code{ivItemcat[h] > 2}): \code{K_h} rows =
+\eqn{P(Y=0|C), \ldots, P(Y=K_h-1|C)}; the base level is included.
+}
+\code{expand_Y} produces one-hot columns in the same order so that
+\code{expand_Phi(fit0$mPhi, ivItemcat)} aligns column-wise with
+\code{expand_Y(mY, ivItemcat)}.  Free (estimable) parameters per item are
+the single \eqn{P(Y=1|C)} row for dichotomous items, and rows 2 through
+\eqn{K_h} for polytomous items (row 1, \eqn{P(Y=0|C)}, is the reference).
+Boundary parameters (within \code{boundary.tol} of 0 or 1) are treated as
+fixed: their score columns are zeroed and they do not contribute to the
+information matrix.
 }
 \keyword{internal}

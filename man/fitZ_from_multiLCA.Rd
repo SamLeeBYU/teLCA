@@ -38,7 +38,9 @@ fitZ_from_multiLCA(
 
 \item{R2.threshold}{Entropy R\eqn{^2} restart threshold.}
 
-\item{incomplete}{Logical.}
+\item{incomplete}{Logical. FIML for partially missing indicators. See the
+\code{Missing Data} section of \code{vignette("tseLCA", package = "tseLCA")}.
+Default \code{FALSE}.}
 
 \item{rebase}{Character or integer. Reference class for column naming of
 \verb{$mGamma}. Must match the \code{rebase} used in \code{\link[=three_step]{three_step()}} so
@@ -47,9 +49,23 @@ coefficient labels are consistent. Default \code{"C1"}.}
 \item{verbose}{Logical.}
 }
 \value{
-A list with \verb{$mGamma}, \verb{$mPhi}, \verb{$vOmega}, \verb{$LLKSeries}, and
-\verb{$raw_fit} (the full multilevLCA output, including \verb{$Varmat_cor} and
-\verb{$SEs_cor_gamma} if available).
+A list with the following elements:
+\describe{
+\item{\code{mGamma}}{Q x (T-1) numeric matrix of multinomial logit
+coefficients. Rows are named by covariate (including \code{"Intercept"}),
+columns by non-reference class (e.g. \code{"C2"}, \code{"C3"}).}
+\item{\code{mPhi}}{Item parameter matrix (items x classes) from the
+fixed-parameter multilevLCA fit.}
+\item{\code{vOmega}}{Length-T vector of marginal class proportions, computed
+as the average of the fitted class probability matrix (\code{vPi_avg} in
+multilevLCA output).}
+\item{\code{LLKSeries}}{Matrix of observed-data log-likelihoods across EM
+iterations, passed through directly from the multilevLCA fit.}
+\item{\code{raw_fit}}{The full \code{\link[multilevLCA:multiLCA]{multilevLCA::multiLCA()}} output object,
+including \verb{$Varmat_cor} (corrected variance matrix) and
+\verb{$SEs_cor_gamma} (corrected standard errors for \code{mGamma}) if
+available.}
+}
 }
 \description{
 Calls \code{multilevLCA::multiLCA} with \code{fixedpars = 1} and \code{Z = Zp.names} to

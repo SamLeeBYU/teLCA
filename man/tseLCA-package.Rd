@@ -6,31 +6,36 @@
 \alias{tseLCA-package}
 \title{tseLCA: Three-Step Estimation for Latent Class Analysis}
 \description{
-\strong{tseLCA} implements bias-adjusted three-step estimators for structural
+\pkg{tseLCA} implements bias-adjusted three-step estimators for structural
 latent class models with covariates and distal outcomes. Building on the
-efficient measurement-model estimation procedures in \pkg{multilevLCA},
-\strong{tseLCA} extends existing functionality through modern three-step
-estimators, classification-error corrections, and analytic sandwich
-variance estimation that propagates uncertainty from the latent class
-measurement stage through to the final structural parameter estimates.
+efficient measurement-model estimation in \pkg{multilevLCA} (Lyrvall et al.,
+2025), \pkg{tseLCA} adds modern three-step estimators, classification-error
+corrections, and analytic sandwich variance estimation that propagates
+measurement uncertainty from the latent class measurement stage through to
+the final structural parameter estimates.
+
+In contrast to one-step approaches such as \pkg{poLCA}, where including
+covariates may alter the underlying latent class definitions, three-step
+methods fix the measurement model before estimating structural relationships
+and adjust for classification error at the final stage. \pkg{tseLCA} also
+allows the measurement and structural models to be estimated on different
+datasets, enabling researchers to calibrate a measurement model on a large
+reference sample and apply it to a separate analysis sample.
 }
 \section{The three-step approach}{
 
-Three-step methods separate the latent class model into three stages,
-preserving the measurement structure established during class formation.
-In contrast to one-step approaches (e.g. \pkg{poLCA}), where including
-covariates may alter the underlying latent class definitions, three-step
-methods fix the measurement model before estimating structural relationships
-and adjust for classification error at the final stage.
-
-\describe{
-\item{Step 1}{Estimate the LCA measurement model -- class-conditional
-item-response probabilities and class prevalences estimated with
-\pkg{multilevLCA}.}
-\item{Step 2}{Assign posterior class probabilities and compute the
-T x T misclassification matrix.}
-\item{Step 3}{Estimate the structural model using bias-adjusted weights
-(ML or BCH correction) with sandwich variance estimation.}
+\enumerate{
+\item \strong{Measurement model}: estimate class-conditional
+item-response probabilities \eqn{\phi} and class prevalences \eqn{\pi}
+using \pkg{multilevLCA} (Lyrvall et al., 2025 ).
+\item \strong{Classification-error matrix}: assign posterior class
+probabilities and compute the T x T misclassification matrix
+\eqn{P(W = s \mid X = t)}, with standard errors corrected for
+classification-error propagation (Bakk, Oberski & Vermunt, 2014).
+\item \strong{Structural model}: estimate covariate effects using
+two-step starting values (Bakk & Kuha, 2018) and/or distal outcome (Bakk, Tekle & Vermunt)
+means with either the ML correction (Vermunt, 2010) or the BCH
+correction (Bolck, Croon & Hagenaars, 2004).
 }
 }
 
@@ -39,79 +44,102 @@ T x T misclassification matrix.}
 \describe{
 \item{\code{\link{three_step}}}{Full three-step estimation pipeline.
 Accepts covariates (\code{Zp.names}), distal outcomes (\code{Zo.name}),
-or both. Handles measurement, classification, and structural estimation
-in a single call.}
-\item{\code{\link{lca_step1}}}{Step-1 measurement model via
-\pkg{multilevLCA}. Also computes two-step covariate initialisation via
-\code{\link{fitZ_from_fit0}} when \code{Zp.names} is supplied.}
+or both. Handles Steps 1--3 in a single call, with optional pre-fitted
+Step-1 input through \code{step1}.}
+\item{\code{\link{lca_step1}}}{Standalone Step-1 measurement model
+estimation via \pkg{multilevLCA}. Returns a reusable fit object that
+can be passed to \code{three_step()} to avoid re-estimating the
+measurement model across multiple structural specifications.}
 \item{\code{\link{fitZ_from_fit0}}}{Two-step covariate estimation by
 fixing measurement parameters at their Step-1 values and estimating
-multinomial logit coefficients via EM. Returns starting values for
-Step 3.}
+multinomial logit coefficients \eqn{\gamma} with an EM algorithm. Returns starting
+values for Step 3. Custom starting values can be supplied via
+\code{starting_val}.}
 \item{\code{\link{fitZ_from_multiLCA}}}{Two-step covariate estimation
 via \code{multiLCA(fixedpars = 1)}, returning \pkg{multilevLCA}'s
-bias-corrected standard errors. Called when
+bias-corrected standard errors. Called automatically when
 \code{get.twostep.vcov = TRUE} in \code{\link{three_step}}.}
-\item{\code{\link{generate_data}}}{Simulate data from the Bakk & Kuha
-(2018) three-class LCA design with covariate or distal outcome
-scenarios across three separation levels.}
-\item{\code{\link{generate_all_conditions}}}{Batch simulation across all
-scenarios, separation levels, and sample sizes for replication studies.}
+\item{\code{\link{generate_data}}}{Simulate data replicating the Bakk &
+Kuha (2018) three-class design: six binary indicators across three
+separation levels (\code{"low"}, \code{"medium"}, \code{"high"}) and
+two scenarios (\code{"covariate"} or \code{"distal"}).}
 }
 }
 
 \section{Estimators}{
 
 \describe{
-\item{ML (default)}{The Vermunt (2010) ML correction uses weighted
-pseudo-likelihood with the misclassification matrix as a bias
-adjustment. Set \code{use.bch = FALSE} (default).}
-\item{BCH}{The Bolck, Croon & Hagenaars (2004) correction inverts the
-misclassification matrix to obtain direct class weights. Set
-\code{use.bch = TRUE}. Works well under high separation but may produce
-an ill-conditioned Hessian with low separation.}
+\item{ML (default, \code{use.bch = FALSE})}{The Vermunt (2010) ML
+correction uses a weighted pseudo-likelihood with the misclassification
+matrix as a bias adjustment. Preferred when class separation is low or
+moderate.}
+\item{BCH (\code{use.bch = TRUE})}{The Bolck, Croon & Hagenaars (2004)
+correction inverts the misclassification matrix to obtain direct class
+weights. Works well under high separation but may produce an
+ill-conditioned Hessian (non-positive semi-definite covariance matrix)
+when separation is low; use the ML estimator in that case.}
 }
 }
 
 \section{Variance estimation}{
 
 \describe{
-\item{Simple (robust)}{Sandwich SEs from Step 3 only
-(\code{use.simple.cov = TRUE}). Efficient when separation is high and
-measurement uncertainty is negligible.}
-\item{Full correction}{Analytic propagation of measurement uncertainty
-from Step 1 through the classification-error correction
-(\code{use.simple.cov = FALSE}, default). Uses an analytic Jacobian
-computed from soft (proportional) posteriors regardless of the
-\code{use.modal.assignment} setting.}
+\item{Full correction (\code{use.simple.cov = FALSE}, default)}{Analytic
+propagation of Step-1 measurement uncertainty through the
+classification-error correction, following Bakk, Oberski & Vermunt
+(2014). Uses soft (proportional) posteriors for the Jacobian
+\eqn{\partial\theta_2/\partial\theta_1} regardless of
+\code{use.modal.assignment}. Recommended when separation is moderate
+or low.}
+\item{Simple/robust (\code{use.simple.cov = TRUE})}{Sandwich SEs from
+Step 3 only, ignoring measurement uncertainty. A useful computational
+shortcut when separation is high and the correction is negligible.}
+}
+}
+
+\section{Class assignment}{
+
+\describe{
+\item{Modal (\code{use.modal.assignment = TRUE}, default)}{Each
+observation is assigned to its most probable class (hard assignment).
+The Jacobian for variance correction is still computed from soft
+posteriors.}
+\item{Proportional (\code{use.modal.assignment = FALSE})}{Soft posterior
+weights are used throughout Steps 2 and 3. Recommended when separation
+is moderate or low, and required for a mathematically well-defined
+analytic Jacobian.}
 }
 }
 
 \section{Supported features}{
 
 \itemize{
-\item Binary and polytomous indicators (following \pkg{multilevLCA}
-coding conventions: consecutive integers from 0).
+\item Binary and polytomous indicators, following \pkg{multilevLCA}
+coding conventions.
 \item Gaussian, Poisson, and binomial distal outcome families.
 \item Full-information maximum likelihood (FIML) for partially observed
-indicator patterns (\code{incomplete = TRUE}).
-\item Flexible measurement and structural samples: the measurement model
-can be estimated on a reference sample and applied to a different
-analysis sample via the \code{step1} argument.
-\item Arbitrary reference class via the \code{rebase} argument.
-\item S3 methods: \code{print}, \code{summary}, \code{coef}, \code{vcov},
-\code{plot} for all four return subclasses (\code{tseLCA_measurement},
-\code{tseLCA_covariate}, \code{tseLCA_distal}, \code{tseLCA_both}).
+indicator patterns (\code{incomplete = TRUE}). Step 3 always performs
+listwise deletion on missing covariates or distal outcomes.
+\item Flexible measurement and structural samples: fit the measurement
+model on a reference sample and apply it to a different analysis sample
+via the \code{step1} argument.
+\item Arbitrary reference class for the multinomial logit parameterization
+via the \code{rebase} argument. Log-likelihoods are invariant to this
+choice.
+\item Joint covariate and distal outcome estimation (\code{Zp.names} and
+\code{Zo.name} supplied together). The covariate model is estimated
+first; covariate-adjusted posteriors are then used as priors in the
+distal outcome step.
+\item S3 methods (\code{print}, \code{summary}, \code{coef}, \code{vcov},
+\code{plot}) for all four return subclasses: \code{tseLCA_measurement},
+\code{tseLCA_covariate}, \code{tseLCA_distal}, \code{tseLCA_both}.
 }
 }
 
 \section{Getting started}{
 
 
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{# Install from GitHub
-pak::pak("SamLeeBYU/tseLCA")
-
-# Introductory vignette
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{# Introductory vignette
 vignette("tseLCA-workflow", package = "tseLCA")
 }\if{html}{\out{</div>}}
 }
@@ -122,13 +150,14 @@ association between latent class membership and external variables using
 bias-adjusted three-step approaches. \emph{Sociological Methodology},
 43(1), 272--311. \doi{10.1177/0081175012470644}
 
+Bakk, Z., Oberski, D. L., & Vermunt, J. K. (2014). Relating latent class
+assignments to external variables: Standard errors for correct inference.
+\emph{Political Analysis}, 22(4), 520--540.
+\url{https://www.jstor.org/stable/24573086}
+
 Bakk, Z., & Kuha, J. (2018). Two-step estimation of models between latent
 classes and external variables. \emph{Psychometrika}, 83(4), 871--892.
 \doi{10.1007/s11336-017-9592-7}
-
-Bakk, Z., Pohle, M. J., & Kuha, J. (2025). Bias-adjusted three-step
-estimation of structural models for latent classes. \emph{Multivariate
-Behavioral Research}. \doi{10.1080/00273171.2025.2473935}
 
 Bolck, A., Croon, M., & Hagenaars, J. (2004). Estimating latent structure
 models with categorical variables: One-step versus three-step estimators.
@@ -136,8 +165,8 @@ models with categorical variables: One-step versus three-step estimators.
 
 Lyrvall, J., Di Mari, R., Bakk, Z., Oser, J., & Kuha, J. (2025).
 Multilevel latent class analysis: State-of-the-art methodologies and their
-implementation in the R package multilevLCA. \emph{Multivariate Behavioral
-Research}, 60(4), 731--747. \doi{10.1080/00273171.2025.2473935}
+implementation in the R package \pkg{multilevLCA}. \emph{Multivariate
+Behavioral Research}, 60(4), 731--747. \doi{10.1080/00273171.2025.2473935}
 
 Vermunt, J. K. (2010). Latent class modeling with covariates: Two improved
 three-step approaches. \emph{Political Analysis}, 18(4), 450--469.

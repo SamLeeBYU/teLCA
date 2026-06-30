@@ -36,29 +36,29 @@ covariate models; \code{"covariate"}, \code{"distal"}, or \code{"both"} for both
 }
 \value{
 A named square matrix in the unconstrained log-ratio
-parameterisation. Row/column names identify each parameter as
+parameterization. Row/column names identify each parameter as
 \code{log(pi_t/pi_1)} or \code{log(P(Y=k|C_t)/P(Y=0|C_t))}. An attribute
-\code{"parameterisation"} is attached as a reminder. Returns \code{NULL}
+\code{"parameterization"} is attached as a reminder. Returns \code{NULL}
 invisibly if \code{fit0$mU} is not available. For structural models,
 returns the Step-3 vcov matrix; the two-step vcov is only available
 when \code{get.twostep.vcov = TRUE}.
 }
 \description{
 For measurement models, returns the BHHH variance-covariance matrix in
-the unconstrained log-ratio parameterisation (NOT the probability scale).
+the unconstrained log-ratio parameterization (NOT the probability scale).
 Row and column names identify each parameter as
 \code{log(pi_t/pi_1)} (class prevalences) or
 \code{log(P(Y=k|C_t)/P(Y=0|C_t))} (item-response probabilities).
-An attribute \code{"parameterisation"} is attached to remind the user of the
+An attribute \code{"parameterization"} is attached to remind the user of the
 scale.
 }
 \examples{
 d    <- generate_data(100, "high", "covariate", seed = 1)
 fit_m <- three_step(d, paste0("Y", 1:6), n_classes = 3)
 V <- vcov(fit_m)
-# Names show log-ratio parameterisation:
+# Names show log-ratio parameterization:
 rownames(V)
-attr(V, "parameterisation")
+attr(V, "parameterization")
 \donttest{
 d   <- generate_data(200, "high", "covariate", seed = 1)
 fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,

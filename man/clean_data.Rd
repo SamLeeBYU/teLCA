@@ -38,8 +38,8 @@ A named list with:
 \item{keep_Y}{Integer indices of rows kept for Steps 1 & 2 (into original N).}
 \item{Z_mat}{N_Z x Q covariate design matrix, or NULL.}
 \item{keep_step3_Z_in_Y}{Positions of Z-complete rows within keep_Y.}
-\item{Z0_mat}{N_Z0 x 1 distal outcome matrix, or NULL.}
-\item{keep_step3_Z0_in_Y}{Positions of Z0-complete rows within keep_Y.}
+\item{Zo_mat}{N_Zo x 1 distal outcome matrix, or NULL.}
+\item{keep_step3_Zo_in_Y}{Positions of Zo-complete rows within keep_Y.}
 }
 }
 \description{

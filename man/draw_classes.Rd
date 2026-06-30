@@ -4,12 +4,12 @@
 \alias{draw_classes}
 \title{Draw latent class memberships from their marginal distribution}
 \usage{
-draw_classes(n, pi)
+draw_classes(n, pi_)
 }
 \arguments{
 \item{n}{Integer. Sample size.}
 
-\item{pi}{Numeric vector of length T. Class proportions (must sum to 1).}
+\item{pi_}{Numeric vector of length T. Class proportions (must sum to 1).}
 }
 \value{
 Integer vector of length n with values in \code{1:T}.

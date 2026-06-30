@@ -108,6 +108,56 @@ joint_log_lik <- function(Y, Z, mPhi, gamma.coefs, mDesign = NULL) {
   sum(log_marg_prob)
 }
 
+#' Joint log-likelihood for the distal outcome model
+#'
+#' Computes `sum_i log[ sum_t P(X=t|Zp_i) * P(Zo_i|X=t) * P(Y_i|X=t) ]`
+#' When Zp is absent, P(X=t|Zp) = vPi (flat prevalences).
+#'
+#' @param Y       N x K_total expanded one-hot response matrix.
+#' @param Zo      Length-N distal outcome vector.
+#' @param mPhi    K_total x T expanded item-response probability matrix.
+#' @param p.zx    N x T matrix of log-densities log P(Zo_i|X=t).
+#' @param pi_mat  N x T matrix of class priors P(X=t|Zp_i). If NULL, uses
+#'   flat prevalences from the row means of p.zx (not used; vPi supplied).
+#' @param vPi     Length-T flat prevalences, used when pi_mat is NULL.
+#' @param mDesign N x K_total design matrix (NULL for complete data).
+#' @noRd
+joint_log_lik_distal <- function(
+  Y,
+  mPhi,
+  log_pZo_t,
+  pi_mat = NULL,
+  vPi = NULL,
+  mDesign = NULL
+) {
+  if (is.null(mDesign)) {
+    mDesign <- matrix(1L, nrow(Y), ncol(Y))
+  }
+
+  # log P(Y_i | X=t): N x T
+  log_P_Y_t <- log_lik_matrix(Y, mPhi, mDesign)
+
+  # log P(X=t | Zp_i): N x T
+  if (!is.null(pi_mat)) {
+    log_P_X_t <- log(pmax(pi_mat, 1e-300))
+  } else {
+    # flat prevalences: broadcast vPi across rows
+    log_P_X_t <- matrix(
+      log(pmax(vPi, 1e-300)),
+      nrow(Y),
+      length(vPi),
+      byrow = TRUE
+    )
+  }
+
+  # log P(Zo_i | X=t): N x T  (passed in as log_pZo_t)
+  log_joint <- log_P_X_t + log_pZo_t + log_P_Y_t # N x T
+
+  row_max <- apply(log_joint, 1L, max)
+  log_marg <- row_max + log(rowSums(exp(log_joint - row_max)))
+  sum(log_marg)
+}
+
 #' Compute posterior class probabilities from the unconstrained theta1 vector
 #'
 #' Reconstructs vPi and phi from the stacked parameter vector theta1 =
@@ -1510,7 +1560,10 @@ lca_vcov_distal <- function(
 #'           two-step estimates, or \code{NULL}.}
 #'         \item{`estimator`}{Character: \code{"ML"} or \code{"BCH"}.}
 #'         \item{`entropy.R2`}{Covariate-adjusted entropy R\eqn{^2}.}
-#'         \item{`llik`}{Joint log-likelihood of the Step-1 model adjusted for covariates. By construction, this log-likelihood will be smaller than the log-likelihood of the equivalent model fit with a one-step estimation procedure.}
+#'         \item{`llik`}{Profile log-likelihood
+#'           \eqn{\sum_i \log \sum_t P(X=t|Z_{p,i};\hat{\gamma}) P(Y_i|X=t;\hat{\phi})},
+#'           with Step-1 parameters \eqn{\hat{\phi}} held fixed. By construction
+#'           smaller than the equivalent one-step MLE likelihood.}
 #'       }
 #'     }
 #'     \item{`tseLCA_distal`}{Returned when \code{Zo.name} is supplied and
@@ -1520,6 +1573,15 @@ lca_vcov_distal <- function(
 #'           parameters (means, log-rates, or logits depending on \code{family}).}
 #'         \item{`three_step_vcov`}{T x T variance-covariance matrix for
 #'           \code{three_step}, named \code{mu_C1} through \code{mu_CT}.}
+#'         \item{`three_step.llik`}{Step-3 distal log-likelihood
+#'           \eqn{\log P(Z_o|X=t)} at converged estimates.}
+#'         \item{`llik`}{Profile log-likelihood
+#'           \eqn{\sum_i \log \sum_t P(X=t|\hat{\pi}) P(Z_{o,i}|X=t;\hat{\mu}) P(Y_i|X=t;\hat{\phi})},
+#'           with Step-1 parameters \eqn{\hat{\pi}, \hat{\phi}} held fixed.
+#'           By construction smaller than the equivalent one-step MLE likelihood.}
+#'         \item{`AIC`}{Akaike information criterion based on \code{llik}.}
+#'         \item{`BIC`}{Bayesian information criterion based on \code{llik},
+#'           using the number of distal-complete observations.}
 #'         \item{`family`}{Character. The distal outcome family used.}
 #'         \item{`estimator`}{Character: \code{"ML"} or \code{"BCH"}.}
 #'         \item{`posteriors`}{N x T soft posterior matrix.}
@@ -1529,10 +1591,15 @@ lca_vcov_distal <- function(
 #'     \item{`tseLCA_both`}{Returned when both \code{Zp.names} and
 #'       \code{Zo.name} are supplied. Contains:
 #'       \describe{
-#'         \item{`covariate`}{A \code{tseLCA_covariate}-structured sub-list.}
-#'         \item{`distal`}{A \code{tseLCA_distal}-structured sub-list.}
+#'         \item{`covariate`}{A \code{tseLCA_covariate}-structured sub-list
+#'           (see above), including \code{llik}, \code{AIC}, \code{BIC},
+#'           \code{entropy.R2}.}
+#'         \item{`distal`}{A \code{tseLCA_distal}-structured sub-list
+#'           (see above), including \code{llik}, \code{AIC}, \code{BIC},
+#'           \code{three_step.llik}.}
 #'         \item{`family`, `n_classes`, `estimator`}{Shared top-level fields.}
-#'         \item{`posteriors`, `classifications`}{Shared across both models.}
+#'         \item{`posteriors`, `classifications`}{Shared N x T posterior
+#'           matrix and length-N modal class vector.}
 #'       }
 #'     }
 #'   }
@@ -2333,9 +2400,42 @@ three_step <- function(
     distal_par <- s3.distal$res$par
     names(distal_par) <- paste0("mu_C", seq_len(T))
 
+    # -- Distal log-likelihood, AIC, BIC ----------------------------------------
+    # Step-3 llik: log P(Zo|X=t) weighted by class assignments (from optim).
+    # Total joint llik: sum_i log[ sum_t P(X=t|Zp_i) P(Zo_i|X=t) P(Y_i|X=t) ]
+    distal.llik <- -s3.distal$res$value
+
+    # log P(Zo_i | X=t) at converged mu_hat: N_dis x T
+    log_pZo_t <- p.zx(distal_par)
+
+    Y_dis <- Y.obs[keep_step3_Zo_in_Y, , drop = FALSE]
+    mDes_dis <- if (!is.null(mDesign)) {
+      mDesign[keep_step3_Zo_in_Y, , drop = FALSE]
+    } else {
+      NULL
+    }
+
+    total.llik.dis <- joint_log_lik_distal(
+      Y = Y_dis,
+      mPhi = expand_Phi(fit0$mPhi, ivItemcat),
+      log_pZo_t = log_pZo_t,
+      pi_mat = pi_adj, # N x T: P(X=t|Zp_i) or flat vPi
+      mDesign = mDes_dis
+    )
+
+    n_meas_params <- (T - 1L) +
+      sum(ifelse(ivItemcat == 2L, 1L, ivItemcat - 1L)) * T
+    n_distal_params <- T
+    total.k.dis <- n_meas_params + n_distal_params
+    N_dis <- length(keep_step3_Zo)
+
     s3.distal.list <- list(
       three_step = distal_par,
-      three_step_vcov = Sigma.3.distal
+      three_step_vcov = Sigma.3.distal,
+      three_step.llik = distal.llik,
+      llik = total.llik.dis,
+      AIC = -2 * total.llik.dis + 2 * total.k.dis,
+      BIC = -2 * total.llik.dis + total.k.dis * log(N_dis)
     )
   }
 
@@ -2535,6 +2635,14 @@ print.tseLCA_distal <- function(x, digits = 4, ...) {
     est,
     fam
   ))
+  if (!is.null(x$llik)) {
+    cat(sprintf(
+      "  Log-lik: %.4f   AIC: %.2f   BIC: %.2f\n",
+      x$llik,
+      x$AIC,
+      x$BIC
+    ))
+  }
   cat("\nDistal outcome means by class:\n")
   .print_table(.distal_table(x, fam), digits = digits)
   invisible(x)
@@ -2655,6 +2763,11 @@ summary.tseLCA_distal <- function(object, digits = 4, ...) {
   cat(sprintf("Latent classes : %d\n", object$n_classes))
   cat(sprintf("Estimator      : %s\n", est))
   cat(sprintf("Family         : %s\n", fam))
+  if (!is.null(object$llik)) {
+    cat(sprintf("Log-likelihood : %.4f\n", object$llik))
+    cat(sprintf("AIC            : %.4f\n", object$AIC))
+    cat(sprintf("BIC            : %.4f\n", object$BIC))
+  }
   cat("\nDistal outcome estimates by class:\n")
   .print_table(.distal_table(object, fam), digits = digits)
   invisible(object)
