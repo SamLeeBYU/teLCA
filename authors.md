@@ -2,7 +2,7 @@
 
 ## Authors
 
-- **Sam Lee**. Author, maintainer.
+- **Sam Lee**. Author, maintainer, copyright holder.
   [](https://orcid.org/0009-0007-2977-6661)
 
 - **Jay Goodliffe**. Contributor.
