@@ -2,7 +2,7 @@
 
 Reorders columns of mPhi and vPi so that the desired reference class
 becomes column 1 before estimation. This ensures the multinomial logit
-is parameterised with the correct baseline from the start.
+is parameterized with the correct baseline from the start.
 
 ## Usage
 

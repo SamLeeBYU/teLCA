@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tseLCA</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -117,8 +117,8 @@ predicted by class membership.</p>
 <span><span class="co">#&gt;   Y1 Y2 Y3 Y4 Y5 Y6 X Zp</span></span>
 <span><span class="co">#&gt; 1  1  1  1  0  0  0 2  1</span></span>
 <span><span class="co">#&gt; 2  0  0  0  0  0  0 3  4</span></span>
-<span><span class="co">#&gt; 3  1  1  1  1  1  1 1  1</span></span>
-<span><span class="co">#&gt; 4  1  1  1  1  1  0 2  2</span></span>
+<span><span class="co">#&gt; 3  1  0  1  0  0  0 2  1</span></span>
+<span><span class="co">#&gt; 4  1  1  0  1  1  1 1  2</span></span>
 <span><span class="co">#&gt; 5  0  0  0  0  0  0 3  5</span></span>
 <span><span class="co">#&gt; 6  1  1  1  1  1  1 1  3</span></span></code></pre></div>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -132,12 +132,12 @@ predicted by class membership.</p>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">d.low</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Y1 Y2 Y3 Y4 Y5 Y6 X Zp</span></span>
-<span><span class="co">#&gt; 1  1  0  0  0  0  0 2  1</span></span>
-<span><span class="co">#&gt; 2  0  0  0  1  1  0 3  4</span></span>
-<span><span class="co">#&gt; 3  1  1  1  1  1  1 1  1</span></span>
-<span><span class="co">#&gt; 4  1  1  1  1  1  1 2  2</span></span>
-<span><span class="co">#&gt; 5  0  0  0  0  0  0 3  5</span></span>
-<span><span class="co">#&gt; 6  1  1  1  0  1  1 1  3</span></span></code></pre></div>
+<span><span class="co">#&gt; 1  1  1  1  0  0  0 2  1</span></span>
+<span><span class="co">#&gt; 2  1  0  0  1  0  1 3  4</span></span>
+<span><span class="co">#&gt; 3  0  0  1  0  0  0 2  1</span></span>
+<span><span class="co">#&gt; 4  1  1  0  0  1  1 1  2</span></span>
+<span><span class="co">#&gt; 5  0  0  1  1  1  0 3  5</span></span>
+<span><span class="co">#&gt; 6  1  1  1  1  1  1 1  3</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
@@ -159,27 +159,27 @@ is low.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">d.measurement</span><span class="op">)</span></span>
 <span><span class="co">#&gt; -- tseLCA Measurement Model --------------------------------</span></span>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
-<span><span class="co">#&gt; Log-likelihood : -1467.9716</span></span>
-<span><span class="co">#&gt; AIC            : 2975.9433</span></span>
-<span><span class="co">#&gt; BIC            : 3060.2354</span></span>
-<span><span class="co">#&gt; Entropy R²     : 0.8745</span></span>
+<span><span class="co">#&gt; Log-likelihood : -1455.5052</span></span>
+<span><span class="co">#&gt; AIC            : 2951.0104</span></span>
+<span><span class="co">#&gt; BIC            : 3035.3025</span></span>
+<span><span class="co">#&gt; Entropy R²     : 0.8780</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Class prevalences:</span></span>
 <span><span class="co">#&gt;             </span></span>
-<span><span class="co">#&gt; P(C1) 0.3468</span></span>
-<span><span class="co">#&gt; P(C2) 0.2950</span></span>
-<span><span class="co">#&gt; P(C3) 0.3582</span></span>
+<span><span class="co">#&gt; P(C1) 0.3570</span></span>
+<span><span class="co">#&gt; P(C2) 0.3308</span></span>
+<span><span class="co">#&gt; P(C3) 0.3122</span></span>
 <span><span class="co">#&gt; attr(,"names")</span></span>
 <span><span class="co">#&gt; [1] "C1" "C2" "C3"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Item-response probabilities (P(Y=1|class)):</span></span>
 <span><span class="co">#&gt;             C1     C2     C3</span></span>
-<span><span class="co">#&gt; P(Y1|C) 0.8920 0.8682 0.1187</span></span>
-<span><span class="co">#&gt; P(Y2|C) 0.9340 0.8954 0.1283</span></span>
-<span><span class="co">#&gt; P(Y3|C) 0.8893 0.8915 0.1077</span></span>
-<span><span class="co">#&gt; P(Y4|C) 0.8473 0.0680 0.1007</span></span>
-<span><span class="co">#&gt; P(Y5|C) 0.9131 0.0773 0.0908</span></span>
-<span><span class="co">#&gt; P(Y6|C) 0.9018 0.0882 0.1040</span></span></code></pre></div>
+<span><span class="co">#&gt; P(Y1|C) 0.9237 0.8621 0.1187</span></span>
+<span><span class="co">#&gt; P(Y2|C) 0.9083 0.9219 0.1178</span></span>
+<span><span class="co">#&gt; P(Y3|C) 0.9148 0.9571 0.0731</span></span>
+<span><span class="co">#&gt; P(Y4|C) 0.8843 0.1481 0.0875</span></span>
+<span><span class="co">#&gt; P(Y5|C) 0.8817 0.1340 0.1118</span></span>
+<span><span class="co">#&gt; P(Y6|C) 0.9174 0.0889 0.1252</span></span></code></pre></div>
 <p>With low separation the measurement model can struggle to find the
 global maximum. Use <code>iter.measurement</code> to trigger the number
 of random restarts whenever entropy
@@ -196,27 +196,27 @@ falls below <code>R2.threshold</code>.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">d.low.measurement</span><span class="op">)</span></span>
 <span><span class="co">#&gt; -- tseLCA Measurement Model --------------------------------</span></span>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
-<span><span class="co">#&gt; Log-likelihood : -2006.5242</span></span>
-<span><span class="co">#&gt; AIC            : 4053.0483</span></span>
-<span><span class="co">#&gt; BIC            : 4137.3405</span></span>
-<span><span class="co">#&gt; Entropy R²     : 0.4447</span></span>
+<span><span class="co">#&gt; Log-likelihood : -2019.2458</span></span>
+<span><span class="co">#&gt; AIC            : 4078.4916</span></span>
+<span><span class="co">#&gt; BIC            : 4162.7837</span></span>
+<span><span class="co">#&gt; Entropy R²     : 0.3327</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Class prevalences:</span></span>
 <span><span class="co">#&gt;             </span></span>
-<span><span class="co">#&gt; P(C1) 0.4551</span></span>
-<span><span class="co">#&gt; P(C2) 0.1723</span></span>
-<span><span class="co">#&gt; P(C3) 0.3726</span></span>
+<span><span class="co">#&gt; P(C1) 0.2753</span></span>
+<span><span class="co">#&gt; P(C2) 0.4551</span></span>
+<span><span class="co">#&gt; P(C3) 0.2696</span></span>
 <span><span class="co">#&gt; attr(,"names")</span></span>
 <span><span class="co">#&gt; [1] "C1" "C2" "C3"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Item-response probabilities (P(Y=1|class)):</span></span>
 <span><span class="co">#&gt;             C1     C2     C3</span></span>
-<span><span class="co">#&gt; P(Y1|C) 0.6411 0.7435 0.3010</span></span>
-<span><span class="co">#&gt; P(Y2|C) 0.8222 0.7303 0.2255</span></span>
-<span><span class="co">#&gt; P(Y3|C) 0.6894 0.4495 0.3511</span></span>
-<span><span class="co">#&gt; P(Y4|C) 0.6122 0.2426 0.2674</span></span>
-<span><span class="co">#&gt; P(Y5|C) 0.6651 0.0661 0.3165</span></span>
-<span><span class="co">#&gt; P(Y6|C) 0.6540 0.1105 0.3632</span></span></code></pre></div>
+<span><span class="co">#&gt; P(Y1|C) 0.7328 0.6418 0.3345</span></span>
+<span><span class="co">#&gt; P(Y2|C) 0.5723 0.7549 0.3223</span></span>
+<span><span class="co">#&gt; P(Y3|C) 0.6937 0.7101 0.3036</span></span>
+<span><span class="co">#&gt; P(Y4|C) 0.6846 0.4588 0.2105</span></span>
+<span><span class="co">#&gt; P(Y5|C) 0.6947 0.4058 0.3787</span></span>
+<span><span class="co">#&gt; P(Y6|C) 0.8651 0.3551 0.2456</span></span></code></pre></div>
 <p>The <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> S3 method delegates to
 <code>multilevLCA</code>’s item-profile plot.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -241,9 +241,9 @@ are generally close to the final three-step estimates.</p>
 <span><span class="op">)</span></span>
 <span><span class="co"># True slopes: -1 (C2) and +1 (C3) relative to C1</span></span>
 <span><span class="va">d.fitZ</span><span class="op">$</span><span class="va">mGamma</span></span>
-<span><span class="co">#&gt;                   C2        C3</span></span>
-<span><span class="co">#&gt; Intercept  1.7790263 -4.170998</span></span>
-<span><span class="co">#&gt; Zp        -0.8401332  1.148593</span></span></code></pre></div>
+<span><span class="co">#&gt;                   C2         C3</span></span>
+<span><span class="co">#&gt; Intercept  2.1934130 -3.4524271</span></span>
+<span><span class="co">#&gt; Zp        -0.9411383  0.8971774</span></span></code></pre></div>
 <p>Starting values from the high-separation fit can be passed to the
 low-separation fit to help it converge.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
@@ -255,9 +255,9 @@ low-separation fit to help it converge.</p>
 <span>  starting_val <span class="op">=</span> <span class="va">d.fitZ</span><span class="op">$</span><span class="va">mGamma</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">d.low.fitZ</span><span class="op">$</span><span class="va">mGamma</span></span>
-<span><span class="co">#&gt;                   C2        C3</span></span>
-<span><span class="co">#&gt; Intercept  0.1647684 -3.396233</span></span>
-<span><span class="co">#&gt; Zp        -0.5668117  0.937924</span></span></code></pre></div>
+<span><span class="co">#&gt;                   C2         C3</span></span>
+<span><span class="co">#&gt; Intercept  3.0446368 -3.6948005</span></span>
+<span><span class="co">#&gt; Zp        -0.9832597  0.9487391</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
@@ -280,37 +280,37 @@ assignment.</p>
 <span><span class="co">#&gt; -- tseLCA Three-Step Covariate Model -----------------------</span></span>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
 <span><span class="co">#&gt; Estimator      : ML</span></span>
-<span><span class="co">#&gt; Log-likelihood : -1338.2884</span></span>
-<span><span class="co">#&gt; AIC            : 2756.5768</span></span>
-<span><span class="co">#&gt; BIC            : 2925.1611</span></span>
-<span><span class="co">#&gt; Entropy R²     : 0.8846  (covariate-adjusted)</span></span>
+<span><span class="co">#&gt; Log-likelihood : -1339.0650</span></span>
+<span><span class="co">#&gt; AIC            : 2758.1299</span></span>
+<span><span class="co">#&gt; BIC            : 2926.7143</span></span>
+<span><span class="co">#&gt; Entropy R²     : 0.8693  (covariate-adjusted)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Two-step (starting) estimates:</span></span>
 <span><span class="co">#&gt;                C2      C3</span></span>
-<span><span class="co">#&gt; Intercept  1.7790 -4.1710</span></span>
-<span><span class="co">#&gt; Zp        -0.8401  1.1486</span></span>
+<span><span class="co">#&gt; Intercept  2.1934 -3.4524</span></span>
+<span><span class="co">#&gt; Zp        -0.9411  0.8972</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Three-step estimates:</span></span>
 <span><span class="co">#&gt;              Estimate Std.Error z.value     p.value</span></span>
-<span><span class="co">#&gt; Intercept:C2   1.8739    0.3159  5.9313 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C2         -0.8833    0.1331 -6.6364 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Intercept:C3  -4.3703    0.6918 -6.3169 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C3          1.1945    0.1735  6.8850 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C2   2.0411    0.3237  6.3050 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C2         -0.8821    0.1406 -6.2730 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C3  -3.4836    0.5913 -5.8913 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C3          0.8985    0.1435  6.2606 &lt; 0.001 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <p>The standard <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code> and <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> S3 methods
 work on any <code>tseLCA</code> object.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">d.three_step</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                   C2        C3</span></span>
-<span><span class="co">#&gt; Intercept  1.8738903 -4.370297</span></span>
-<span><span class="co">#&gt; Zp        -0.8833431  1.194500</span></span>
+<span><span class="co">#&gt;                   C2         C3</span></span>
+<span><span class="co">#&gt; Intercept  2.0410764 -3.4835616</span></span>
+<span><span class="co">#&gt; Zp        -0.8820801  0.8984978</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">d.three_step</span><span class="op">)</span></span>
 <span><span class="co">#&gt;              Intercept:C2        Zp:C2 Intercept:C3        Zp:C3</span></span>
-<span><span class="co">#&gt; Intercept:C2  0.099811915 -0.037977145  -0.02047535  0.003563972</span></span>
-<span><span class="co">#&gt; Zp:C2        -0.037977145  0.017717066   0.01161711 -0.001880094</span></span>
-<span><span class="co">#&gt; Intercept:C3 -0.020475347  0.011617106   0.47864889 -0.117651101</span></span>
-<span><span class="co">#&gt; Zp:C3         0.003563972 -0.001880094  -0.11765110  0.030100056</span></span></code></pre></div>
+<span><span class="co">#&gt; Intercept:C2  0.104798063 -0.041343485  -0.01048872  0.001510799</span></span>
+<span><span class="co">#&gt; Zp:C2        -0.041343485  0.019772531   0.01121397 -0.001932282</span></span>
+<span><span class="co">#&gt; Intercept:C3 -0.010488717  0.011213968   0.34964328 -0.082842095</span></span>
+<span><span class="co">#&gt; Zp:C3         0.001510799 -0.001932282  -0.08284210  0.020597096</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="proportional-assignment">Proportional assignment<a class="anchor" aria-label="anchor" href="#proportional-assignment"></a>
@@ -340,22 +340,22 @@ separation is high.</p>
 <span><span class="co">#&gt; -- tseLCA Three-Step Covariate Model -----------------------</span></span>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
 <span><span class="co">#&gt; Estimator      : ML</span></span>
-<span><span class="co">#&gt; Log-likelihood : -1338.3943</span></span>
-<span><span class="co">#&gt; AIC            : 2756.7886</span></span>
-<span><span class="co">#&gt; BIC            : 2925.3730</span></span>
-<span><span class="co">#&gt; Entropy R²     : 0.8842  (covariate-adjusted)</span></span>
+<span><span class="co">#&gt; Log-likelihood : -1339.0617</span></span>
+<span><span class="co">#&gt; AIC            : 2758.1234</span></span>
+<span><span class="co">#&gt; BIC            : 2926.7078</span></span>
+<span><span class="co">#&gt; Entropy R²     : 0.8680  (covariate-adjusted)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Two-step (starting) estimates:</span></span>
 <span><span class="co">#&gt;                C2      C3</span></span>
-<span><span class="co">#&gt; Intercept  1.7790 -4.1710</span></span>
-<span><span class="co">#&gt; Zp        -0.8401  1.1486</span></span>
+<span><span class="co">#&gt; Intercept  2.1934 -3.4524</span></span>
+<span><span class="co">#&gt; Zp        -0.9411  0.8972</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Three-step estimates:</span></span>
 <span><span class="co">#&gt;              Estimate Std.Error z.value     p.value</span></span>
-<span><span class="co">#&gt; Intercept:C2   1.8671    0.3189  5.8552 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C2         -0.8756    0.1352 -6.4764 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Intercept:C3  -4.5000    0.6967 -6.4591 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C3          1.2258    0.1752  6.9950 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C2   2.1096    0.3287  6.4183 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C2         -0.9121    0.1460 -6.2456 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C3  -3.6508    0.6430 -5.6777 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C3          0.9367    0.1547  6.0563 &lt; 0.001 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 </div>
@@ -378,22 +378,22 @@ so this is a useful computational shortcut for large samples.</p>
 <span><span class="co">#&gt; -- tseLCA Three-Step Covariate Model -----------------------</span></span>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
 <span><span class="co">#&gt; Estimator      : ML</span></span>
-<span><span class="co">#&gt; Log-likelihood : -1338.2884</span></span>
-<span><span class="co">#&gt; AIC            : 2756.5768</span></span>
-<span><span class="co">#&gt; BIC            : 2925.1611</span></span>
-<span><span class="co">#&gt; Entropy R²     : 0.8846  (covariate-adjusted)</span></span>
+<span><span class="co">#&gt; Log-likelihood : -1339.0650</span></span>
+<span><span class="co">#&gt; AIC            : 2758.1299</span></span>
+<span><span class="co">#&gt; BIC            : 2926.7143</span></span>
+<span><span class="co">#&gt; Entropy R²     : 0.8693  (covariate-adjusted)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Two-step (starting) estimates:</span></span>
 <span><span class="co">#&gt;                C2      C3</span></span>
-<span><span class="co">#&gt; Intercept  1.7790 -4.1710</span></span>
-<span><span class="co">#&gt; Zp        -0.8401  1.1486</span></span>
+<span><span class="co">#&gt; Intercept  2.1934 -3.4524</span></span>
+<span><span class="co">#&gt; Zp        -0.9411  0.8972</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Three-step estimates:</span></span>
 <span><span class="co">#&gt;              Estimate Std.Error z.value     p.value</span></span>
-<span><span class="co">#&gt; Intercept:C2   1.8739    0.3145  5.9578 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C2         -0.8833    0.1323 -6.6760 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Intercept:C3  -4.3703    0.6863 -6.3681 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C3          1.1945    0.1722  6.9378 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C2   2.0411    0.3214  6.3504 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C2         -0.8821    0.1394 -6.3257 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C3  -3.4836    0.5876 -5.9281 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C3          0.8985    0.1426  6.3008 &lt; 0.001 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 </div>
@@ -417,22 +417,22 @@ semi-definite), in which case the ML estimator is preferred.</p>
 <span><span class="co">#&gt; -- tseLCA Three-Step Covariate Model -----------------------</span></span>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
 <span><span class="co">#&gt; Estimator      : BCH</span></span>
-<span><span class="co">#&gt; Log-likelihood : -1338.4071</span></span>
-<span><span class="co">#&gt; AIC            : 2756.8142</span></span>
-<span><span class="co">#&gt; BIC            : 2925.3985</span></span>
-<span><span class="co">#&gt; Entropy R²     : 0.8853  (covariate-adjusted)</span></span>
+<span><span class="co">#&gt; Log-likelihood : -1339.2863</span></span>
+<span><span class="co">#&gt; AIC            : 2758.5726</span></span>
+<span><span class="co">#&gt; BIC            : 2927.1569</span></span>
+<span><span class="co">#&gt; Entropy R²     : 0.8700  (covariate-adjusted)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Two-step (starting) estimates:</span></span>
 <span><span class="co">#&gt;                C2      C3</span></span>
-<span><span class="co">#&gt; Intercept  1.7790 -4.1710</span></span>
-<span><span class="co">#&gt; Zp        -0.8401  1.1486</span></span>
+<span><span class="co">#&gt; Intercept  2.1934 -3.4524</span></span>
+<span><span class="co">#&gt; Zp        -0.9411  0.8972</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Three-step estimates:</span></span>
 <span><span class="co">#&gt;              Estimate Std.Error z.value     p.value</span></span>
-<span><span class="co">#&gt; Intercept:C2   1.9274    0.3346  5.7596 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C2         -0.9084    0.1468 -6.1880 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Intercept:C3  -3.9789    0.6458 -6.1609 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C3          1.1066    0.1636  6.7662 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C2   1.9554    0.3111  6.2844 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C2         -0.8424    0.1304 -6.4613 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C3  -3.4634    0.5697 -6.0790 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C3          0.8923    0.1385  6.4412 &lt; 0.001 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <p>BCH with low-separation data can fail to produce a positive
@@ -462,22 +462,22 @@ more reliable in this setting.</p>
 <span><span class="co">#&gt; -- tseLCA Three-Step Covariate Model -----------------------</span></span>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
 <span><span class="co">#&gt; Estimator      : ML</span></span>
-<span><span class="co">#&gt; Log-likelihood : -1974.5489</span></span>
-<span><span class="co">#&gt; AIC            : 4029.0977</span></span>
-<span><span class="co">#&gt; BIC            : 4197.6821</span></span>
-<span><span class="co">#&gt; Entropy R²     : 0.4410  (covariate-adjusted)</span></span>
+<span><span class="co">#&gt; Log-likelihood : -1979.3372</span></span>
+<span><span class="co">#&gt; AIC            : 4038.6744</span></span>
+<span><span class="co">#&gt; BIC            : 4207.2588</span></span>
+<span><span class="co">#&gt; Entropy R²     : 0.3518  (covariate-adjusted)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Two-step (starting) estimates:</span></span>
 <span><span class="co">#&gt;                C2      C3</span></span>
-<span><span class="co">#&gt; Intercept  0.1594 -3.3877</span></span>
-<span><span class="co">#&gt; Zp        -0.5637  0.9358</span></span>
+<span><span class="co">#&gt; Intercept  3.0267 -3.6919</span></span>
+<span><span class="co">#&gt; Zp        -0.9767  0.9482</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Three-step estimates:</span></span>
 <span><span class="co">#&gt;              Estimate Std.Error z.value     p.value</span></span>
-<span><span class="co">#&gt; Intercept:C2   0.9140    1.7455  0.5237 0.6005     </span></span>
-<span><span class="co">#&gt; Zp:C2         -1.0336    1.6784 -0.6158 0.5380     </span></span>
-<span><span class="co">#&gt; Intercept:C3  -4.2276    1.7326 -2.4400 0.0147  *  </span></span>
-<span><span class="co">#&gt; Zp:C3          1.1703    0.3835  3.0515 0.0023  ** </span></span>
+<span><span class="co">#&gt; Intercept:C2   3.2034    2.2929  1.3971 0.1624     </span></span>
+<span><span class="co">#&gt; Zp:C2         -1.0761    1.9088 -0.5638 0.5729     </span></span>
+<span><span class="co">#&gt; Intercept:C3  -3.8431    2.9955 -1.2830 0.1995     </span></span>
+<span><span class="co">#&gt; Zp:C3          0.9554    0.6034  1.5832 0.1134     </span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <hr>
@@ -498,22 +498,22 @@ transitivity relation
 <span><span class="co">#&gt; -- tseLCA Three-Step Covariate Model -----------------------</span></span>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
 <span><span class="co">#&gt; Estimator      : ML</span></span>
-<span><span class="co">#&gt; Log-likelihood : -1338.2884</span></span>
-<span><span class="co">#&gt; AIC            : 2756.5768</span></span>
-<span><span class="co">#&gt; BIC            : 2925.1611</span></span>
-<span><span class="co">#&gt; Entropy R²     : 0.8846  (covariate-adjusted)</span></span>
+<span><span class="co">#&gt; Log-likelihood : -1339.0650</span></span>
+<span><span class="co">#&gt; AIC            : 2758.1299</span></span>
+<span><span class="co">#&gt; BIC            : 2926.7143</span></span>
+<span><span class="co">#&gt; Entropy R²     : 0.8693  (covariate-adjusted)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Two-step (starting) estimates:</span></span>
 <span><span class="co">#&gt;                C2      C3</span></span>
-<span><span class="co">#&gt; Intercept  1.7790 -4.1710</span></span>
-<span><span class="co">#&gt; Zp        -0.8401  1.1486</span></span>
+<span><span class="co">#&gt; Intercept  2.1934 -3.4524</span></span>
+<span><span class="co">#&gt; Zp        -0.9411  0.8972</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Three-step estimates:</span></span>
 <span><span class="co">#&gt;              Estimate Std.Error z.value     p.value</span></span>
-<span><span class="co">#&gt; Intercept:C2   1.8739    0.3145  5.9578 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C2         -0.8833    0.1323 -6.6760 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Intercept:C3  -4.3703    0.6863 -6.3681 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C3          1.1945    0.1722  6.9378 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C2   2.0411    0.3214  6.3504 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C2         -0.8821    0.1394 -6.3257 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C3  -3.4836    0.5876 -5.9281 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C3          0.8985    0.1426  6.3008 &lt; 0.001 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
@@ -529,22 +529,22 @@ transitivity relation
 <span><span class="co">#&gt; -- tseLCA Three-Step Covariate Model -----------------------</span></span>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
 <span><span class="co">#&gt; Estimator      : ML</span></span>
-<span><span class="co">#&gt; Log-likelihood : -1338.2884</span></span>
-<span><span class="co">#&gt; AIC            : 2756.5768</span></span>
-<span><span class="co">#&gt; BIC            : 2925.1611</span></span>
-<span><span class="co">#&gt; Entropy R²     : 0.8846  (covariate-adjusted)</span></span>
+<span><span class="co">#&gt; Log-likelihood : -1339.0650</span></span>
+<span><span class="co">#&gt; AIC            : 2758.1299</span></span>
+<span><span class="co">#&gt; BIC            : 2926.7143</span></span>
+<span><span class="co">#&gt; Entropy R²     : 0.8693  (covariate-adjusted)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Two-step (starting) estimates:</span></span>
 <span><span class="co">#&gt;                C1      C3</span></span>
-<span><span class="co">#&gt; Intercept -1.7786 -5.9494</span></span>
-<span><span class="co">#&gt; Zp         0.8400  1.9884</span></span>
+<span><span class="co">#&gt; Intercept -2.1941 -5.6433</span></span>
+<span><span class="co">#&gt; Zp         0.9413  1.8377</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Three-step estimates:</span></span>
 <span><span class="co">#&gt;              Estimate Std.Error z.value     p.value</span></span>
-<span><span class="co">#&gt; Intercept:C1  -1.8739    0.3145 -5.9578 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C1          0.8833    0.1323  6.6760 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Intercept:C3  -6.2442    0.7785 -8.0213 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C3          2.0778    0.2245  9.2571 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C1  -2.0411    0.3214 -6.3504 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C1          0.8821    0.1394  6.3257 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C3  -5.5246    0.6823 -8.0976 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C3          1.7806    0.2078  8.5696 &lt; 0.001 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
@@ -560,22 +560,22 @@ transitivity relation
 <span><span class="co">#&gt; -- tseLCA Three-Step Covariate Model -----------------------</span></span>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
 <span><span class="co">#&gt; Estimator      : ML</span></span>
-<span><span class="co">#&gt; Log-likelihood : -1338.2884</span></span>
-<span><span class="co">#&gt; AIC            : 2756.5768</span></span>
-<span><span class="co">#&gt; BIC            : 2925.1611</span></span>
-<span><span class="co">#&gt; Entropy R²     : 0.8846  (covariate-adjusted)</span></span>
+<span><span class="co">#&gt; Log-likelihood : -1339.0650</span></span>
+<span><span class="co">#&gt; AIC            : 2758.1299</span></span>
+<span><span class="co">#&gt; BIC            : 2926.7143</span></span>
+<span><span class="co">#&gt; Entropy R²     : 0.8693  (covariate-adjusted)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Two-step (starting) estimates:</span></span>
 <span><span class="co">#&gt;                C1      C2</span></span>
-<span><span class="co">#&gt; Intercept  4.1707  5.9494</span></span>
-<span><span class="co">#&gt; Zp        -1.1484 -1.9884</span></span>
+<span><span class="co">#&gt; Intercept  3.4492  5.6433</span></span>
+<span><span class="co">#&gt; Zp        -0.8964 -1.8377</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Three-step estimates:</span></span>
 <span><span class="co">#&gt;              Estimate Std.Error z.value     p.value</span></span>
-<span><span class="co">#&gt; Intercept:C1   4.3703    0.6863  6.3681 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C1         -1.1945    0.1722 -6.9378 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Intercept:C2   6.2442    0.7785  8.0213 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C2         -2.0778    0.2245 -9.2571 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C1   3.4836    0.5876  5.9281 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C1         -0.8985    0.1426 -6.3008 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C2   5.5246    0.6823  8.0976 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C2         -1.7806    0.2078 -8.5696 &lt; 0.001 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <hr>
@@ -608,22 +608,22 @@ it to a smaller analysis sample.</li>
 <span><span class="co">#&gt; -- tseLCA Three-Step Covariate Model -----------------------</span></span>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
 <span><span class="co">#&gt; Estimator      : ML</span></span>
-<span><span class="co">#&gt; Log-likelihood : -1338.3943</span></span>
-<span><span class="co">#&gt; AIC            : 2756.7886</span></span>
-<span><span class="co">#&gt; BIC            : 2925.3730</span></span>
-<span><span class="co">#&gt; Entropy R²     : 0.8842  (covariate-adjusted)</span></span>
+<span><span class="co">#&gt; Log-likelihood : -1339.0617</span></span>
+<span><span class="co">#&gt; AIC            : 2758.1234</span></span>
+<span><span class="co">#&gt; BIC            : 2926.7078</span></span>
+<span><span class="co">#&gt; Entropy R²     : 0.8680  (covariate-adjusted)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Two-step (starting) estimates:</span></span>
 <span><span class="co">#&gt;                C2      C3</span></span>
-<span><span class="co">#&gt; Intercept  1.7790 -4.1710</span></span>
-<span><span class="co">#&gt; Zp        -0.8401  1.1486</span></span>
+<span><span class="co">#&gt; Intercept  2.1934 -3.4524</span></span>
+<span><span class="co">#&gt; Zp        -0.9411  0.8972</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Three-step estimates:</span></span>
 <span><span class="co">#&gt;              Estimate Std.Error z.value     p.value</span></span>
-<span><span class="co">#&gt; Intercept:C2   1.8671    0.3189  5.8552 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C2         -0.8756    0.1352 -6.4764 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Intercept:C3  -4.5000    0.6967 -6.4591 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C3          1.2258    0.1752  6.9950 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C2   2.1096    0.3287  6.4183 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C2         -0.9121    0.1460 -6.2456 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C3  -3.6508    0.6430 -5.6777 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C3          0.9367    0.1547  6.0563 &lt; 0.001 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
@@ -655,22 +655,22 @@ it to a smaller analysis sample.</li>
 <span><span class="co">#&gt; -- tseLCA Three-Step Covariate Model -----------------------</span></span>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
 <span><span class="co">#&gt; Estimator      : ML</span></span>
-<span><span class="co">#&gt; Log-likelihood : -1986.2340</span></span>
-<span><span class="co">#&gt; AIC            : 4052.4680</span></span>
-<span><span class="co">#&gt; BIC            : 4221.0523</span></span>
-<span><span class="co">#&gt; Entropy R²     : 0.3761  (covariate-adjusted)</span></span>
+<span><span class="co">#&gt; Log-likelihood : -1983.8159</span></span>
+<span><span class="co">#&gt; AIC            : 4047.6319</span></span>
+<span><span class="co">#&gt; BIC            : 4216.2162</span></span>
+<span><span class="co">#&gt; Entropy R²     : 0.3770  (covariate-adjusted)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Two-step (starting) estimates:</span></span>
 <span><span class="co">#&gt;                C2      C3</span></span>
-<span><span class="co">#&gt; Intercept  1.3687 -4.0525</span></span>
-<span><span class="co">#&gt; Zp        -0.3242  1.0992</span></span>
+<span><span class="co">#&gt; Intercept  2.5856 -4.2916</span></span>
+<span><span class="co">#&gt; Zp        -1.3548  1.0808</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Three-step estimates:</span></span>
 <span><span class="co">#&gt;              Estimate Std.Error z.value     p.value</span></span>
-<span><span class="co">#&gt; Intercept:C2   1.3449    0.6437  2.0894 0.0367  *  </span></span>
-<span><span class="co">#&gt; Zp:C2         -0.2669    0.3026 -0.8820 0.3778     </span></span>
-<span><span class="co">#&gt; Intercept:C3  -4.9820    1.1859 -4.2009 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C3          1.2694    0.2457  5.1662 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C2   2.7061    1.1851  2.2835 0.0224  *  </span></span>
+<span><span class="co">#&gt; Zp:C2         -1.3765    0.9785 -1.4068 0.1595     </span></span>
+<span><span class="co">#&gt; Intercept:C3  -3.9495    2.0920 -1.8879 0.0590  .  </span></span>
+<span><span class="co">#&gt; Zp:C3          1.0305    0.4740  2.1741 0.0297  *  </span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <p>You can also compute two-step starting values separately and inject
@@ -696,22 +696,22 @@ them before calling <code><a href="../reference/three_step.html">three_step()</a
 <span><span class="co">#&gt; -- tseLCA Three-Step Covariate Model -----------------------</span></span>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
 <span><span class="co">#&gt; Estimator      : ML</span></span>
-<span><span class="co">#&gt; Log-likelihood : -1986.2340</span></span>
-<span><span class="co">#&gt; AIC            : 4052.4680</span></span>
-<span><span class="co">#&gt; BIC            : 4221.0523</span></span>
-<span><span class="co">#&gt; Entropy R²     : 0.3761  (covariate-adjusted)</span></span>
+<span><span class="co">#&gt; Log-likelihood : -1983.8159</span></span>
+<span><span class="co">#&gt; AIC            : 4047.6319</span></span>
+<span><span class="co">#&gt; BIC            : 4216.2162</span></span>
+<span><span class="co">#&gt; Entropy R²     : 0.3770  (covariate-adjusted)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Two-step (starting) estimates:</span></span>
 <span><span class="co">#&gt;                C2      C3</span></span>
-<span><span class="co">#&gt; Intercept  1.3687 -4.0525</span></span>
-<span><span class="co">#&gt; Zp        -0.3242  1.0992</span></span>
+<span><span class="co">#&gt; Intercept  2.5856 -4.2916</span></span>
+<span><span class="co">#&gt; Zp        -1.3548  1.0808</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Three-step estimates:</span></span>
 <span><span class="co">#&gt;              Estimate Std.Error z.value     p.value</span></span>
-<span><span class="co">#&gt; Intercept:C2   1.3449    0.6437  2.0894 0.0367  *  </span></span>
-<span><span class="co">#&gt; Zp:C2         -0.2669    0.3026 -0.8820 0.3778     </span></span>
-<span><span class="co">#&gt; Intercept:C3  -4.9820    1.1859 -4.2009 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C3          1.2694    0.2457  5.1662 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C2   2.7061    1.1851  2.2835 0.0224  *  </span></span>
+<span><span class="co">#&gt; Zp:C2         -1.3765    0.9785 -1.4068 0.1595     </span></span>
+<span><span class="co">#&gt; Intercept:C3  -3.9495    2.0920 -1.8879 0.0590  .  </span></span>
+<span><span class="co">#&gt; Zp:C3          1.0305    0.4740  2.1741 0.0297  *  </span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <hr>
@@ -736,12 +736,12 @@ while allowing more observations into Steps 1 and 2 than Step 3.</p>
 <span><span class="va">d.sparse</span> <span class="op">&lt;-</span> <span class="va">d.new</span> <span class="op">*</span> <span class="va">missing</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">d.sparse</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Y1 Y2 Y3 Y4 Y5 Y6  X Zp</span></span>
-<span><span class="co">#&gt; 1  0  0 NA  0  0  0  3  5</span></span>
-<span><span class="co">#&gt; 2  1  1 NA  1  1  1  1  2</span></span>
-<span><span class="co">#&gt; 3  0  0  1  0  0  1  3  4</span></span>
-<span><span class="co">#&gt; 4  1  1  1  1  1  1  1  4</span></span>
-<span><span class="co">#&gt; 5  0  1  1  1  1  1 NA  2</span></span>
-<span><span class="co">#&gt; 6  1  0 NA  0  0  0  3  3</span></span></code></pre></div>
+<span><span class="co">#&gt; 1  0  0 NA  0  1  0  3  5</span></span>
+<span><span class="co">#&gt; 2  1  1 NA  0  0  0  2  2</span></span>
+<span><span class="co">#&gt; 3  1  1  1  1  1  0  1  4</span></span>
+<span><span class="co">#&gt; 4  0  0  0  0  0  0  3  4</span></span>
+<span><span class="co">#&gt; 5  1  1  1  0  0  0 NA  2</span></span>
+<span><span class="co">#&gt; 6  1  1 NA  0  0  0  2  3</span></span></code></pre></div>
 <p>With <code>incomplete = FALSE</code> (the default), any row with a
 missing indicator is dropped before the measurement model is
 estimated.</p>
@@ -760,27 +760,27 @@ estimated.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">d.sparse.measurement</span><span class="op">)</span></span>
 <span><span class="co">#&gt; -- tseLCA Measurement Model --------------------------------</span></span>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
-<span><span class="co">#&gt; Log-likelihood : -763.0984</span></span>
-<span><span class="co">#&gt; AIC            : 1566.1968</span></span>
-<span><span class="co">#&gt; BIC            : 1637.2559</span></span>
-<span><span class="co">#&gt; Entropy R²     : 0.8835</span></span>
+<span><span class="co">#&gt; Log-likelihood : -742.0656</span></span>
+<span><span class="co">#&gt; AIC            : 1524.1311</span></span>
+<span><span class="co">#&gt; BIC            : 1595.1903</span></span>
+<span><span class="co">#&gt; Entropy R²     : 0.9027</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Class prevalences:</span></span>
 <span><span class="co">#&gt;             </span></span>
-<span><span class="co">#&gt; P(C1) 0.2914</span></span>
-<span><span class="co">#&gt; P(C2) 0.3924</span></span>
-<span><span class="co">#&gt; P(C3) 0.3162</span></span>
+<span><span class="co">#&gt; P(C1) 0.2995</span></span>
+<span><span class="co">#&gt; P(C2) 0.3967</span></span>
+<span><span class="co">#&gt; P(C3) 0.3037</span></span>
 <span><span class="co">#&gt; attr(,"names")</span></span>
 <span><span class="co">#&gt; [1] "C1" "C2" "C3"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Item-response probabilities (P(Y=1|class)):</span></span>
 <span><span class="co">#&gt;             C1     C2     C3</span></span>
-<span><span class="co">#&gt; P(Y1|C) 0.9038 0.9015 0.1078</span></span>
-<span><span class="co">#&gt; P(Y2|C) 0.8920 0.9116 0.0938</span></span>
-<span><span class="co">#&gt; P(Y3|C) 0.8558 0.8980 0.1073</span></span>
-<span><span class="co">#&gt; P(Y4|C) 0.9546 0.0841 0.0945</span></span>
-<span><span class="co">#&gt; P(Y5|C) 0.8999 0.1121 0.1224</span></span>
-<span><span class="co">#&gt; P(Y6|C) 0.9116 0.1262 0.1677</span></span></code></pre></div>
+<span><span class="co">#&gt; P(Y1|C) 0.8241 0.8869 0.0834</span></span>
+<span><span class="co">#&gt; P(Y2|C) 0.8600 0.9104 0.0811</span></span>
+<span><span class="co">#&gt; P(Y3|C) 0.9110 0.9344 0.0633</span></span>
+<span><span class="co">#&gt; P(Y4|C) 0.9035 0.0486 0.1302</span></span>
+<span><span class="co">#&gt; P(Y5|C) 0.9349 0.1517 0.0795</span></span>
+<span><span class="co">#&gt; P(Y6|C) 0.9331 0.1555 0.0762</span></span></code></pre></div>
 <p>With <code>incomplete = TRUE</code>, only fully-missing rows are
 dropped; partially observed rows contribute to the measurement model via
 FIML.</p>
@@ -795,27 +795,27 @@ FIML.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">d.sparse.measurement2</span><span class="op">)</span></span>
 <span><span class="co">#&gt; -- tseLCA Measurement Model --------------------------------</span></span>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
-<span><span class="co">#&gt; Log-likelihood : -1372.3013</span></span>
-<span><span class="co">#&gt; AIC            : 2784.6025</span></span>
-<span><span class="co">#&gt; BIC            : 2868.8947</span></span>
-<span><span class="co">#&gt; Entropy R²     : 0.8376</span></span>
+<span><span class="co">#&gt; Log-likelihood : -1342.8026</span></span>
+<span><span class="co">#&gt; AIC            : 2725.6052</span></span>
+<span><span class="co">#&gt; BIC            : 2809.8974</span></span>
+<span><span class="co">#&gt; Entropy R²     : 0.8425</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Class prevalences:</span></span>
 <span><span class="co">#&gt;             </span></span>
-<span><span class="co">#&gt; P(C1) 0.3064</span></span>
-<span><span class="co">#&gt; P(C2) 0.3764</span></span>
-<span><span class="co">#&gt; P(C3) 0.3171</span></span>
+<span><span class="co">#&gt; P(C1) 0.3049</span></span>
+<span><span class="co">#&gt; P(C2) 0.3652</span></span>
+<span><span class="co">#&gt; P(C3) 0.3299</span></span>
 <span><span class="co">#&gt; attr(,"names")</span></span>
 <span><span class="co">#&gt; [1] "C1" "C2" "C3"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Item-response probabilities (P(Y=1|class)):</span></span>
 <span><span class="co">#&gt;             C1     C2     C3</span></span>
-<span><span class="co">#&gt; P(Y1|C) 0.8697 0.8820 0.0864</span></span>
-<span><span class="co">#&gt; P(Y2|C) 0.8965 0.8784 0.1405</span></span>
-<span><span class="co">#&gt; P(Y3|C) 0.8527 0.8662 0.0796</span></span>
-<span><span class="co">#&gt; P(Y4|C) 0.9424 0.0817 0.0902</span></span>
-<span><span class="co">#&gt; P(Y5|C) 0.9159 0.1019 0.1156</span></span>
-<span><span class="co">#&gt; P(Y6|C) 0.9106 0.1184 0.1592</span></span></code></pre></div>
+<span><span class="co">#&gt; P(Y1|C) 0.8797 0.8916 0.0925</span></span>
+<span><span class="co">#&gt; P(Y2|C) 0.8888 0.8858 0.0677</span></span>
+<span><span class="co">#&gt; P(Y3|C) 0.9337 0.8859 0.1453</span></span>
+<span><span class="co">#&gt; P(Y4|C) 0.9079 0.0819 0.1339</span></span>
+<span><span class="co">#&gt; P(Y5|C) 0.9536 0.1359 0.1056</span></span>
+<span><span class="co">#&gt; P(Y6|C) 0.9583 0.1590 0.1176</span></span></code></pre></div>
 <p>Regardless of <code>incomplete</code>, Step 3 drops any row with a
 missing covariate. The rows used in Step 3 are a subset of those used in
 Steps 1 and 2.</p>
@@ -831,7 +831,7 @@ Steps 1 and 2.</p>
 <span><span class="co">#&gt; 43 row(s) excluded from covariate step (missing Z).</span></span>
 <span><span class="co">#&gt; fitZ EM converged in 9 iterations.</span></span>
 <span><span class="co">#&gt; 43 row(s) excluded from covariate step (missing Z).</span></span>
-<span><span class="co">#&gt; EM converged in 6 iterations.</span></span>
+<span><span class="co">#&gt; EM converged in 8 iterations.</span></span>
 <span><span class="co"># Additional rows dropped from Step 3 due to missing Zp</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">d.sparse</span><span class="op">$</span><span class="va">Zp</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 43</span></span>
@@ -839,22 +839,22 @@ Steps 1 and 2.</p>
 <span><span class="co">#&gt; -- tseLCA Three-Step Covariate Model -----------------------</span></span>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
 <span><span class="co">#&gt; Estimator      : ML</span></span>
-<span><span class="co">#&gt; Log-likelihood : -1126.5227</span></span>
-<span><span class="co">#&gt; AIC            : 2333.0454</span></span>
-<span><span class="co">#&gt; BIC            : 2498.0327</span></span>
-<span><span class="co">#&gt; Entropy R²     : 0.8571  (covariate-adjusted)</span></span>
+<span><span class="co">#&gt; Log-likelihood : -1088.3344</span></span>
+<span><span class="co">#&gt; AIC            : 2256.6688</span></span>
+<span><span class="co">#&gt; BIC            : 2421.6562</span></span>
+<span><span class="co">#&gt; Entropy R²     : 0.8672  (covariate-adjusted)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Two-step (starting) estimates:</span></span>
 <span><span class="co">#&gt;                C2      C3</span></span>
-<span><span class="co">#&gt; Intercept  2.6367 -4.1123</span></span>
-<span><span class="co">#&gt; Zp        -1.0765  1.0957</span></span>
+<span><span class="co">#&gt; Intercept  2.5023 -4.6555</span></span>
+<span><span class="co">#&gt; Zp        -1.0494  1.2929</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Three-step estimates:</span></span>
 <span><span class="co">#&gt;              Estimate Std.Error z.value     p.value</span></span>
-<span><span class="co">#&gt; Intercept:C2   2.6060    0.3945  6.6051 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C2         -1.0627    0.1671 -6.3612 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Intercept:C3  -4.2255    0.5607 -7.5359 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C3          1.1247    0.1436  7.8297 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C2   2.4803    0.3807  6.5149 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C2         -1.0136    0.1667 -6.0789 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C3  -4.7754    0.7267 -6.5716 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C3          1.3164    0.1796  7.3290 &lt; 0.001 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <p>A FIML measurement model can be passed in and then reused for the
@@ -872,27 +872,27 @@ covariate step on the same sparse data.</p>
 <span><span class="co">#&gt; 43 row(s) excluded from covariate step (missing Z).</span></span>
 <span><span class="co">#&gt; fitZ EM converged in 9 iterations.</span></span>
 <span><span class="co">#&gt; 43 row(s) excluded from covariate step (missing Z).</span></span>
-<span><span class="co">#&gt; EM converged in 6 iterations.</span></span>
+<span><span class="co">#&gt; EM converged in 8 iterations.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">d.sparse.three_step2</span><span class="op">)</span></span>
 <span><span class="co">#&gt; -- tseLCA Three-Step Covariate Model -----------------------</span></span>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
 <span><span class="co">#&gt; Estimator      : ML</span></span>
-<span><span class="co">#&gt; Log-likelihood : -1126.5227</span></span>
-<span><span class="co">#&gt; AIC            : 2333.0454</span></span>
-<span><span class="co">#&gt; BIC            : 2498.0327</span></span>
-<span><span class="co">#&gt; Entropy R²     : 0.8571  (covariate-adjusted)</span></span>
+<span><span class="co">#&gt; Log-likelihood : -1088.3344</span></span>
+<span><span class="co">#&gt; AIC            : 2256.6688</span></span>
+<span><span class="co">#&gt; BIC            : 2421.6562</span></span>
+<span><span class="co">#&gt; Entropy R²     : 0.8672  (covariate-adjusted)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Two-step (starting) estimates:</span></span>
 <span><span class="co">#&gt;                C2      C3</span></span>
-<span><span class="co">#&gt; Intercept  2.6367 -4.1123</span></span>
-<span><span class="co">#&gt; Zp        -1.0765  1.0957</span></span>
+<span><span class="co">#&gt; Intercept  2.5023 -4.6555</span></span>
+<span><span class="co">#&gt; Zp        -1.0494  1.2929</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Three-step estimates:</span></span>
 <span><span class="co">#&gt;              Estimate Std.Error z.value     p.value</span></span>
-<span><span class="co">#&gt; Intercept:C2   2.6060    0.3945  6.6051 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C2         -1.0627    0.1671 -6.3612 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Intercept:C3  -4.2255    0.5607 -7.5359 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C3          1.1247    0.1436  7.8297 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C2   2.4803    0.3807  6.5149 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C2         -1.0136    0.1667 -6.0789 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C3  -4.7754    0.7267 -6.5716 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C3          1.3164    0.1796  7.3290 &lt; 0.001 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <hr>
@@ -1030,12 +1030,15 @@ estimators are available.</p>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
 <span><span class="co">#&gt; Estimator      : ML</span></span>
 <span><span class="co">#&gt; Family         : gaussian</span></span>
+<span><span class="co">#&gt; Log-likelihood : -2169.0110</span></span>
+<span><span class="co">#&gt; AIC            : 4384.0220</span></span>
+<span><span class="co">#&gt; BIC            : 4480.9580</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Distal outcome estimates by class:</span></span>
 <span><span class="co">#&gt;              Estimate Std.Error  z.value     p.value</span></span>
-<span><span class="co">#&gt; mu_C1 (mean)  -1.0899    0.0795 -13.7040 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; mu_C2 (mean)   1.0012    0.0818  12.2438 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; mu_C3 (mean)   0.0450    0.0856   0.5257 0.5991     </span></span>
+<span><span class="co">#&gt; mu_C1 (mean)  -1.0821    0.0817 -13.2495 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; mu_C2 (mean)   1.0172    0.0819  12.4151 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; mu_C3 (mean)   0.0254    0.0878   0.2887 0.7728     </span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">d.distal.three_step.bch</span><span class="op">)</span></span>
@@ -1043,21 +1046,22 @@ estimators are available.</p>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
 <span><span class="co">#&gt; Estimator      : BCH</span></span>
 <span><span class="co">#&gt; Family         : gaussian</span></span>
+<span><span class="co">#&gt; Log-likelihood : -2168.8685</span></span>
+<span><span class="co">#&gt; AIC            : 4383.7370</span></span>
+<span><span class="co">#&gt; BIC            : 4480.6730</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Distal outcome estimates by class:</span></span>
 <span><span class="co">#&gt;              Estimate Std.Error  z.value     p.value</span></span>
-<span><span class="co">#&gt; mu_C1 (mean)  -1.0906    0.0862 -12.6567 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; mu_C2 (mean)   0.9291    0.0805  11.5410 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; mu_C3 (mean)   0.0592    0.0837   0.7066 0.4798     </span></span>
+<span><span class="co">#&gt; mu_C1 (mean)  -1.0941    0.0867 -12.6134 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; mu_C2 (mean)   0.9751    0.0823  11.8534 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; mu_C3 (mean)   0.0578    0.0859   0.6733 0.5008     </span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
-<h2 id="three-step-estimation-with-both-covariates-z_p-and-distal-outcomes-z_o">Three-step estimation with both covariates
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Z</mi><mi>p</mi></msub><annotation encoding="application/x-tex">Z_p</annotation></semantics></math>)
-and distal outcomes
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Z</mi><mi>o</mi></msub><annotation encoding="application/x-tex">Z_o</annotation></semantics></math>)<a class="anchor" aria-label="anchor" href="#three-step-estimation-with-both-covariates-z_p-and-distal-outcomes-z_o"></a>
+<h2 id="three-step-estimation-with-both-covariates-zp-and-distal-outcomes-zo">Three-step estimation with both covariates (Zp) and distal outcomes
+(Zo)<a class="anchor" aria-label="anchor" href="#three-step-estimation-with-both-covariates-zp-and-distal-outcomes-zo"></a>
 </h2>
 <p>Consistent with how most research in the social sciences construct
 the relationships between
@@ -1088,12 +1092,12 @@ procedures for the distal outcome model in step 3.</p>
 <span><span class="va">d.covariate</span><span class="op">$</span><span class="va">Zo</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/draw_Zo.html">draw_Zo</a></span><span class="op">(</span><span class="va">d.covariate</span><span class="op">$</span><span class="va">X</span>, <span class="va">bk2018_params</span><span class="op">$</span><span class="va">distal_params</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">d.covariate</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Y1 Y2 Y3 Y4 Y5 Y6 X Zp         Zo</span></span>
-<span><span class="co">#&gt; 1  0  0  0  0  0  0 3  3 -1.1624650</span></span>
-<span><span class="co">#&gt; 2  1  1  1  1  0  0 1  3 -1.1591833</span></span>
-<span><span class="co">#&gt; 3  1  0  1  1  1  1 1  3 -1.2055132</span></span>
-<span><span class="co">#&gt; 4  1  1  1  1  1  1 1  4  0.8752276</span></span>
-<span><span class="co">#&gt; 5  0  1  1  0  1  0 1  3 -2.5582369</span></span>
-<span><span class="co">#&gt; 6  0  0  0  0  1  0 3  5  0.5276738</span></span>
+<span><span class="co">#&gt; 1  1  1  1  1  0  0 2  3 -0.1624650</span></span>
+<span><span class="co">#&gt; 2  1  1  1  1  1  1 1  3 -1.1591833</span></span>
+<span><span class="co">#&gt; 3  1  1  1  1  1  1 1  3 -1.2055132</span></span>
+<span><span class="co">#&gt; 4  0  0  0  0  0  0 3  4  1.8752276</span></span>
+<span><span class="co">#&gt; 5  1  1  1  1  1  1 1  3 -2.5582369</span></span>
+<span><span class="co">#&gt; 6  1  1  1  1  1  1 1  5 -0.4723262</span></span>
 <span></span>
 <span><span class="va">d.covariate.three_step</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/three_step.html">three_step</a></span><span class="op">(</span></span>
 <span>  data <span class="op">=</span> <span class="va">d.covariate</span>,</span>
@@ -1108,29 +1112,29 @@ procedures for the distal outcome model in step 3.</p>
 <span><span class="co">#&gt; Latent classes : 3</span></span>
 <span><span class="co">#&gt; Estimator      : ML</span></span>
 <span><span class="co">#&gt; Family         : gaussian</span></span>
-<span><span class="co">#&gt; Log-likelihood : -1300.1948</span></span>
-<span><span class="co">#&gt; AIC            : 2680.3896</span></span>
-<span><span class="co">#&gt; BIC            : 2848.9739</span></span>
+<span><span class="co">#&gt; Log-likelihood : -1315.6596</span></span>
+<span><span class="co">#&gt; AIC            : 2711.3193</span></span>
+<span><span class="co">#&gt; BIC            : 2879.9036</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Covariate -- two-step (starting) estimates:</span></span>
 <span><span class="co">#&gt;                C2      C3</span></span>
-<span><span class="co">#&gt; Intercept  2.4310 -4.4953</span></span>
-<span><span class="co">#&gt; Zp        -1.1027  1.2103</span></span>
+<span><span class="co">#&gt; Intercept  2.4973 -4.2196</span></span>
+<span><span class="co">#&gt; Zp        -1.0177  1.1159</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Covariate -- three-step estimates:</span></span>
 <span><span class="co">#&gt;              Estimate Std.Error z.value     p.value</span></span>
-<span><span class="co">#&gt; Intercept:C2   2.4602    0.3855  6.3819 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C2         -1.1178    0.1771 -6.3119 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Intercept:C3  -4.6274    0.6030 -7.6738 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; Zp:C3          1.2413    0.1499  8.2791 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C2   2.6602    0.3998  6.6538 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C2         -1.0790    0.1632 -6.6134 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Intercept:C3  -4.6917    0.7070 -6.6365 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; Zp:C3          1.2278    0.1735  7.0773 &lt; 0.001 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Distal outcome -- three-step estimates:</span></span>
 <span><span class="co">#&gt;              Estimate Std.Error  z.value     p.value</span></span>
-<span><span class="co">#&gt; mu_C1 (mean)  -0.9346    0.0774 -12.0711 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; mu_C2 (mean)   1.0685    0.0894  11.9577 &lt; 0.001 ***</span></span>
-<span><span class="co">#&gt; mu_C3 (mean)  -0.0007    0.0745  -0.0097 0.9923     </span></span>
+<span><span class="co">#&gt; mu_C1 (mean)  -0.9851    0.0828 -11.8995 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; mu_C2 (mean)   0.9298    0.0851  10.9217 &lt; 0.001 ***</span></span>
+<span><span class="co">#&gt; mu_C3 (mean)   0.1188    0.0722   1.6458 0.0998  .  </span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <p>Note that with covariates in a model with high separation, the
@@ -1149,7 +1153,7 @@ distal outcome estimation than if there were no covariates in the model
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      mu_C1      mu_C2      mu_C3 </span></span>
-<span><span class="co">#&gt; 0.07688217 0.09796084 0.07614852</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.08302639 0.08922331 0.07595896</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
@@ -1196,7 +1200,7 @@ improved three-step approaches. <em>Political Analysis</em>, 18(4),
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] tseLCA_0.1.4</span></span>
+<span><span class="co">#&gt; [1] tseLCA_1.0.0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;  [1] sass_0.4.10        generics_0.1.4     tidyr_1.3.2        pracma_2.4.6      </span></span>

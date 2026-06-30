@@ -45,6 +45,6 @@ A list with:
 
 For dichotomous items (K_h=2) the two columns are stored. For polytomous
 items (K_h\>2) all K_h columns are stored. This function first
-compresses the expanded Y back to integer codes via `compress_Y`, then
-re-expands consistently via `expand_Y` so downstream functions receive
-the correct N x K_total matrix.
+compresses the expanded Y back to integer codes through `compress_Y`,
+then re-expands consistently via `expand_Y` so downstream functions
+receive the correct N x K_total matrix.

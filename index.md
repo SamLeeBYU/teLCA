@@ -68,13 +68,21 @@ You can install the development version of tseLCA from GitHub like so:
 
 ``` r
 
-# Install pak if it is not already available
+# Install developmental tseLCA from the GitHub repository
 if (!require("pak")) {
   install.packages("pak")
 }
 
-# Install tseLCA from the GitHub repository
 pak::pak("SamLeeBYU/tseLCA")
+```
+
+Once tseLCA is on CRAN, then you can simply install it from a CRAN
+server.
+
+``` r
+
+# Install tseLCA from CRAN
+install.packages("tseLCA")
 ```
 
 Then read the introductory vignette on this package’s webpage here:

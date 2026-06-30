@@ -44,23 +44,23 @@ d    <- generate_data(100, "high", "covariate", seed = 1)
 fit_m <- three_step(d, paste0("Y", 1:6), n_classes = 3)
 print(fit_m)
 #> tseLCA -- measurement model
-#>   Classes: 3   Log-lik: -299.8180   AIC: 639.64   BIC: 691.74
-#>   Entropy R²: 0.8631
+#>   Classes: 3   Log-lik: -295.0095   AIC: 630.02   BIC: 682.12
+#>   Entropy R²: 0.8683
 # \donttest{
 d   <- generate_data(200, "high", "covariate", seed = 1)
 fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,
                   Zp.names = "Zp", use.simple.cov = TRUE)
 print(fit)
 #> tseLCA -- three-step covariate model
-#>   Classes: 3   Estimator: ML   Log-lik: -542.3379   AIC: 1164.68   BIC: 1296.61
-#>   Entropy R² (covariate-adjusted): 0.8772
+#>   Classes: 3   Estimator: ML   Log-lik: -548.6403   AIC: 1177.28   BIC: 1309.21
+#>   Entropy R² (covariate-adjusted): 0.8589
 #> 
 #> Covariate coefficients (three-step):
 #>              Estimate Std.Error z.value     p.value
-#> Intercept:C2   2.0295    0.4900  4.1416 < 0.001 ***
-#> Zp:C2         -0.8192    0.1891 -4.3323 < 0.001 ***
-#> Intercept:C3  -5.4875    1.2680 -4.3278 < 0.001 ***
-#> Zp:C3          1.4540    0.3215  4.5223 < 0.001 ***
+#> Intercept:C2   2.2334    0.6258  3.5688 < 0.001 ***
+#> Zp:C2         -1.1570    0.3002 -3.8545 < 0.001 ***
+#> Intercept:C3  -3.2742    0.7191 -4.5529 < 0.001 ***
+#> Zp:C3          0.9401    0.1896  4.9587 < 0.001 ***
 #> ---
 #> Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # }
@@ -71,12 +71,13 @@ fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,
 print(fit)
 #> tseLCA -- three-step distal outcome model
 #>   Classes: 3   Estimator: ML   Family: gaussian
+#>   Log-lik: -892.7558   AIC: 1831.51   BIC: 1907.37
 #> 
 #> Distal outcome means by class:
 #>              Estimate Std.Error z.value     p.value
-#> mu_C1 (mean)  -0.8837    0.1185 -7.4579 < 0.001 ***
-#> mu_C2 (mean)   0.9948    0.1188  8.3712 < 0.001 ***
-#> mu_C3 (mean)   0.1488    0.1510  0.9852 0.3245     
+#> mu_C1 (mean)  -0.8223    0.1169 -7.0356 < 0.001 ***
+#> mu_C2 (mean)   1.0946    0.1141  9.5956 < 0.001 ***
+#> mu_C3 (mean)   0.0492    0.1531  0.3212 0.7480     
 #> ---
 #> Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # }

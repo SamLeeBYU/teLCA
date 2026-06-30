@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tseLCA</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,12 +65,12 @@
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">Zp</span> <span class="op">&lt;-</span> <span class="fu"><a href="draw_Zp.html">draw_Zp</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">Zp</span> <span class="op">&lt;-</span> <span class="fu"><a href="draw_Zp.html">draw_Zp</a></span><span class="op">(</span><span class="fl">1000</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">X</span>  <span class="op">&lt;-</span> <span class="fu">draw_classes_given_Zp</span><span class="op">(</span><span class="va">Zp</span>, <span class="va">bk2018_params</span><span class="op">$</span><span class="va">covariate_params</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span> <span class="co"># Should be roughly uniform</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> X</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  1  2  3 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 27 37 36 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1   2   3 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 294 341 365 </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

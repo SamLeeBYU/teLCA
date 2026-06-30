@@ -46,27 +46,27 @@ fit_m <- three_step(d, paste0("Y", 1:6), n_classes = 3)
 summary(fit_m)
 #> -- tseLCA Measurement Model --------------------------------
 #> Latent classes : 3
-#> Log-likelihood : -299.8180
-#> AIC            : 639.6360
-#> BIC            : 691.7394
-#> Entropy R²     : 0.8631
+#> Log-likelihood : -295.0095
+#> AIC            : 630.0190
+#> BIC            : 682.1224
+#> Entropy R²     : 0.8683
 #> 
 #> Class prevalences:
 #>             
-#> P(C1) 0.2614
-#> P(C2) 0.3641
-#> P(C3) 0.3745
+#> P(C1) 0.2755
+#> P(C2) 0.3498
+#> P(C3) 0.3747
 #> attr(,"names")
 #> [1] "C1" "C2" "C3"
 #> 
 #> Item-response probabilities (P(Y=1|class)):
 #>             C1     C2     C3
-#> P(Y1|C) 0.8503 0.9439 0.2512
-#> P(Y2|C) 0.6930 0.9069 0.2633
-#> P(Y3|C) 0.8137 0.9954 0.2800
-#> P(Y4|C) 0.9197 0.1017 0.0335
-#> P(Y5|C) 0.8086 0.1011 0.0583
-#> P(Y6|C) 0.9830 0.0571 0.1128
+#> P(Y1|C) 0.8596 0.9340 0.0440
+#> P(Y2|C) 0.8167 0.8927 0.1674
+#> P(Y3|C) 1.0000 0.7724 0.0649
+#> P(Y4|C) 0.8303 0.0562 0.1377
+#> P(Y5|C) 0.8222 0.0368 0.0550
+#> P(Y6|C) 0.7657 0.2024 0.0754
 # \donttest{
 d   <- generate_data(200, "high", "covariate", seed = 1)
 fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,
@@ -75,22 +75,22 @@ summary(fit)
 #> -- tseLCA Three-Step Covariate Model -----------------------
 #> Latent classes : 3
 #> Estimator      : ML
-#> Log-likelihood : -542.3379
-#> AIC            : 1164.6758
-#> BIC            : 1296.6084
-#> Entropy R²     : 0.8772  (covariate-adjusted)
+#> Log-likelihood : -548.6403
+#> AIC            : 1177.2805
+#> BIC            : 1309.2132
+#> Entropy R²     : 0.8589  (covariate-adjusted)
 #> 
 #> Two-step (starting) estimates:
 #>                C2      C3
-#> Intercept  1.8853 -5.3376
-#> Zp        -0.7516  1.4098
+#> Intercept  1.9888 -3.1317
+#> Zp        -1.0175  0.9190
 #> 
 #> Three-step estimates:
 #>              Estimate Std.Error z.value     p.value
-#> Intercept:C2   2.0295    0.4900  4.1416 < 0.001 ***
-#> Zp:C2         -0.8192    0.1891 -4.3323 < 0.001 ***
-#> Intercept:C3  -5.4875    1.2680 -4.3278 < 0.001 ***
-#> Zp:C3          1.4540    0.3215  4.5223 < 0.001 ***
+#> Intercept:C2   2.2334    0.6258  3.5688 < 0.001 ***
+#> Zp:C2         -1.1570    0.3002 -3.8545 < 0.001 ***
+#> Intercept:C3  -3.2742    0.7191 -4.5529 < 0.001 ***
+#> Zp:C3          0.9401    0.1896  4.9587 < 0.001 ***
 #> ---
 #> Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # }
@@ -103,12 +103,15 @@ summary(fit)
 #> Latent classes : 3
 #> Estimator      : ML
 #> Family         : gaussian
+#> Log-likelihood : -892.7558
+#> AIC            : 1831.5116
+#> BIC            : 1907.3729
 #> 
 #> Distal outcome estimates by class:
 #>              Estimate Std.Error z.value     p.value
-#> mu_C1 (mean)  -0.8837    0.1185 -7.4579 < 0.001 ***
-#> mu_C2 (mean)   0.9948    0.1188  8.3712 < 0.001 ***
-#> mu_C3 (mean)   0.1488    0.1510  0.9852 0.3245     
+#> mu_C1 (mean)  -0.8223    0.1169 -7.0356 < 0.001 ***
+#> mu_C2 (mean)   1.0946    0.1141  9.5956 < 0.001 ***
+#> mu_C3 (mean)   0.0492    0.1531  0.3212 0.7480     
 #> ---
 #> Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # }

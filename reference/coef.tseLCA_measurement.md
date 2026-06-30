@@ -58,39 +58,39 @@ fit_m <- three_step(d, paste0("Y", 1:6), n_classes = 3)
 coef(fit_m)   # returns list with $prevalences and $item_probs
 #> $prevalences
 #>                
-#> P(C1) 0.2613812
-#> P(C2) 0.3641288
-#> P(C3) 0.3744900
+#> P(C1) 0.2755108
+#> P(C2) 0.3497761
+#> P(C3) 0.3747131
 #> 
 #> $item_probs
 #>                C1         C2         C3
-#> P(Y1|C) 0.8503009 0.94386031 0.25116991
-#> P(Y2|C) 0.6930271 0.90692158 0.26334344
-#> P(Y3|C) 0.8136952 0.99542535 0.27998700
-#> P(Y4|C) 0.9197189 0.10173196 0.03353693
-#> P(Y5|C) 0.8085871 0.10111305 0.05829891
-#> P(Y6|C) 0.9829910 0.05714552 0.11283694
+#> P(Y1|C) 0.8596137 0.93397796 0.04399101
+#> P(Y2|C) 0.8167472 0.89269738 0.16741645
+#> P(Y3|C) 0.9999900 0.77243231 0.06487957
+#> P(Y4|C) 0.8302998 0.05619882 0.13766913
+#> P(Y5|C) 0.8222312 0.03677733 0.05498234
+#> P(Y6|C) 0.7656717 0.20241699 0.07538715
 #> 
 # \donttest{
 d   <- generate_data(200, "high", "covariate", seed = 1)
 fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,
                   Zp.names = "Zp", use.simple.cov = TRUE)
 coef(fit)                      # three-step estimates
-#>                   C2        C3
-#> Intercept  2.0294548 -5.487549
-#> Zp        -0.8191555  1.453963
+#>                  C2         C3
+#> Intercept  2.233384 -3.2742157
+#> Zp        -1.156988  0.9400712
 coef(fit, which = "two_step")  # two-step starting values
-#>                   C2        C3
-#> Intercept  1.8853450 -5.337580
-#> Zp        -0.7516079  1.409796
+#>                  C2         C3
+#> Intercept  1.988800 -3.1317130
+#> Zp        -1.017498  0.9190021
 # }
 # \donttest{
 d   <- generate_data(200, "high", "distal", seed = 2)
 fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,
                   Zo.name = "Zo", use.simple.cov = TRUE)
 coef(fit)   # named vector of class means
-#>      mu_C1      mu_C2      mu_C3 
-#> -0.8836699  0.9947896  0.1488161 
+#>       mu_C1       mu_C2       mu_C3 
+#> -0.82227322  1.09461008  0.04916818 
 # }
 # \donttest{
 d   <- generate_data(200, "high", "covariate", seed = 1)
@@ -99,21 +99,21 @@ fit <- three_step(d, paste0("Y", 1:6), n_classes = 3,
                   Zp.names = "Zp", Zo.name = "Zo",
                   use.simple.cov = TRUE)
 coef(fit, which = "covariate")
-#>                   C2        C3
-#> Intercept  2.0294548 -5.487549
-#> Zp        -0.8191555  1.453963
+#>                  C2         C3
+#> Intercept  2.233384 -3.2742157
+#> Zp        -1.156988  0.9400712
 coef(fit, which = "distal")
-#>        mu_C1        mu_C2        mu_C3 
-#> -1.068160593  0.006733996  1.191464437 
+#>       mu_C1       mu_C2       mu_C3 
+#> -1.04363124  0.00515846  1.14210878 
 coef(fit, which = "both")
 #> $covariate
-#>                   C2        C3
-#> Intercept  2.0294548 -5.487549
-#> Zp        -0.8191555  1.453963
+#>                  C2         C3
+#> Intercept  2.233384 -3.2742157
+#> Zp        -1.156988  0.9400712
 #> 
 #> $distal
-#>        mu_C1        mu_C2        mu_C3 
-#> -1.068160593  0.006733996  1.191464437 
+#>       mu_C1       mu_C2       mu_C3 
+#> -1.04363124  0.00515846  1.14210878 
 #> 
 # }
 ```

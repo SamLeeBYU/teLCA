@@ -5,12 +5,12 @@ Returns a T x K matrix `rho` where `rho[t, k] = P(Y_k = 1 | X = t)`.
 ## Usage
 
 ``` r
-make_rho(pi)
+make_rho(pi_)
 ```
 
 ## Arguments
 
-- pi:
+- pi\_:
 
   Numeric scalar in (0.5, 1). Probability of the "likely" response. Use
   `bk2018_params$separation_levels` for the three simulation levels.
@@ -23,11 +23,11 @@ A 3 x 6 numeric matrix.
 
 The three-class structure is:
 
-- Class 1: `pi` on all 6 items (high responders).
+- Class 1: `pi_` on all 6 items (high responders).
 
-- Class 2: `pi` on items 1-3, `1 - pi` on items 4-6 (mixed).
+- Class 2: `pi_` on items 1-3, `1 - pi_` on items 4-6 (mixed).
 
-- Class 3: `1 - pi` on all 6 items (low responders).
+- Class 3: `1 - pi_` on all 6 items (low responders).
 
 ## Examples
 

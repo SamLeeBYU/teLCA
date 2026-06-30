@@ -41,19 +41,20 @@ fitZ_from_fit0(
 
 - tol:
 
-  Convergence tolerance.
+  Convergence tolerance. Default `1e-6`.
 
 - maxIter:
 
-  Maximum EM iterations.
+  Maximum EM iterations. Default `200`.
 
 - incomplete:
 
-  Logical.
+  Logical. FIML for partially missing indicators. See the `Missing Data`
+  section of `vignette("tseLCA", package = "tseLCA")`. Default `FALSE`.
 
 - include.intercept:
 
-  Logical.
+  Logical. Prepend intercept to covariate design matrix. Default `TRUE`.
 
 - rebase:
 
@@ -73,8 +74,40 @@ fitZ_from_fit0(
 
 ## Value
 
-A list with `$mGamma` (Q x (T-1)), `$mPhi`, `$vOmega`, `$LLKSeries`,
-`$converged`, `$n_obs`.
+A list with the following elements:
+
+- `mGamma`:
+
+  Q x (T-1) numeric matrix of multinomial logit coefficients, where Q is
+  the number of columns in the covariate design matrix (including
+  intercept if `include.intercept = TRUE`). Rows are named by covariate,
+  columns by non-reference class (e.g. `"C2"`, `"C3"`).
+
+- `mPhi`:
+
+  Expanded item parameter matrix (items x classes), fixed at `fit0$mPhi`
+  throughout estimation.
+
+- `vOmega`:
+
+  Length-T vector of marginal class proportions implied by the final
+  `mGamma`, computed as column means of the fitted class probability
+  matrix.
+
+- `LLKSeries`:
+
+  Single-column matrix of observed-data log-likelihoods, one row per EM
+  iteration. Useful for diagnosing convergence.
+
+- `converged`:
+
+  Logical. `TRUE` if the EM loop exited before `maxIter` iterations or
+  if the final log-likelihood change was below `tol`.
+
+- `n_obs`:
+
+  Integer. Number of observations used in estimation after listwise
+  deletion on covariates.
 
 ## Examples
 
@@ -91,11 +124,11 @@ fZ <- fitZ_from_fit0(
   Zp.names = "Zp",
   verbose  = TRUE
 )
-#> fitZ EM converged in 8 iterations.
+#> fitZ EM converged in 9 iterations.
 fZ$mGamma   # Q x (T-1) coefficient matrix
-#>                   C2        C3
-#> Intercept  1.8853450 -5.337580
-#> Zp        -0.7516079  1.409796
+#>                  C2         C3
+#> Intercept  1.988800 -3.1317130
+#> Zp        -1.017498  0.9190021
 fZ$converged
 #> [1] TRUE
 # }

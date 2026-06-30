@@ -9,7 +9,7 @@ mGamma (Q x (T-1)) via an EM algorithm with a BFGS M-step."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">tseLCA</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,19 +82,20 @@ mGamma (Q x (T-1)) via an EM algorithm with a BFGS M-step."></head><body>
 
 
 <dt id="arg-tol">tol<a class="anchor" aria-label="anchor" href="#arg-tol"></a></dt>
-<dd><p>Convergence tolerance.</p></dd>
+<dd><p>Convergence tolerance. Default <code>1e-6</code>.</p></dd>
 
 
 <dt id="arg-maxiter">maxIter<a class="anchor" aria-label="anchor" href="#arg-maxiter"></a></dt>
-<dd><p>Maximum EM iterations.</p></dd>
+<dd><p>Maximum EM iterations. Default <code>200</code>.</p></dd>
 
 
 <dt id="arg-incomplete">incomplete<a class="anchor" aria-label="anchor" href="#arg-incomplete"></a></dt>
-<dd><p>Logical.</p></dd>
+<dd><p>Logical. FIML for partially missing indicators. See the
+<code>Missing Data</code> section of <code>vignette("tseLCA", package = "tseLCA")</code>. Default <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-include-intercept">include.intercept<a class="anchor" aria-label="anchor" href="#arg-include-intercept"></a></dt>
-<dd><p>Logical.</p></dd>
+<dd><p>Logical. Prepend intercept to covariate design matrix. Default <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-rebase">rebase<a class="anchor" aria-label="anchor" href="#arg-rebase"></a></dt>
@@ -114,9 +115,37 @@ is consistent.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>$mGamma</code> (Q x (T-1)), <code>$mPhi</code>, <code>$vOmega</code>,
-<code>$LLKSeries</code>, <code>$converged</code>, <code>$n_obs</code>.</p>
-    </div>
+    <p>A list with the following elements:</p><dl><dt><code>mGamma</code></dt>
+<dd><p>Q x (T-1) numeric matrix of multinomial logit
+coefficients, where Q is the number of columns in the covariate design
+matrix (including intercept if <code>include.intercept = TRUE</code>). Rows are
+named by covariate, columns by non-reference class (e.g. <code>"C2"</code>,
+<code>"C3"</code>).</p></dd>
+
+<dt><code>mPhi</code></dt>
+<dd><p>Expanded item parameter matrix (items x classes), fixed at
+<code>fit0$mPhi</code> throughout estimation.</p></dd>
+
+<dt><code>vOmega</code></dt>
+<dd><p>Length-T vector of marginal class proportions implied by
+the final <code>mGamma</code>, computed as column means of the fitted class
+probability matrix.</p></dd>
+
+<dt><code>LLKSeries</code></dt>
+<dd><p>Single-column matrix of observed-data log-likelihoods,
+one row per EM iteration. Useful for diagnosing convergence.</p></dd>
+
+<dt><code>converged</code></dt>
+<dd><p>Logical. <code>TRUE</code> if the EM loop exited before
+<code>maxIter</code> iterations or if the final log-likelihood change was below
+<code>tol</code>.</p></dd>
+
+<dt><code>n_obs</code></dt>
+<dd><p>Integer. Number of observations used in estimation after
+listwise deletion on covariates.</p></dd>
+
+
+</dl></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
@@ -132,11 +161,11 @@ is consistent.</p></dd>
 <span class="r-in"><span>  Zp.names <span class="op">=</span> <span class="st">"Zp"</span>,</span></span>
 <span class="r-in"><span>  verbose  <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> fitZ EM converged in 8 iterations.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> fitZ EM converged in 9 iterations.</span>
 <span class="r-in"><span><span class="va">fZ</span><span class="op">$</span><span class="va">mGamma</span>   <span class="co"># Q x (T-1) coefficient matrix</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   C2        C3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept  1.8853450 -5.337580</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Zp        -0.7516079  1.409796</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  C2         C3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept  1.988800 -3.1317130</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Zp        -1.017498  0.9190021</span>
 <span class="r-in"><span><span class="va">fZ</span><span class="op">$</span><span class="va">converged</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

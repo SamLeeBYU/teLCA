@@ -13,13 +13,13 @@ Source:
 [`inst/CITATION`](https://github.com/SamLeeBYU/tseLCA/blob/main/inst/CITATION)
 
 Lee S (2026). *tseLCA: Three-Step Estimation for Latent Class Analysis*.
-R package version 0.1.4, <https://github.com/SamLeeBYU/tseLCA>.
+R package version 1.0.0, <https://github.com/SamLeeBYU/tseLCA>.
 
     @Manual{,
       title = {{tseLCA}: Three-Step Estimation for Latent Class Analysis},
       author = {Sam Lee},
       year = {2026},
-      note = {R package version 0.1.4},
+      note = {R package version 1.0.0},
       url = {https://github.com/SamLeeBYU/tseLCA},
       institution = {Brigham Young University University of Arizona},
     }

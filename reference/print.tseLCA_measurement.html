@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tseLCA</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,23 +83,23 @@
 <span class="r-in"><span><span class="va">fit_m</span> <span class="op">&lt;-</span> <span class="fu"><a href="three_step.html">three_step</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Y"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span>, n_classes <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit_m</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> tseLCA -- measurement model</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Classes: 3   Log-lik: -299.8180   AIC: 639.64   BIC: 691.74</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Entropy R²: 0.8631</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Classes: 3   Log-lik: -295.0095   AIC: 630.02   BIC: 682.12</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Entropy R²: 0.8683</span>
 <span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="va">d</span>   <span class="op">&lt;-</span> <span class="fu"><a href="generate_data.html">generate_data</a></span><span class="op">(</span><span class="fl">200</span>, <span class="st">"high"</span>, <span class="st">"covariate"</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="three_step.html">three_step</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Y"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span>, n_classes <span class="op">=</span> <span class="fl">3</span>,</span></span>
 <span class="r-in"><span>                  Zp.names <span class="op">=</span> <span class="st">"Zp"</span>, use.simple.cov <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> tseLCA -- three-step covariate model</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Classes: 3   Estimator: ML   Log-lik: -542.3379   AIC: 1164.68   BIC: 1296.61</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Entropy R² (covariate-adjusted): 0.8772</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Classes: 3   Estimator: ML   Log-lik: -548.6403   AIC: 1177.28   BIC: 1309.21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Entropy R² (covariate-adjusted): 0.8589</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Covariate coefficients (three-step):</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>              Estimate Std.Error z.value     p.value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept:C2   2.0295    0.4900  4.1416 &lt; 0.001 ***</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Zp:C2         -0.8192    0.1891 -4.3323 &lt; 0.001 ***</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept:C3  -5.4875    1.2680 -4.3278 &lt; 0.001 ***</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Zp:C3          1.4540    0.3215  4.5223 &lt; 0.001 ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept:C2   2.2334    0.6258  3.5688 &lt; 0.001 ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Zp:C2         -1.1570    0.3002 -3.8545 &lt; 0.001 ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept:C3  -3.2742    0.7191 -4.5529 &lt; 0.001 ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Zp:C3          0.9401    0.1896  4.9587 &lt; 0.001 ***</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
@@ -110,12 +110,13 @@
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> tseLCA -- three-step distal outcome model</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Classes: 3   Estimator: ML   Family: gaussian</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Log-lik: -892.7558   AIC: 1831.51   BIC: 1907.37</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Distal outcome means by class:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>              Estimate Std.Error z.value     p.value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mu_C1 (mean)  -0.8837    0.1185 -7.4579 &lt; 0.001 ***</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mu_C2 (mean)   0.9948    0.1188  8.3712 &lt; 0.001 ***</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mu_C3 (mean)   0.1488    0.1510  0.9852 0.3245     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mu_C1 (mean)  -0.8223    0.1169 -7.0356 &lt; 0.001 ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mu_C2 (mean)   1.0946    0.1141  9.5956 &lt; 0.001 ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mu_C3 (mean)   0.0492    0.1531  0.3212 0.7480     </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

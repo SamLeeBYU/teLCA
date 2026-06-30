@@ -9,7 +9,7 @@ probabilities, and coefficient tables with standard errors and p-values."></head
 
     <a class="navbar-brand me-2" href="../index.html">tseLCA</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,27 +87,27 @@ probabilities, and coefficient tables with standard errors and p-values.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit_m</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> -- tseLCA Measurement Model --------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Latent classes : 3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Log-likelihood : -299.8180</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> AIC            : 639.6360</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BIC            : 691.7394</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Entropy R²     : 0.8631</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Log-likelihood : -295.0095</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> AIC            : 630.0190</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> BIC            : 682.1224</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Entropy R²     : 0.8683</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Class prevalences:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(C1) 0.2614</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(C2) 0.3641</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(C3) 0.3745</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(C1) 0.2755</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(C2) 0.3498</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(C3) 0.3747</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"names")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "C1" "C2" "C3"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Item-response probabilities (P(Y=1|class)):</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             C1     C2     C3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y1|C) 0.8503 0.9439 0.2512</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y2|C) 0.6930 0.9069 0.2633</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y3|C) 0.8137 0.9954 0.2800</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y4|C) 0.9197 0.1017 0.0335</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y5|C) 0.8086 0.1011 0.0583</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y6|C) 0.9830 0.0571 0.1128</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y1|C) 0.8596 0.9340 0.0440</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y2|C) 0.8167 0.8927 0.1674</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y3|C) 1.0000 0.7724 0.0649</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y4|C) 0.8303 0.0562 0.1377</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y5|C) 0.8222 0.0368 0.0550</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y6|C) 0.7657 0.2024 0.0754</span>
 <span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="va">d</span>   <span class="op">&lt;-</span> <span class="fu"><a href="generate_data.html">generate_data</a></span><span class="op">(</span><span class="fl">200</span>, <span class="st">"high"</span>, <span class="st">"covariate"</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="three_step.html">three_step</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Y"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span>, n_classes <span class="op">=</span> <span class="fl">3</span>,</span></span>
@@ -116,22 +116,22 @@ probabilities, and coefficient tables with standard errors and p-values.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> -- tseLCA Three-Step Covariate Model -----------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Latent classes : 3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimator      : ML</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Log-likelihood : -542.3379</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> AIC            : 1164.6758</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> BIC            : 1296.6084</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Entropy R²     : 0.8772  (covariate-adjusted)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Log-likelihood : -548.6403</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> AIC            : 1177.2805</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> BIC            : 1309.2132</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Entropy R²     : 0.8589  (covariate-adjusted)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Two-step (starting) estimates:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                C2      C3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept  1.8853 -5.3376</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Zp        -0.7516  1.4098</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept  1.9888 -3.1317</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Zp        -1.0175  0.9190</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Three-step estimates:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>              Estimate Std.Error z.value     p.value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept:C2   2.0295    0.4900  4.1416 &lt; 0.001 ***</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Zp:C2         -0.8192    0.1891 -4.3323 &lt; 0.001 ***</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept:C3  -5.4875    1.2680 -4.3278 &lt; 0.001 ***</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Zp:C3          1.4540    0.3215  4.5223 &lt; 0.001 ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept:C2   2.2334    0.6258  3.5688 &lt; 0.001 ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Zp:C2         -1.1570    0.3002 -3.8545 &lt; 0.001 ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept:C3  -3.2742    0.7191 -4.5529 &lt; 0.001 ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Zp:C3          0.9401    0.1896  4.9587 &lt; 0.001 ***</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
@@ -144,12 +144,15 @@ probabilities, and coefficient tables with standard errors and p-values.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Latent classes : 3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimator      : ML</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family         : gaussian</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Log-likelihood : -892.7558</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> AIC            : 1831.5116</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> BIC            : 1907.3729</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Distal outcome estimates by class:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>              Estimate Std.Error z.value     p.value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mu_C1 (mean)  -0.8837    0.1185 -7.4579 &lt; 0.001 ***</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mu_C2 (mean)   0.9948    0.1188  8.3712 &lt; 0.001 ***</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mu_C3 (mean)   0.1488    0.1510  0.9852 0.3245     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mu_C1 (mean)  -0.8223    0.1169 -7.0356 &lt; 0.001 ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mu_C2 (mean)   1.0946    0.1141  9.5956 &lt; 0.001 ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mu_C3 (mean)   0.0492    0.1531  0.3212 0.7480     </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

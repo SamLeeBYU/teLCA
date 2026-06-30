@@ -73,11 +73,11 @@ datasets <- generate_all_conditions(n_rep = 5L, base_seed = 1L,
 # Access a single replicate
 head(datasets[["covariate"]][["high"]][["500"]][[1]])
 #>   Y1 Y2 Y3 Y4 Y5 Y6 X Zp
-#> 1  1  0  1  0  0  1 2  2
-#> 2  1  1  1  1  1  1 1  3
+#> 1  1  1  1  1  0  1 1  2
+#> 2  0  1  1  1  0  0 1  3
 #> 3  1  1  1  1  1  1 1  3
-#> 4  1  0  1  1  1  1 1  3
+#> 4  1  1  1  1  1  1 1  3
 #> 5  1  1  1  0  0  0 2  1
-#> 6  1  1  1  1  1  0 1  2
+#> 6  0  1  1  0  0  0 2  2
 # }
 ```

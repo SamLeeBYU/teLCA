@@ -30,6 +30,6 @@ Numeric vector of length n.
 X  <- draw_classes(100, c(1/3, 1/3, 1/3))
 Zo <- draw_Zo(X, bk2018_params$distal_params)
 tapply(Zo, X, mean)   # should be close to true mu
-#>          1          2          3 
-#> -0.9139547  1.0746963  0.1654177 
+#>         1         2         3 
+#> -1.054481  1.211078 -0.040895 
 ```

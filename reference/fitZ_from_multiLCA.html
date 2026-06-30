@@ -13,7 +13,7 @@ multilevLCA's corrected standard errors for the two-step gamma estimates."></hea
 
     <a class="navbar-brand me-2" href="../index.html">tseLCA</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -109,7 +109,9 @@ multilevLCA's corrected standard errors for the two-step gamma estimates.</p>
 
 
 <dt id="arg-incomplete">incomplete<a class="anchor" aria-label="anchor" href="#arg-incomplete"></a></dt>
-<dd><p>Logical.</p></dd>
+<dd><p>Logical. FIML for partially missing indicators. See the
+<code>Missing Data</code> section of <code>vignette("tseLCA", package = "tseLCA")</code>.
+Default <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-rebase">rebase<a class="anchor" aria-label="anchor" href="#arg-rebase"></a></dt>
@@ -124,10 +126,32 @@ coefficient labels are consistent. Default <code>"C1"</code>.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>$mGamma</code>, <code>$mPhi</code>, <code>$vOmega</code>, <code>$LLKSeries</code>, and
-<code>$raw_fit</code> (the full multilevLCA output, including <code>$Varmat_cor</code> and
-<code>$SEs_cor_gamma</code> if available).</p>
-    </div>
+    <p>A list with the following elements:</p><dl><dt><code>mGamma</code></dt>
+<dd><p>Q x (T-1) numeric matrix of multinomial logit
+coefficients. Rows are named by covariate (including <code>"Intercept"</code>),
+columns by non-reference class (e.g. <code>"C2"</code>, <code>"C3"</code>).</p></dd>
+
+<dt><code>mPhi</code></dt>
+<dd><p>Item parameter matrix (items x classes) from the
+fixed-parameter multilevLCA fit.</p></dd>
+
+<dt><code>vOmega</code></dt>
+<dd><p>Length-T vector of marginal class proportions, computed
+as the average of the fitted class probability matrix (<code>vPi_avg</code> in
+multilevLCA output).</p></dd>
+
+<dt><code>LLKSeries</code></dt>
+<dd><p>Matrix of observed-data log-likelihoods across EM
+iterations, passed through directly from the multilevLCA fit.</p></dd>
+
+<dt><code>raw_fit</code></dt>
+<dd><p>The full <code><a href="https://rdrr.io/pkg/multilevLCA/man/multiLCA.html" class="external-link">multilevLCA::multiLCA()</a></code> output object,
+including <code>$Varmat_cor</code> (corrected variance matrix) and
+<code>$SEs_cor_gamma</code> (corrected standard errors for <code>mGamma</code>) if
+available.</p></dd>
+
+
+</dl></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
@@ -147,15 +171,15 @@ coefficient labels are consistent. Default <code>"C1"</code>.</p></dd>
 <span class="r-in"><span>  R2.threshold        <span class="op">=</span> <span class="fl">0.70</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fZ_ml</span><span class="op">$</span><span class="va">mGamma</span>           <span class="co"># two-step estimates</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   C2        C3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept  1.8862448 -5.343414</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Zp        -0.7520118  1.411197</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  C2         C3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept  1.990672 -3.1319910</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Zp        -1.018352  0.9190157</span>
 <span class="r-in"><span><span class="va">fZ_ml</span><span class="op">$</span><span class="va">raw_fit</span><span class="op">$</span><span class="va">Varmat_cor</span>   <span class="co"># multilevLCA corrected vcov</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>              [,1]         [,2]         [,3]         [,4]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1,]  0.226606015 -0.080420786  0.022531107 -0.008956779</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [2,] -0.080420786  0.036221462  0.004946794  0.001391765</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3,]  0.022531107  0.004946794  1.501589310 -0.345447542</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [4,] -0.008956779  0.001391765 -0.345447542  0.082865708</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             [,1]         [,2]         [,3]         [,4]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1,]  0.28553970 -0.119040291  0.051831951 -0.016507545</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2,] -0.11904029  0.065539163 -0.009799449  0.005370232</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3,]  0.05183195 -0.009799449  0.613479393 -0.157124127</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4,] -0.01650754  0.005370232 -0.157124127  0.043473866</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

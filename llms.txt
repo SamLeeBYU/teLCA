@@ -68,13 +68,21 @@ You can install the development version of tseLCA from GitHub like so:
 
 ``` r
 
-# Install pak if it is not already available
+# Install developmental tseLCA from the GitHub repository
 if (!require("pak")) {
   install.packages("pak")
 }
 
-# Install tseLCA from the GitHub repository
 pak::pak("SamLeeBYU/tseLCA")
+```
+
+Once tseLCA is on CRAN, then you can simply install it from a CRAN
+server.
+
+``` r
+
+# Install tseLCA from CRAN
+install.packages("tseLCA")
 ```
 
 Then read the introductory vignette on this package’s webpage here:
@@ -152,7 +160,7 @@ summary(fit)
 - [`make_rho()`](https://samleebyu.github.io/tseLCA/reference/make_rho.md)
   : Build the item-response probability matrix for the simulation
 - [`mnl_probs()`](https://samleebyu.github.io/tseLCA/reference/mnl_probs.md)
-  : Compute multinomial logistic class probabilities given a covariate
+  : Compute multinomial logistic class probabilities given covariates
 - [`plot(`*`<tseLCA_measurement>`*`)`](https://samleebyu.github.io/tseLCA/reference/plot.tseLCA_measurement.md)
   [`plot(`*`<tseLCA_covariate>`*`)`](https://samleebyu.github.io/tseLCA/reference/plot.tseLCA_measurement.md)
   [`plot(`*`<tseLCA_distal>`*`)`](https://samleebyu.github.io/tseLCA/reference/plot.tseLCA_measurement.md)

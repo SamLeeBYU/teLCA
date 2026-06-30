@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tseLCA</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,8 +69,8 @@ See <code>bk2018_params$distal_params</code>.</p></dd>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">X</span>  <span class="op">&lt;-</span> <span class="fu"><a href="draw_classes.html">draw_classes</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="fl">3</span>, <span class="fl">1</span><span class="op">/</span><span class="fl">3</span>, <span class="fl">1</span><span class="op">/</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">Zo</span> <span class="op">&lt;-</span> <span class="fu">draw_Zo</span><span class="op">(</span><span class="va">X</span>, <span class="va">bk2018_params</span><span class="op">$</span><span class="va">distal_params</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/tapply.html" class="external-link">tapply</a></span><span class="op">(</span><span class="va">Zo</span>, <span class="va">X</span>, <span class="va">mean</span><span class="op">)</span>   <span class="co"># should be close to true mu</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          1          2          3 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -0.9139547  1.0746963  0.1654177 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1         2         3 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -1.054481  1.211078 -0.040895 </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

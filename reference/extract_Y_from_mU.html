@@ -11,7 +11,7 @@ followed by T columns of posterior class probabilities."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">tseLCA</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,7 +86,7 @@ If <code>NULL</code>, inferred from <code>fit0$mPhi</code> dimensions.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>For dichotomous items (K_h=2) the two columns are stored. For polytomous
 items (K_h&gt;2) all K_h columns are stored. This function first compresses
-the expanded Y back to integer codes via <code>compress_Y</code>, then re-expands
+the expanded Y back to integer codes through <code>compress_Y</code>, then re-expands
 consistently via <code>expand_Y</code> so downstream functions receive the correct
 N x K_total matrix.</p>
     </div>

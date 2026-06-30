@@ -74,10 +74,10 @@ A named list with:
 
   Positions of Z-complete rows within keep_Y.
 
-- Z0_mat:
+- Zo_mat:
 
-  N_Z0 x 1 distal outcome matrix, or NULL.
+  N_Zo x 1 distal outcome matrix, or NULL.
 
-- keep_step3_Z0_in_Y:
+- keep_step3_Zo_in_Y:
 
-  Positions of Z0-complete rows within keep_Y.
+  Positions of Zo-complete rows within keep_Y.

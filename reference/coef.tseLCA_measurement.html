@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tseLCA</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,39 +97,39 @@
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">fit_m</span><span class="op">)</span>   <span class="co"># returns list with $prevalences and $item_probs</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $prevalences</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(C1) 0.2613812</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(C2) 0.3641288</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(C3) 0.3744900</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(C1) 0.2755108</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(C2) 0.3497761</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(C3) 0.3747131</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $item_probs</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                C1         C2         C3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y1|C) 0.8503009 0.94386031 0.25116991</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y2|C) 0.6930271 0.90692158 0.26334344</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y3|C) 0.8136952 0.99542535 0.27998700</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y4|C) 0.9197189 0.10173196 0.03353693</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y5|C) 0.8085871 0.10111305 0.05829891</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y6|C) 0.9829910 0.05714552 0.11283694</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y1|C) 0.8596137 0.93397796 0.04399101</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y2|C) 0.8167472 0.89269738 0.16741645</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y3|C) 0.9999900 0.77243231 0.06487957</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y4|C) 0.8302998 0.05619882 0.13766913</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y5|C) 0.8222312 0.03677733 0.05498234</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> P(Y6|C) 0.7656717 0.20241699 0.07538715</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="va">d</span>   <span class="op">&lt;-</span> <span class="fu"><a href="generate_data.html">generate_data</a></span><span class="op">(</span><span class="fl">200</span>, <span class="st">"high"</span>, <span class="st">"covariate"</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="three_step.html">three_step</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Y"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span>, n_classes <span class="op">=</span> <span class="fl">3</span>,</span></span>
 <span class="r-in"><span>                  Zp.names <span class="op">=</span> <span class="st">"Zp"</span>, use.simple.cov <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>                      <span class="co"># three-step estimates</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   C2        C3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept  2.0294548 -5.487549</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Zp        -0.8191555  1.453963</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  C2         C3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept  2.233384 -3.2742157</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Zp        -1.156988  0.9400712</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">fit</span>, which <span class="op">=</span> <span class="st">"two_step"</span><span class="op">)</span>  <span class="co"># two-step starting values</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   C2        C3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept  1.8853450 -5.337580</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Zp        -0.7516079  1.409796</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  C2         C3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept  1.988800 -3.1317130</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Zp        -1.017498  0.9190021</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="va">d</span>   <span class="op">&lt;-</span> <span class="fu"><a href="generate_data.html">generate_data</a></span><span class="op">(</span><span class="fl">200</span>, <span class="st">"high"</span>, <span class="st">"distal"</span>, seed <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="three_step.html">three_step</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Y"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span>, n_classes <span class="op">=</span> <span class="fl">3</span>,</span></span>
 <span class="r-in"><span>                  Zo.name <span class="op">=</span> <span class="st">"Zo"</span>, use.simple.cov <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>   <span class="co"># named vector of class means</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      mu_C1      mu_C2      mu_C3 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -0.8836699  0.9947896  0.1488161 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       mu_C1       mu_C2       mu_C3 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -0.82227322  1.09461008  0.04916818 </span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="va">d</span>   <span class="op">&lt;-</span> <span class="fu"><a href="generate_data.html">generate_data</a></span><span class="op">(</span><span class="fl">200</span>, <span class="st">"high"</span>, <span class="st">"covariate"</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
@@ -138,21 +138,21 @@
 <span class="r-in"><span>                  Zp.names <span class="op">=</span> <span class="st">"Zp"</span>, Zo.name <span class="op">=</span> <span class="st">"Zo"</span>,</span></span>
 <span class="r-in"><span>                  use.simple.cov <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">fit</span>, which <span class="op">=</span> <span class="st">"covariate"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   C2        C3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept  2.0294548 -5.487549</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Zp        -0.8191555  1.453963</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  C2         C3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept  2.233384 -3.2742157</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Zp        -1.156988  0.9400712</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">fit</span>, which <span class="op">=</span> <span class="st">"distal"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        mu_C1        mu_C2        mu_C3 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -1.068160593  0.006733996  1.191464437 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       mu_C1       mu_C2       mu_C3 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -1.04363124  0.00515846  1.14210878 </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">fit</span>, which <span class="op">=</span> <span class="st">"both"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $covariate</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   C2        C3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept  2.0294548 -5.487549</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Zp        -0.8191555  1.453963</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  C2         C3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept  2.233384 -3.2742157</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Zp        -1.156988  0.9400712</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $distal</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        mu_C1        mu_C2        mu_C3 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -1.068160593  0.006733996  1.191464437 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       mu_C1       mu_C2       mu_C3 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -1.04363124  0.00515846  1.14210878 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>

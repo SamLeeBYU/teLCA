@@ -26,10 +26,10 @@ Integer vector of length n with class labels in `1:T`.
 ## Examples
 
 ``` r
-Zp <- draw_Zp(100)
+Zp <- draw_Zp(1000)
 X  <- draw_classes_given_Zp(Zp, bk2018_params$covariate_params)
-table(X)
+table(X) # Should be roughly uniform
 #> X
-#>  1  2  3 
-#> 27 37 36 
+#>   1   2   3 
+#> 294 341 365 
 ```

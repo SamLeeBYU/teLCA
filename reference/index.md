@@ -37,7 +37,7 @@
 - [`make_rho()`](https://samleebyu.github.io/tseLCA/reference/make_rho.md)
   : Build the item-response probability matrix for the simulation
 - [`mnl_probs()`](https://samleebyu.github.io/tseLCA/reference/mnl_probs.md)
-  : Compute multinomial logistic class probabilities given a covariate
+  : Compute multinomial logistic class probabilities given covariates
 - [`plot(`*`<tseLCA_measurement>`*`)`](https://samleebyu.github.io/tseLCA/reference/plot.tseLCA_measurement.md)
   [`plot(`*`<tseLCA_covariate>`*`)`](https://samleebyu.github.io/tseLCA/reference/plot.tseLCA_measurement.md)
   [`plot(`*`<tseLCA_distal>`*`)`](https://samleebyu.github.io/tseLCA/reference/plot.tseLCA_measurement.md)
