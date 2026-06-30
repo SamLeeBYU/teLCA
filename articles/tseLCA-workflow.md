@@ -458,8 +458,8 @@ summary(d.low.three_step.prop)
 ## Choosing the reference class
 
 By default, class 1 (`"C1"`) is the reference category for the
-multinomial logit parameterisation. The `rebase` argument changes this.
-Estimates are reparameterised consistently: log-likelihoods are
+multinomial logit parameterization. The `rebase` argument changes this.
+Estimates are reparameterized consistently: log-likelihoods are
 invariant, and the coefficients satisfy the transitivity relation
 $`\log(\pi_t / \pi_j) = \log(\pi_t / \pi_1) - \log(\pi_j / \pi_1)`$.
 

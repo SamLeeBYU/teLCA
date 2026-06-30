@@ -487,8 +487,8 @@ more reliable in this setting.</p>
 <h2 id="choosing-the-reference-class">Choosing the reference class<a class="anchor" aria-label="anchor" href="#choosing-the-reference-class"></a>
 </h2>
 <p>By default, class 1 (<code>"C1"</code>) is the reference category for
-the multinomial logit parameterisation. The <code>rebase</code> argument
-changes this. Estimates are reparameterised consistently:
+the multinomial logit parameterization. The <code>rebase</code> argument
+changes this. Estimates are reparameterized consistently:
 log-likelihoods are invariant, and the coefficients satisfy the
 transitivity relation
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>π</mi><mi>t</mi></msub><mi>/</mi><msub><mi>π</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>π</mi><mi>t</mi></msub><mi>/</mi><msub><mi>π</mi><mn>1</mn></msub><mo stretchy="false" form="postfix">)</mo><mo>−</mo><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>π</mi><mi>j</mi></msub><mi>/</mi><msub><mi>π</mi><mn>1</mn></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\log(\pi_t / \pi_j) = \log(\pi_t / \pi_1) - \log(\pi_j / \pi_1)</annotation></semantics></math>.</p>
