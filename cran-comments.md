@@ -1,7 +1,8 @@
 ## Test environments
 * local machine, R 4.6.1
 * win-builder (release and devel)
-* R-hub v2 (macOS and Ubuntu/Fedora Linux)
+* Ubuntu Linux (R-devel)
+* macOS arm64 (R-devel)
 
 ## R CMD check results
 0 errors | 0 warnings | 1 note
