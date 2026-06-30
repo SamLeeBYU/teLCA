@@ -1,3 +1,8 @@
+#' One-hot expand an integer response matrix
+#'
+#' Converts an N x H matrix of 0-based integer category values into an
+#' N x sum(ivItemcat) binary indicator matrix, one column per category per item.
+#' @noRd
 expand_Y <- function(mY_int, ivItemcat) {
   # mY_int: N x H matrix of integer category values (0-based)
   # ivItemcat: length-H vector of number of categories per item
@@ -15,6 +20,12 @@ expand_Y <- function(mY_int, ivItemcat) {
   out
 }
 
+#' Expand a compact mPhi to a full item-probability matrix
+#'
+#' Converts multilevLCA's storage convention (one row per dichotomous item,
+#' K rows per polytomous item) into a sum(ivItemcat) x T expanded matrix where
+#' each item block contains all K category probabilities including the reference.
+#' @noRd
 expand_Phi <- function(phi_mat, ivItemcat) {
   dichotomous <- ivItemcat == 2L
   result <- vector("list", length(ivItemcat))
@@ -32,6 +43,12 @@ expand_Phi <- function(phi_mat, ivItemcat) {
   do.call(rbind, result)
 }
 
+#' Expand a free-parameter phi matrix to full category probabilities
+#'
+#' Inverse of the simplex constraint: given (K-1) free rows per polytomous item
+#' and 1 row per dichotomous item, prepends the reference P(Y=0|C) row for each
+#' polytomous item so that the result aligns with expand_Y output.
+#' @noRd
 expand_Phi_free <- function(phi_free, ivItemcat) {
   result <- vector("list", length(ivItemcat))
   h_phi <- 1L
@@ -49,13 +66,25 @@ expand_Phi_free <- function(phi_free, ivItemcat) {
   do.call(rbind, result)
 }
 
+#' Per-observation class log-likelihood matrix
+#'
+#' Returns an N x T matrix where entry `[i, t]` is the conditional log-likelihood
+#' log P(Y_i | X=t) under the expanded item-probability matrix mPhi.
+#' mDesign masks missing indicators (0 = missing, 1 = observed).
+#' @noRd
 log_lik_matrix <- function(Y, mPhi, mDesign = NULL) {
   if (is.null(mDesign)) {
     mDesign <- matrix(1L, nrow(Y), ncol(Y))
   }
-  (mDesign * Y) %*% log(mPhi) #+ (mDesign * (1 - Y)) %*% log(1 - mPhi)
+  (mDesign * Y) %*% log(mPhi)
 }
 
+#' Joint observed-data log-likelihood with covariates
+#'
+#' Computes sum_i log P(Y_i, Z_i) = sum_i log sum_t P(Y_i|X=t) P(X=t|Z_i)
+#' under a multinomial logit structural model with coefficient matrix gamma.coefs
+#' (Q x (T-1), reference class absorbed into the intercept column of Z).
+#' @noRd
 joint_log_lik <- function(Y, Z, mPhi, gamma.coefs, mDesign = NULL) {
   if (is.null(mDesign)) {
     mDesign <- matrix(1L, nrow(Y), ncol(Y))
@@ -79,6 +108,12 @@ joint_log_lik <- function(Y, Z, mPhi, gamma.coefs, mDesign = NULL) {
   sum(log_marg_prob)
 }
 
+#' Compute posterior class probabilities from the unconstrained theta1 vector
+#'
+#' Reconstructs vPi and phi from the stacked parameter vector theta1 =
+#' `c(vPi[-1], phi_free)` used internally by lca_step2, then returns the
+#' N x T soft posterior matrix P(X=t|Y_i).
+#' @noRd
 compute_posteriors <- function(Y, mDesign, theta1, ivItemcat, T) {
   vPi_free <- theta1[1:(T - 1L)]
   vPi <- c(1 - sum(vPi_free), vPi_free)
@@ -93,6 +128,13 @@ compute_posteriors <- function(Y, mDesign, theta1, ivItemcat, T) {
   exp(log_joint - log_denom)
 }
 
+#' Compute classification-error matrix with optional covariate-adjusted prior
+#'
+#' Returns posteriors, modal/soft assignments (w.is), and the T x T
+#' classification-error probability matrix p.wx_mat = P(W=s|X=t).
+#' When pi_adj (N x T) is supplied, uses person-specific class priors from the
+#' covariate model; otherwise falls back to the flat vPi from fit0.
+#' @noRd
 compute_pwx_adj <- function(
   Y.obs,
   fit0,
@@ -143,6 +185,16 @@ compute_pwx_adj <- function(
 }
 
 # -- Step 2: Posteriors and classification-error matrix -----------------------
+
+#' Step 2: posteriors, classification-error matrix, and Jacobian closure
+#'
+#' Computes all Step-2 quantities needed for Step 3 and variance propagation:
+#' theta1 and theta2 (constrained and unconstrained parameterizations of the
+#' classification-error matrix), w.is (modal or soft assignments), p.wx_mat,
+#' and optionally a closure compute_J_unc for the analytic Jacobian
+#' d theta2 / d u used in the measurement-uncertainty correction.
+#' Returns NULL for compute_J_unc when use.simple.cov = TRUE.
+#' @noRd
 lca_step2 <- function(
   Y.obs,
   fit0,
@@ -225,12 +277,6 @@ lca_step2 <- function(
   p.wx_mat <- gamma_vec_to_pwx(theta2)
 
   if (!use.simple.cov) {
-    # fit0$Varmat is already in u-space. compute_J_unc_analytical computes
-    # d theta2 / d u, returned as a closure for callers to apply on subsets.    # fit0$Varmat (Sigma_1) is already in unconstrained u-space -- it is the
-    # inverse outer-product of scores w.r.t. u, i.e. E[dl/du (dl/du)']^{-1}.
-    # Therefore J.2 = d theta2 / d u  directly, with no need to chain through
-    # d u / d theta1.  The old J_theta1_to_u factor is dropped entirely.
-
     compute_J_unc_analytical <- function(
       p_ik,
       Y_obs,
@@ -241,11 +287,10 @@ lca_step2 <- function(
     ) {
       N <- nrow(p_ik)
 
-      # A_{st} = sum_i p_{is} p_{it}
       A <- t(p_ik) %*% p_ik
       A[A < 1e-12] <- 1e-12
 
-      # Extract item probabilities to match the free parameter structure
+      #Extract item probabilities to match the free parameter structure
       phi_mat <- matrix(
         th1[T_classes:length(th1)],
         nrow = sum(ivItemcat - 1L),
@@ -258,7 +303,7 @@ lca_step2 <- function(
 
       J <- matrix(0, nrow = T_classes * (T_classes - 1L), ncol = L)
 
-      # Offsets for locating items and categories in the expanded matrices
+      #Offsets for locating items and categories in the expanded matrices
       starts_Y <- c(1L, cumsum(ivItemcat)[-length(ivItemcat)] + 1L)
       item_offsets <- c(
         0L,
@@ -291,20 +336,20 @@ lca_step2 <- function(
             I_s <- if (s == c_prime) 1.0 else 0.0
             I_t <- if (t == c_prime) 1.0 else 0.0
 
-            # The core shared derivative component for class c_prime
+            #shared derivative component for class c_prime
             Q_stc <- P_st *
               (I_s + I_t - 2 * p_ik[, c_prime]) -
               2 * P_tt * (I_t - p_ik[, c_prime])
 
             sum_Q <- sum(Q_stc)
 
-            # 1. Derivative for class prevalence u^rho (only c' >= 2)
+            #Derivative for class prevalence u^rho (only c' >= 2)
             if (c_prime >= 2L) {
               col_rho <- c_prime - 1L
               J[row_J, col_rho] <- sum_Q
             }
 
-            # 2. Derivative for item response u^phi
+            #Derivative for item response u^phi
             for (h in seq_along(ivItemcat)) {
               K_h <- ivItemcat[h]
               n_free <- K_h - 1L
@@ -325,7 +370,6 @@ lca_step2 <- function(
               for (k in seq_len(n_free)) {
                 Y_col <- Y_cols[k]
 
-                # Multiply by mDes to strictly handle missing observation partials
                 val <- sum(Q_stc * Y_obs[, Y_col]) -
                   phi_vals[k] * sum(Q_stc * mDes[, Y_col])
                 J[row_J, col_J_start + k] <- val
@@ -346,12 +390,17 @@ lca_step2 <- function(
     gamma_vec_to_pwx = gamma_vec_to_pwx,
     theta2_from_theta1 = theta2_from_theta1,
     p.xy = p.xy,
-    # compute_J_unc is NULL when use.simple.cov = TRUE -- callers check
-    # !is.null(s2$compute_J_unc) before computing J.2 on their subsets.
     compute_J_unc = if (!use.simple.cov) compute_J_unc_analytical else NULL
   )
 }
 
+#' Analytic Hessian of the ML distal outcome negative log-likelihood
+#'
+#' Computes the T x T observed-data Hessian matrix at the current parameter
+#' vector beta = (mu_1, ..., mu_T) for Gaussian, Poisson, or Binomial families,
+#' accounting for classification error via the p.wx_mat correction matrix.
+#' Used by lca_step3.distal to invert for the naive SE estimate.
+#' @noRd
 ml_hessian_distal <- function(
   beta,
   p.zx,
@@ -372,33 +421,37 @@ ml_hessian_distal <- function(
   if (family == "gaussian") {
     mu <- beta
     g_it <- outer(Zo_cc, mu, "-") / sigma2 # N x T
-    h_t <- rep(-1 / sigma2, T) # length T
+    h_t <- rep(-1 / sigma2, T)
   } else if (family == "poisson") {
     mu <- exp(beta)
     g_it <- outer(Zo_cc, rep(1, T)) -
       outer(rep(1, N), mu) # N x T: z_i - mu_t
-    h_t <- -mu # length T
+    h_t <- -mu
   } else if (family == "binomial") {
     mu <- 1 / (1 + exp(-beta))
     g_it <- outer(Zo_cc, rep(1, T)) -
       outer(rep(1, N), mu) # N x T: z_i - mu_t
-    h_t <- -mu * (1 - mu) # length T
+    h_t <- -mu * (1 - mu)
   }
+  diag_term <- colSums(r_it) * h_t + colSums(r_it * g_it^2 * (1 - r_it))
 
-  # diagonal: sum_i r_it * h_t + sum_i r_it * g_it^2 * (1 - r_it)
-  diag_term <- colSums(r_it) * h_t + colSums(r_it * g_it^2 * (1 - r_it)) # length T
-
-  # off-diagonal: -sum_i r_it * g_it * r_is * g_is
   rg <- r_it * g_it # N x T
-  off_diag <- -crossprod(rg) # T x T, includes diagonal
+  off_diag <- -crossprod(rg) # T x T
 
-  # combine: diagonal replaces the off_diag diagonal entries
   H_pos <- off_diag
   diag(H_pos) <- diag_term
 
   -H_pos # Hessian of neg.ll
 }
 
+#' Step 3 (distal): estimate class-specific distal outcome parameters
+#'
+#' Estimates mu = (mu_1, ..., mu_T) for Gaussian (means), Poisson (log-rates),
+#' or Binomial (logits) distal outcomes with either BCH (closed-form or Newton-Rhapson) or
+#' ML EM. Returns the parameter estimates, the inverted Hessian H.3.inv, and
+#' the case-wise score function three_step.score for sandwich variance
+#' propagation in lca_vcov_distal.
+#' @noRd
 lca_step3.distal <- function(
   neg.ll,
   beta_init,
@@ -412,11 +465,11 @@ lca_step3.distal <- function(
   family = "gaussian",
   p.zx = NULL,
   vPi = NULL,
-  pi_mat = NULL, # covariate-adjusted N x T, or NULL for flat vPi
+  pi_mat = NULL,
   verbose = FALSE
 ) {
   N <- length(Zo_cc)
-  # use covariate-adjusted pi if provided, otherwise flat vPi
+  #use covariate-adjusted pi if provided, otherwise flat vPi
   pi_s <- if (!is.null(pi_mat)) {
     pi_mat
   } else {
@@ -427,7 +480,6 @@ lca_step3.distal <- function(
     D <- qr.solve(pwx)
     w.it <- w.is_cc %*% D # N x T
 
-    # BCH score: w.it fixed, no pi_mat/pwx needed
     score_nt_bch <- function(mu) {
       if (family == "gaussian") {
         resid <- outer(Zo_cc, mu, "-")
@@ -471,7 +523,6 @@ lca_step3.distal <- function(
         sigma2 = sigma2
       )
     } else {
-      # unified NR loop for all families
       beta <- beta_init
       for (nr in seq_len(em.maxIter)) {
         grad_vec <- colSums(score_nt_bch(beta))
@@ -588,7 +639,7 @@ lca_step3.distal <- function(
       }
     }
 
-    # estimate sigma2 after EM convergence
+    # estimate sigma2 after EM convergence (just for diagnostics)
     sigma2 <- if (family == "gaussian") {
       pzx <- exp(pmax(p.zx(beta), -500))
       joint <- pi_s * pzx * (w.is_cc %*% pwx)
@@ -636,6 +687,13 @@ lca_step3.distal <- function(
   ))
 }
 
+#' Step 3 (covariate): estimate multinomial logit gamma with either BCH or ML EM
+#'
+#' Optimizes the Q x (T-1) coefficient matrix gamma for P(X=t|Z_i) via
+#' Newton-Raphson (BCH) or EM with an inner NR M-step (ML). Returns the
+#' parameter vector, the inverted Hessian H.3.inv (or NA matrix on failure),
+#' used by lca_vcov for sandwich variance propagation.
+#' @noRd
 lca_step3 <- function(
   neg.ll,
   gamma_init,
@@ -659,7 +717,7 @@ lca_step3 <- function(
   # print(ll_prev)
   if (use.bch) {
     D <- qr.solve(pwx)
-    w.it <- w.is_cc %*% D # N x T, fixed BCH weights
+    w.it <- w.is_cc %*% D # N x T
     w.it_plus <- rowSums(w.it)
 
     for (nr in seq_len(em.maxIter)) {
@@ -671,7 +729,6 @@ lca_step3 <- function(
       pi_ <- p.xz(beta)
       for (k in seq_len(T - 1)) {
         for (l in k:(T - 1)) {
-          # upper triangle only
           w_kl <- w.it_plus * pi_[, k + 1L] * ((k == l) - pi_[, l + 1L])
           idx_k <- ((k - 1) * Q + 1):(k * Q)
           idx_l <- ((l - 1) * Q + 1):(l * Q)
@@ -682,7 +739,7 @@ lca_step3 <- function(
       }
 
       if (
-        nr >= max(em.maxIter / 5, 1) &&
+        nr >= max(em.maxIter / 5, 1) && #Wait a little bit before testing for PSD
           inherits(
             tryCatch(chol(H), error = function(e) e),
             "error"
@@ -759,13 +816,13 @@ lca_step3 <- function(
         H <- matrix(0, Q * (T - 1), Q * (T - 1))
         for (k in seq_len(T - 1)) {
           for (l in k:(T - 1)) {
-            # upper triangle only
             w_kl <- gamma_plus * p_nr1[, k] * ((k == l) - p_nr1[, l])
             idx_k <- ((k - 1) * Q + 1):(k * Q)
             idx_l <- ((l - 1) * Q + 1):(l * Q)
             block <- -t(Z_mat_cc) %*% (w_kl * Z_mat_cc)
             H[idx_k, idx_l] <- block
-            if (k != l) H[idx_l, idx_k] <- t(block) # Clairaut: H symmetric
+            # Clairaut: H symmetric
+            if (k != l) H[idx_l, idx_k] <- t(block)
           }
         }
 
@@ -796,7 +853,6 @@ lca_step3 <- function(
       # )
 
       # beta <- t(coef(fit))
-      # H <- qr.solve(-vcov(fit))
       ######################################################################################
 
       ll_curr <- -neg.ll(c(beta))
@@ -821,14 +877,14 @@ lca_step3 <- function(
         if (correct.spec) {
           matrix(NA_real_, Q * (T - 1), Q * (T - 1))
         } else {
-          # -- Analytic observed-data Hessian of neg.ll --------------------------
+          # -- Analytic observed-data Hessian of neg.ll (checked with sympy)--------------------------
           # neg.ll = -sum_i sum_s w_{is} * log(q_{is})
           # q_{is} = sum_t pi_{it}(beta) * pwx[s,t]
           # r_{is} = w_{is} / q_{is}
           #
           # H_{(q,k),(p,l)} = sum_i z_{iq}*z_{ip} * [
-          #   pi_{i,k+1}*(I(k==l)-pi_{i,l+1}) * F_k           <- term A
-          # - pi_{i,k+1} * pi_{i,l+1} * G_{kl}                 <- term B (from dF/dbeta)
+          #   pi_{i,k+1}*(I(k==l)-pi_{i,l+1}) * F_k
+          # - pi_{i,k+1} * pi_{i,l+1} * G_{kl}
           # ]
           # where:
           #   F_k  = sum_s w_{is}*pwx[s,k+1]/q_{is} - sum_s w_{is}
@@ -845,20 +901,13 @@ lca_step3 <- function(
               rowSums(w.is_cc)
           }
 
-          # G_{kl} for each pair (k,l) -- precompute N x T(T-1)^2 is expensive;
-          # compute inside the double loop instead
+          # G_{kl} for each pair (k,l)
           H_obs <- matrix(0, Q * (T - 1L), Q * (T - 1L))
           for (k in seq_len(T - 1L)) {
             for (l in k:(T - 1L)) {
-              # upper triangle only
               idx_k <- ((k - 1L) * Q + 1L):(k * Q)
               idx_l <- ((l - 1L) * Q + 1L):(l * Q)
-
-              # term A: pi_{i,k+1}*(I(k==l)-pi_{i,l+1}) * F_k
               tA <- p_[, k + 1L] * ((k == l) - p_[, l + 1L]) * F_mat[, k]
-
-              # term B: -pi_{i,k+1} * pi_{i,l+1} * G_{kl}
-              # G_{kl}[i] = sum_s w_{is}*pwx[s,k+1]*(pwx[s,l+1]-q_{is})/q_{is}^2
               G_kl <- rowSums(
                 w.is_cc *
                   pwx[, k + 1L][col(w.is_cc)] *
@@ -900,7 +949,7 @@ lca_step3 <- function(
 
 # -- Variance estimation (Bakk et al., 2014) ----------------------------------
 
-#' Individual-level BHHH Varmat for binary and polytomous LCA
+#' Individual-level BHHH variance matrix for binary and polytomous LCA
 #'
 #' Computes the outer-product (BHHH) information matrix and variance-covariance
 #' matrix for LCA measurement model parameters in the unconstrained
@@ -910,59 +959,51 @@ lca_step3 <- function(
 #' \eqn{s_{it} = u_{it}(y_i - d_i \circ p_{it})},
 #' where \eqn{d_i} is the missing-data design indicator matrix.
 #'
-#' @param Y.exp Expanded indicator matrix (N x sum(K_h)).
-#' @param mDesign.exp Expanded design matrix (same dimensions as \code{Y.exp}),
-#'   or \code{NULL} for complete data.
-#' @param fit0 Step-1 measurement model.
-#' @param ivItemcat Number of categories for each item.
-#' @param use.freq Logical. Collapse duplicate score vectors before computing
-#'   the BHHH information matrix.
-#'
-#' @return A list containing \code{Infomat}, \code{Varmat},
-#'   \code{SEs}, and the individual score matrix \code{mScore}.
-#' Individual-level BHHH Varmat for binary and polytomous LCA
-#'
-#' Computes the outer-product (BHHH) information matrix and variance-covariance
-#' matrix for LCA measurement model parameters in the unconstrained
-#' (logit/log-ratio) space.
-#'
-#' Assumes \code{fit0$mPhi} has the following structure (from multilevLCA):
+#' Assumes \code{fit0$mPhi} follows the \pkg{multilevLCA} storage convention:
 #' \itemize{
 #'   \item Dichotomous item h (\code{ivItemcat[h] == 2}): 1 row =
-#'     \eqn{P(Y=1|C)}. The base level \eqn{P(Y=0|C)} is excluded.
+#'     \eqn{P(Y=1|C)}; the base level \eqn{P(Y=0|C)} is excluded.
 #'   \item Polytomous item h (\code{ivItemcat[h] > 2}): \code{K_h} rows =
-#'     \eqn{P(Y=0|C), \ldots, P(Y=K_h-1|C)}. The base level IS included.
+#'     \eqn{P(Y=0|C), \ldots, P(Y=K_h-1|C)}; the base level is included.
 #' }
 #' \code{expand_Y} produces one-hot columns in the same order so that
 #' \code{expand_Phi(fit0$mPhi, ivItemcat)} aligns column-wise with
-#' \code{expand_Y(mY, ivItemcat)}.
-#'
-#' Free (estimable) parameters per item:
-#' \itemize{
-#'   \item Dichotomous: the single row of \code{mPhi} (\eqn{P(Y=1|C)}).
-#'   \item Polytomous: rows 2..K_h of \code{mPhi} (\eqn{P(Y=1|C), \ldots}).
-#'     Row 1 (\eqn{P(Y=0|C)}) is the reference and is not a free parameter.
-#' }
-#'
+#' \code{expand_Y(mY, ivItemcat)}.  Free (estimable) parameters per item are
+#' the single \eqn{P(Y=1|C)} row for dichotomous items, and rows 2 through
+#' \eqn{K_h} for polytomous items (row 1, \eqn{P(Y=0|C)}, is the reference).
 #' Boundary parameters (within \code{boundary.tol} of 0 or 1) are treated as
-#' fixed: their score columns are zeroed so they do not contribute to the
+#' fixed: their score columns are zeroed and they do not contribute to the
 #' information matrix.
 #'
-#' @param Y.exp       Expanded one-hot matrix (N x sum(K_h)).
-#' @param mDesign.exp Expanded design matrix (same dims), or \code{NULL}.
-#' @param fit0        Step-1 fit with \code{$vPi} and \code{$mPhi}.
+#' @param Y.exp       N x sum(K_h) expanded one-hot indicator matrix.
+#' @param mDesign.exp Expanded design matrix (same dimensions as \code{Y.exp}),
+#'   or \code{NULL} for complete data.
+#' @param fit0        Step-1 fit object with \code{$vPi} and \code{$mPhi}.
 #' @param ivItemcat   Integer vector of category counts per item.
 #' @param boundary.tol Scalar tolerance for boundary detection. Default
 #'   \code{1e-2}.
-#' @param use.freq    Collapse duplicate score rows before cross-product.
-#'   Default \code{TRUE}.
+#' @param use.freq    Logical. Collapse duplicate score rows before computing
+#'   the cross-product, weighting by frequency. Default \code{TRUE}.
 #' @param u_post      Optional N x T matrix of posterior class probabilities.
 #'   When supplied (e.g. extracted from \code{fit0$mU} via
 #'   \code{extract_Y_from_mU}), \code{compute_posteriors} is skipped.
 #'   Default \code{NULL}.
 #'
-#' @return List with \code{$Infomat}, \code{$Varmat}, \code{$SEs},
-#'   \code{$mScore}.
+#' @return A list with the following elements:
+#'   \describe{
+#'     \item{`Infomat`}{Square BHHH information matrix of dimension p x p,
+#'       where p = (T-1) + sum(ivItemcat - 1) * T is the total number of free
+#'       parameters. Boundary parameters have zero rows and columns.}
+#'     \item{`Varmat`}{Inverse of \code{Infomat} divided by N, giving the
+#'       asymptotic variance-covariance matrix on the same scale as
+#'       \pkg{multilevLCA}'s \code{$Varmat}. Boundary parameters have zero
+#'       rows and columns.}
+#'     \item{`SEs`}{Numeric vector of length p. Square root of the diagonal of
+#'       \code{Varmat}; zero for boundary parameters.}
+#'     \item{`mScore`}{N x p matrix of individual score contributions in the
+#'       unconstrained parameterization, used for sandwich variance propagation
+#'       in \code{lca_vcov} and \code{lca_vcov_distal}.}
+#'   }
 #' @keywords internal
 lca_indiv_varmat <- function(
   Y.exp,
@@ -971,7 +1012,7 @@ lca_indiv_varmat <- function(
   ivItemcat,
   boundary.tol = 1e-2,
   use.freq = TRUE,
-  u_post = NULL # optional: pre-computed N x T posteriors (e.g. from mU)
+  u_post = NULL
 ) {
   pi_ <- fit0$vPi
   phi <- fit0$mPhi
@@ -982,11 +1023,11 @@ lca_indiv_varmat <- function(
     mDesign.exp <- matrix(1L, N, ncol(Y.exp))
   }
 
-  # ---- Boundary flags --------------------------------------------------------
+  #Protect against parameter estimates on the boundary of the support (zero out their score contributions)
   pi_bdry <- pi_ <= boundary.tol | pi_ >= (1 - boundary.tol)
   phi_bdry <- phi <= boundary.tol | phi >= (1 - boundary.tol)
 
-  # Clamp boundary parameters before computing posteriors
+  #Clamp boundary parameters before computing posteriors
   pi_[pi_bdry] <- pmax(pmin(pi_[pi_bdry], 1 - 1e-6), 1e-6)
   phi[phi_bdry] <- pmax(pmin(phi[phi_bdry], 1 - 1e-6), 1e-6)
 
@@ -1068,7 +1109,7 @@ lca_indiv_varmat <- function(
         )
     s_col <- u_post[, t] * resid
 
-    # Zero boundary free parameters for this class
+    #Zero boundary free parameters for this class
     bdry_t <- phi_bdry_free[, t]
     if (any(bdry_t)) {
       s_col[, bdry_t] <- 0
@@ -1080,8 +1121,7 @@ lca_indiv_varmat <- function(
   S <- cbind(s_u_pi, s_u_phi) # N x p
 
   # ---- Identify active (non-boundary) columns --------------------------------
-  # Boundary parameters have all-zero score columns -- removing them before
-  # qr.solve avoids rank deficiency, then we restore zero rows/cols after.
+  # Boundary parameters have all-zero score columns to avoid rank deficiency, then restore zero rows/cols after
   active <- which(colSums(S != 0) > 0L)
   p_full <- ncol(S)
 
@@ -1110,8 +1150,6 @@ lca_indiv_varmat <- function(
   )
 
   # ---- Restore full-size Infomat and Varmat ----------------------------------
-  # Boundary parameters get zero rows/cols in Infomat (no information)
-  # and zero rows/cols in Varmat (variance treated as zero / fixed).
   Infomat <- matrix(0, p_full, p_full)
   Infomat[active, active] <- Infomat_active
 
@@ -1126,6 +1164,13 @@ lca_indiv_varmat <- function(
   )
 }
 
+#' Covariate model variance-covariance with measurement-uncertainty correction
+#'
+#' Assembles the sandwich variance matrix for the Step-3 gamma estimates,
+#' optionally propagating Step-1 measurement uncertainty through the analytic
+#' `C_mat = d/d(theta2) [sum_i score_3_i]` and Jacobian `J.2 = d(theta2)/d(u)`.
+#' When use.simple.cov = TRUE, returns the plain robust sandwich H^{-1} S'S H^{-1}.
+#' @noRd
 lca_vcov <- function(
   coefs,
   three_step.score,
@@ -1145,7 +1190,7 @@ lca_vcov <- function(
 
   Sigma.3.robust <- H.3.inv %*% crossprod(J.3) %*% H.3.inv
   if (!use.simple.cov) {
-    # -- Analytic C_mat = d/d theta2 [colSums(score_3)] ----------------------------
+    # -- Analytic C_mat = d/d theta2 [colSums(score_3)] (checked with sympy) ----------------------------
 
     T_ <- n_classes
     pwx <- p.wx_mat
@@ -1202,9 +1247,6 @@ lca_vcov <- function(
           d_score_mat[, k] <- pwx[s0, t0] * (term1 - term2)
         }
 
-        # crossprod(Z_mat, d_score_mat) produces a Q x (T-1) matrix.
-        # as.vector() unrolls it column by column, exactly matching the
-        # flattened order of three_step.score(c(coefs), pwx)
         C_mat[, idx_theta2] <- as.vector(crossprod(Z_mat, d_score_mat))
       }
     }
@@ -1216,7 +1258,6 @@ lca_vcov <- function(
     step1.uncertainty <- NULL
   }
 
-  # Apply parameter names to vcov matrix
   param_names <- as.vector(outer(
     rownames(coefs),
     colnames(coefs),
@@ -1229,6 +1270,14 @@ lca_vcov <- function(
   Sigma.3
 }
 
+#' Distal outcome variance-covariance with full uncertainty propagation
+#'
+#' Assembles the T x T sandwich variance matrix for the distal outcome mu
+#' estimates, propagating Step-1 measurement uncertainty
+#' and, when both a covariate and distal model are fitted, Step-3 covariate
+#' uncertainty. Skips steps 1/2 uncertainty corrections when
+#' use.bch = TRUE or use.simple.cov = TRUE.
+#' @noRd
 lca_vcov_distal <- function(
   mu_hat,
   three_step.score,
@@ -1272,7 +1321,7 @@ lca_vcov_distal <- function(
   # three_step.score[i,t] = r_{it} * g_{it}  =>  g_it = score / r_it
   g_it <- J.3 / pmax(r_it, 1e-300) # N x T
 
-  # -- C1_mat: d/d theta2 [colSums(score_distal)]  (T x T*(T-1)) ----------------
+  # -- C1_mat: d/d theta2 [colSums(score_distal)]  (T x T*(T-1)) (checked with sympy) ----------------
   # theta2 = off-diagonal log-ratios of pwx (column-softmax parameterzation).
   # d ae_{i,t0}/d g_{s0,t0} = pwx[s0,t0] * (w_{i,s0} - ae_{i,t0})
   # c_i = dae / ae_{i,t0}
@@ -1304,17 +1353,13 @@ lca_vcov_distal <- function(
     }
   }
 
-  # C1_mat = sum_i d(score_i)/d(theta2) ~ O(N); divide by N to get mean-scale.
-  # J.2 ~ O(N) and Sigma.1 ~ O(1/N) together preserve O(N) scale for
-  # step1.uncertainty, consistent with H.3.inv giving O(1/N) overall.
-
   step1.uncertainty <- C1_mat %*%
     s2$J.2 %*%
     Sigma.1 %*%
     t(s2$J.2) %*%
     t(C1_mat)
 
-  # -- C_mat: d/d gamma [colSums(score_distal)]  (T x Q*(T-1)) -----------------
+  # -- C_mat: d/d gamma [colSums(score_distal)]  (T x Q*(T-1)) (checked with sympy) -----------------
   # gamma enters through pi_adj = p.xz(gamma); pwx_adj treated as fixed.
   # m_{it} = pzx_{it}*ae_i[t] / q_i   (proportional to r_{it}/pi_{it})
   # A_{i,l} = pi_{i,l+1} * (m_{i,l+1} - sum_t' m_{it'}*pi_{it'})
@@ -1359,70 +1404,158 @@ lca_vcov_distal <- function(
 
 #' Three-step LCA estimation with covariates and/or distal outcomes
 #'
-#' @param data A data.frame.
-#' @param Y.names Character vector of indicator column names.
+#' Fits a three-step latent class model through the following steps:
+#' \enumerate{
+#'   \item \strong{Measurement model}: estimates latent class parameters
+#'     (\eqn{\pi}, \eqn{\phi}) using \pkg{multilevLCA}
+#'     (Lyrvall et al., 2025).
+#'   \item \strong{Classification-error matrix}: computes posterior class
+#'     probabilities and the T x T misclassification probability matrix
+#'     \eqn{P(W = s \mid X = t)}, with standard errors corrected for
+#'     classification-error propagation (Bakk, Oberski & Vermunt, 2014).
+#'   \item \strong{Structural model}: estimates covariate effects using
+#'     two-step starting values (Bakk & Kuha, 2018) and/or distal outcome
+#'     means following Bakk, Tekle & Vermunt (2013), with the ML correction (Vermunt, 2010) or BCH correction
+#'     (Bolck, Croon & Hagenaars, 2004). See
+#'     \code{vignette("tseLCA", package = "tseLCA")} for a worked example.
+#' }
+#'
+#' @param data A data.frame containing all columns referenced by \code{Y.names},
+#'   \code{Zp.names}, and \code{Zo.name}.
+#' @param Y.names Character vector of indicator column names. Need to be coded as consecutive integers with base level starting at `0`.
 #' @param n_classes Integer. Number of latent classes.
-#' @param Zp.names Character vector of covariate column names, or `NULL`.
-#' @param Zo.name Single character name of the distal outcome column, or `NULL`.
-#' @param step1 Pre-fitted Step-1 object (output of [tseLCA::lca_step1()]), or `NULL`.
-#' @param use.two.step Logical. Use two-step starting values for Step 3.
-#' @param use.modal.assignment Logical. Use modal (hard) class assignment.
-#' @param include.intercept Logical. Include intercept in covariate model.
-#' @param use.simple.cov Logical. Skip measurement-uncertainty correction.
-#' @param incomplete Logical. FIML for missing indicators.
-#' @param boundary.tol Boundary tolerance for phi parameters.
-#' @param maxIter.measurement Maximum EM iterations for Step 1.
-#' @param measurement.tol Convergence tolerance for Step 1.
-#' @param covariate.tol Convergence tolerance for Step 3.
-#' @param iter.measurement Random restarts when entropy R\eqn{^2} is low.
-#' @param R2.threshold Entropy R\eqn{^2} restart threshold.
-#' @param use.bch Logical. Use BCH weights instead of ML.
-#' @param em.maxIter Maximum EM iterations for Step 3.
-#' @param get.twostep.vcov Logical. If `TRUE`, obtain multilevLCA's
-#'   bias-corrected variance-covariance matrix for the two-step gamma
-#'   estimates and store it in `$two_step_vcov`. If the `fitZ` object passed
-#'   via `step1` already contains a `Varmat_cor` (from a prior
-#'   `fitZ_from_multiLCA` or plain `multiLCA` call), it is attached
-#'   automatically even when `get.twostep.vcov = FALSE`. Default `FALSE`.
-#' @param rebase Character (e.g. `"C1"`, `"C2"`) or integer specifying which
-#'   latent class to use as the reference category in the multinomial logit
-#'   for Steps 2 and 3. The measurement model is permuted so this class
-#'   becomes column 1 before any structural estimation. Default `"C1"`.
-#' @param family One of `"gaussian"` (default), `"poisson"`, `"binomial"`.
-#' @param correct.spec Logical. Use model-robust (outer-product) Hessian.
-#' @param verbose Logical. Print progress messages.
+#' @param Zp.names Character vector of covariate column names, or \code{NULL}
+#'   for a measurement-only fit. Default \code{NULL}.
+#' @param Zo.name Single character name of the distal outcome column, or
+#'   \code{NULL}. Default \code{NULL}.
+#' @param step1 Pre-fitted Step-1 object (output of [tseLCA::lca_step1()] or a
+#'   prior \code{three_step()} call), or \code{NULL} to run Step 1 internally.
+#'   Default \code{NULL}.
+#' @param use.two.step Logical. Initialize Step-3 from two-step estimates.
+#'   Default \code{TRUE}.
+#' @param use.modal.assignment Logical. Use modal (hard) class assignments in
+#'   Step 2 and 3. \code{FALSE} uses soft posterior weights. Default \code{TRUE}.
+#' @param include.intercept Logical. Prepend an intercept column to the
+#'   covariate design matrix. Default \code{TRUE}.
+#' @param use.simple.cov Logical. Skip the Step-1 measurement-uncertainty
+#'   correction and return only the robust sandwich variance. Faster but
+#'   underestimates standard errors when class separation is low. Default
+#'   \code{FALSE}.
+#' @param incomplete Logical. FIML for partially missing indicators. See the
+#'   \code{Missing Data} section of \code{vignette("tseLCA", package = "tseLCA")}.
+#'   Default \code{FALSE}.
+#' @param boundary.tol Scalar. Parameters within this tolerance of 0 or 1 are
+#'   treated as fixed when computing the Step-1 variance matrix for numerical stability. Default
+#'   \code{1e-2}.
+#' @param maxIter.measurement Integer. Maximum EM iterations for Step 1.
+#'   Default \code{5000L}.
+#' @param measurement.tol Scalar. Convergence tolerance for the Step-1 EM
+#'   algorithm. Default \code{1e-8}.
+#' @param covariate.tol Scalar. Convergence tolerance for the Step-3
+#'   Newton-Raphson or EM algorithm. Default \code{1e-6}.
+#' @param iter.measurement Integer. Number of random restarts triggered when
+#'   the Step-1 entropy R\eqn{^2} falls below \code{R2.threshold}. Default
+#'   \code{10L}.
+#' @param R2.threshold Scalar. Entropy R\eqn{^2} threshold below which Step-1
+#'   random restarts are triggered. Default \code{0.70}.
+#' @param use.bch Logical. Use BCH-corrected weights instead of the ML
+#'   estimator in Step 3. May error if BCH weights induce a non-positive semi-definite Hessian in the third step (common in cases of low separation). Default \code{FALSE}.
+#' @param em.maxIter Integer. Maximum EM iterations for the Step-3 covariate
+#'   or distal outcome model. Default \code{200L}.
+#' @param get.twostep.vcov Logical. If \code{TRUE}, obtain \pkg{multilevLCA}'s
+#'   bias-corrected variance-covariance matrix for the two-step gamma estimates
+#'   and store it in \code{$two_step_vcov}. If the \code{fitZ} object passed
+#'   via \code{step1} already contains a \code{Varmat_cor} (from a prior
+#'   [fitZ_from_multiLCA()] or plain \code{multiLCA} call), it is attached
+#'   automatically even when \code{get.twostep.vcov = FALSE}. Default
+#'   \code{FALSE}.
+#' @param rebase Character (e.g. \code{"C1"}, \code{"C2"}) or integer
+#'   specifying which latent class to use as the reference category in the
+#'   multinomial logit. The measurement model is permuted so this class becomes
+#'   column 1 before any structural estimation. Default \code{"C1"}.
+#' @param family Character. Distal outcome family: one of \code{"gaussian"}
+#'   (class means), \code{"poisson"} (log-rates), or \code{"binomial"}
+#'   (logits). Default \code{"gaussian"}.
+#' @param correct.spec Logical. Use the model-robust outer-product Hessian for
+#'   Step-3 standard errors rather than the observed-data Hessian. Not appropriate
+#'   when the Step-3 model may be misspecified. Default \code{FALSE}.
+#' @param verbose Logical. Print convergence messages. Default \code{FALSE}.
+#'
+#' @return An S3 object of class \code{tseLCA}. The subclass depends on which
+#'   models were estimated:
+#'   \describe{
+#'     \item{`tseLCA_measurement`}{Returned when neither \code{Zp.names} nor
+#'       \code{Zo.name} is supplied. Contains the following elements:
+#'       \describe{
+#'         \item{`measurement_model`}{Step-1 output list from [tseLCA::lca_step1()].}
+#'         \item{`llik`}{Final Step-1 log-likelihood.}
+#'         \item{`AIC`, `BIC`}{Information criteria from the measurement model.}
+#'         \item{`R2entr`}{Entropy R\eqn{^2} of the measurement model.}
+#'         \item{`n_classes`}{Number of latent classes.}
+#'         \item{`posteriors`}{N x T matrix of soft posterior class probabilities.}
+#'         \item{`classifications`}{Length-N integer vector of modal class assignments.}
+#'       }
+#'     }
+#'     \item{`tseLCA_covariate`}{Returned when \code{Zp.names} is supplied and
+#'       \code{Zo.name} is \code{NULL}. Contains all elements of
+#'       \code{tseLCA_measurement} plus:
+#'       \describe{
+#'         \item{`three_step`}{Q x (T-1) matrix of Step-3 gamma coefficients.}
+#'         \item{`three_step_vcov`}{Q(T-1) x Q(T-1) variance-covariance matrix
+#'           for \code{three_step}, with measurement-uncertainty correction
+#'           unless \code{use.simple.cov = TRUE}.}
+#'         \item{`two_step`}{Q x (T-1) matrix of two-step starting values, or
+#'           \code{NULL} if \code{use.two.step = FALSE}.}
+#'         \item{`two_step_vcov`}{\pkg{multilevLCA} bias-corrected vcov for the
+#'           two-step estimates, or \code{NULL}.}
+#'         \item{`estimator`}{Character: \code{"ML"} or \code{"BCH"}.}
+#'         \item{`entropy.R2`}{Covariate-adjusted entropy R\eqn{^2}.}
+#'         \item{`llik`}{Joint log-likelihood of the Step-1 model adjusted for covariates. By construction, this log-likelihood will be smaller than the log-likelihood of the equivalent model fit with a one-step estimation procedure.}
+#'       }
+#'     }
+#'     \item{`tseLCA_distal`}{Returned when \code{Zo.name} is supplied and
+#'       \code{Zp.names} is \code{NULL}. Contains:
+#'       \describe{
+#'         \item{`three_step`}{Named length-T vector of Step-3 distal outcome
+#'           parameters (means, log-rates, or logits depending on \code{family}).}
+#'         \item{`three_step_vcov`}{T x T variance-covariance matrix for
+#'           \code{three_step}, named \code{mu_C1} through \code{mu_CT}.}
+#'         \item{`family`}{Character. The distal outcome family used.}
+#'         \item{`estimator`}{Character: \code{"ML"} or \code{"BCH"}.}
+#'         \item{`posteriors`}{N x T soft posterior matrix.}
+#'         \item{`classifications`}{Length-N modal class assignment vector.}
+#'       }
+#'     }
+#'     \item{`tseLCA_both`}{Returned when both \code{Zp.names} and
+#'       \code{Zo.name} are supplied. Contains:
+#'       \describe{
+#'         \item{`covariate`}{A \code{tseLCA_covariate}-structured sub-list.}
+#'         \item{`distal`}{A \code{tseLCA_distal}-structured sub-list.}
+#'         \item{`family`, `n_classes`, `estimator`}{Shared top-level fields.}
+#'         \item{`posteriors`, `classifications`}{Shared across both models.}
+#'       }
+#'     }
+#'   }
 #'
 #' @references
 #' Bakk, Z., Tekle, F. B., & Vermunt, J. K. (2013). Estimating the association
 #'   between latent class membership and external variables using bias-adjusted
-#'   three-step approaches. *Sociological Methodology*, 43(1), 272--311.
+#'   three-step approaches. \emph{Sociological Methodology}, 43(1), 272--311.
 #'   \doi{10.1177/0081175012470644}
 #'
 #' Bakk, Z., & Kuha, J. (2018). Two-step estimation of models between latent
-#'   classes and external variables. *Psychometrika*, 83(4), 871--892.
+#'   classes and external variables. \emph{Psychometrika}, 83(4), 871--892.
 #'   \doi{10.1007/s11336-017-9592-7}
 #'
 #' Bakk, Z., Pohle, M. J., & Kuha, J. (2025). Bias-adjusted three-step
-#'   estimation of structural models for latent classes. *Multivariate
-#'   Behavioral Research*. \doi{10.1080/00273171.2025.2473935}
+#'   estimation of structural models for latent classes. \emph{Multivariate
+#'   Behavioral Research}. \doi{10.1080/00273171.2025.2473935}
 #'
-#' @return An S3 object of class `tseLCA` with subclass depending on which
-#'   models were estimated:
-#'   \describe{
-#'     \item{`tseLCA_measurement`}{Measurement model only. Contains
-#'       `$measurement_model`, `$llik`, `$AIC`, `$BIC`, `$R2entr`,
-#'       `$n_classes`, `$posteriors` (N x T soft posterior matrix),
-#'       `$classifications` (length-N modal class vector).}
-#'     \item{`tseLCA_covariate`}{Covariate model. Adds `$three_step` (gamma
-#'       coefficient matrix), `$three_step_vcov`, `$two_step`,
-#'       `$two_step_vcov`, `$estimator`, `$entropy.R2` (covariate-adjusted
-#'       entropy R^2), `$posteriors`, `$classifications`.}
-#'     \item{`tseLCA_distal`}{Distal outcome model. Contains `$three_step`
-#'       (class means or log-rates), `$three_step_vcov`, `$family`,
-#'       `$estimator`, `$posteriors`, `$classifications`.}
-#'     \item{`tseLCA_both`}{Both models. Top-level `$covariate` and `$distal`
-#'       sub-lists plus shared `$posteriors`, `$classifications`, `$estimator`.}
-#'   }
+#' @seealso \code{vignette("tseLCA", package = "tseLCA")} for a full worked
+#'   example; [tseLCA::lca_step1()] for standalone Step-1 estimation;
+#'   [fitZ_from_fit0()] and [fitZ_from_multiLCA()] for two-step covariate
+#'   estimation.
+#'
 #' @examples
 #' d <- generate_data(n = 200, separation = "high",
 #'                    scenario = "covariate", seed = 1)
@@ -1431,7 +1564,6 @@ lca_vcov_distal <- function(
 #' fit_m <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3)
 #' summary(fit_m)
 #'
-#'
 #' # ML three-step with simple SEs (fast)
 #' fit <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3,
 #'                   Zp.names = "Zp", use.simple.cov = TRUE)
@@ -1439,7 +1571,7 @@ lca_vcov_distal <- function(
 #' coef(fit)
 #' vcov(fit)
 #'
-#' # Full measurement-uncertainty correction
+#' # Full measurement-uncertainty correction (see vignette for interpretation)
 #' fit_cor <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3,
 #'                       Zp.names = "Zp", use.simple.cov = FALSE,
 #'                       use.modal.assignment = FALSE)
@@ -1464,14 +1596,14 @@ lca_vcov_distal <- function(
 #'                       use.simple.cov = TRUE)
 #' summary(fit_dis)
 #'
-#' # Pass a pre-fitted measurement model
+#' # Pass a pre-fitted measurement model to skip Step 1
 #' fit_step1 <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3)
 #' fit2 <- three_step(d, Y.names = paste0("Y", 1:6), n_classes = 3,
 #'                    Zp.names = "Zp", step1 = fit_step1,
 #'                    use.simple.cov = TRUE)
 #' summary(fit2)
 #'
-#' # Plot item-response profiles
+#' # Plot item-response profiles from the measurement model
 #' plot(fit)
 #'
 #' @export
@@ -1509,8 +1641,6 @@ three_step <- function(
     s1 <- if (inherits(step1, "tseLCA")) step1$measurement_model else step1
     # Apply rebase permutation so the desired reference class is column 1.
     s1$fit0 <- permute_fit0_classes(s1$fit0, ref_idx)
-    # Normalize fitZ names first (handles raw multiLCA output with
-    # "gamma(X|C)" rownames), then rebase to the new reference class.
     if (!is.null(s1$fitZ)) {
       s1$fitZ <- normalize_fitZ_names(
         s1$fitZ,
@@ -1555,8 +1685,6 @@ three_step <- function(
       verbose = verbose
     )
   }
-
-  # Assign fitZ after the block above so it reflects any newly computed value.
   fitZ <- s1$fitZ
 
   # -- Data preparation --------------------------------------------------------
@@ -1579,9 +1707,6 @@ three_step <- function(
   keep_step3_Zo_in_Y <- cd$keep_step3_Zo_in_Y
   keep_step3_Zo <- cd$keep_step3_Zo
 
-  # Augment s1 with Y.names and ivItemcat so vcov.tseLCA_measurement can
-  # build named rows/columns. Done before early return so measurement-only
-  # fits also carry this metadata.
   s1$Y.names <- Y.names
   s1$ivItemcat <- ivItemcat
   s1$ref_idx <- ref_idx
@@ -1631,10 +1756,6 @@ three_step <- function(
   # Subset s2 outputs to the rows used in each Step 3 model.
   # s2 was estimated on all keep_Y rows; Step 3 models only use complete-Z rows.
   s2_for_cov <- if (!is.null(Z_mat)) {
-    # Recompute J.2 on the Z-complete subset (keep_step3_Z_in_Y rows).
-    # C_mat in lca_vcov sums over N_Z rows; using s2$J.2 (all N_Y rows)
-    # would mismatch the normalisation when N_Z < N_Y (missing covariates).
-    # Skip entirely when use.simple.cov = TRUE -- J.2 is never used then.
     J.2_cov <- if (!is.null(s2$compute_J_unc)) {
       Y_cov <- Y.obs[keep_step3_Z_in_Y, , drop = FALSE]
       mDes_cov <- if (!is.null(mDesign)) {
@@ -1674,10 +1795,6 @@ three_step <- function(
   }
 
   s2_for_dis <- if (!is.null(Zo_mat)) {
-    # Recompute J.2 on the Zo-complete subset (keep_step3_Zo_in_Y rows).
-    # C1_mat in lca_vcov_distal sums over N_Zo rows; using s2$J.2 (all N_Y
-    # rows) would mismatch the normalisation when N_Zo < N_Y.
-    # Skip when use.simple.cov = TRUE or use.bch = TRUE.
     J.2_dis <- if (!is.null(s2$compute_J_unc)) {
       Y_dis <- Y.obs[keep_step3_Zo_in_Y, , drop = FALSE]
       mDes_dis <- if (!is.null(mDesign)) {
@@ -1717,8 +1834,6 @@ three_step <- function(
   }
 
   # Extract Step-1 sample inputs for Sigma.1. Uses fit0$mU when available.
-  # fit0 has already been rebased (permute_fit0_classes), but mU retains the
-  # original multilevLCA column ordering. Reorder u_post to match rebased fit0.
   step1_Y <- if (!is.null(fit0$mU)) {
     raw <- extract_Y_from_mU(fit0, ivItemcat)
     if (ref_idx != 1L) {
@@ -1880,7 +1995,6 @@ three_step <- function(
     Sigma.3.covariate <- Sigma.3
 
     # -- Model fit ----------------------------------------------------------------
-    # Compute log-likelihood on Step 3 complete-case rows (Y ? Z)
     Y_cc <- Y.obs[keep_step3_Z_in_Y, , drop = FALSE]
     mDes_cc <- if (!is.null(mDesign)) {
       mDesign[keep_step3_Z_in_Y, , drop = FALSE]
@@ -1911,7 +2025,6 @@ three_step <- function(
     # they didn't set get.twostep.vcov = TRUE.
 
     .extract_varmat <- function(fZ) {
-      # Returns Varmat_cor from whichever location it lives in, or NULL.
       if (is.null(fZ)) {
         return(NULL)
       }
@@ -1942,15 +2055,13 @@ three_step <- function(
       V
     }
 
-    # Check for an already-present Varmat_cor before deciding whether to
-    # call fitZ_from_multiLCA.
     existing_varmat <- .extract_varmat(fitZ)
 
     two_step_vcov <- if (!is.null(existing_varmat)) {
-      # Already have it -- attach regardless of get.twostep.vcov
+      # Already have it
       .name_varmat(existing_varmat, fitZ)
     } else if (get.twostep.vcov) {
-      # No existing vcov -- call fitZ_from_multiLCA
+      # No existing vcov
       fZ_ml <- fitZ_from_multiLCA(
         data = data,
         Y.names = Y.names,
@@ -1965,7 +2076,6 @@ three_step <- function(
         rebase = rebase,
         verbose = verbose
       )
-      # Use the multiLCA result as fitZ if none existed
       if (is.null(fitZ)) {
         fitZ <- fZ_ml
         s1$fitZ <- fZ_ml
@@ -2045,9 +2155,6 @@ three_step <- function(
     }
 
     if (!is.null(Zp.names)) {
-      # Build Z_mat_dis: covariate design for the Zo-complete rows.
-      # keep_step3_Zo contains the original row indices of Zo-complete obs;
-      # we re-index into the full raw Z columns from data.
       Z_mat_dis <- if (!is.null(Z_mat) && length(keep_step3_Zo) > 0L) {
         Z_full_raw <- if (include.intercept) {
           m <- cbind(1, as.matrix(data[, Zp.names, drop = FALSE]))
@@ -2063,7 +2170,6 @@ three_step <- function(
 
       if (!is.null(Z_mat_dis)) {
         pi_adj_full <- cbind(1, p.xz(matrix(s3$res$par, ncol = T - 1)))
-        # p.xz was built on the Z step3 rows; rebuild for Zo rows
         p.xz_dis <- function(params) {
           eta_full <- cbind(0, Z_mat_dis %*% params)
           row_max <- apply(eta_full, 1L, max)
@@ -2105,7 +2211,6 @@ three_step <- function(
       )
     }
 
-    # w.is for starting-value GLMs -- use distal-subset rows
     w.is_dis <- res_adj$w.is
 
     # Create p.zx : The function that maps latent indicators to oberved distal outcome Zo (need a choice of likelihood)
@@ -2113,10 +2218,8 @@ three_step <- function(
     if (family == "poisson") {
       p.zx <- function(params) {
         log_mu <- params[1:T]
-        mu <- exp(log_mu) # length T
-        # P(Z=z_i | X=t) = mu_t^z_i * exp(-mu_t) / z_i!
-        # log P = z_i * log(mu_t) - mu_t - log(z_i!)
-        z <- Zo_mat[, 1L] # N vector
+        mu <- exp(log_mu)
+        z <- Zo_mat[, 1L]
         outer(z, log_mu, "*") - # N x T: z_i * log(mu_t)
           outer(rep(1, nrow(Zo_mat)), mu, "*") - # N x T: mu_t
           lgamma(z + 1L) # N x 1, recycled
@@ -2127,15 +2230,13 @@ three_step <- function(
       )
       beta_init <- coef(starting.lm)
     } else if (family == "binomial") {
-      # params: logit(mu_t) -- logit link, ensures mu_t in (0,1)
+      # params: logit(mu_t)
       p.zx <- function(params) {
         logit_mu <- params[1:T]
-        mu <- 1 / (1 + exp(-logit_mu)) # length T
-        # P(Z=z_i | X=t) = mu_t^z_i * (1-mu_t)^(1-z_i)
-        # log P = z_i * log(mu_t) + (1-z_i) * log(1-mu_t)
-        z <- Zo_mat[, 1L] # N vector
+        mu <- 1 / (1 + exp(-logit_mu))
+        z <- Zo_mat[, 1L]
         outer(z, log(mu), "*") + # N x T
-          outer(1 - z, log(1 - mu), "*") # N x T, then exp
+          outer(1 - z, log(1 - mu), "*")
       }
       starting.lm <- glm(
         Zo_mat[, 1L] ~ -1 + as.factor(max.col(w.is_dis)),
@@ -2276,6 +2377,8 @@ three_step <- function(
 
 # -- helpers -------------------------------------------------------------------
 
+#' Format covariate coefficients as a printable data frame
+#' @noRd
 .covariate_table <- function(x) {
   # x is a tseLCA_covariate or x$covariate for tseLCA_both
   est <- as.vector(x$three_step)
@@ -2293,6 +2396,8 @@ three_step <- function(
   )
 }
 
+#' Format distal outcome estimates as a printable data frame
+#' @noRd
 .distal_table <- function(x, family) {
   # x is a tseLCA_distal or x$distal for tseLCA_both
   est <- x$three_step
@@ -2316,6 +2421,8 @@ three_step <- function(
   )
 }
 
+#' Format p-values with significance stars, fixed width
+#' @noRd
 .format_pval <- function(p) {
   # All entries formatted to the same width so decimal points align in print():
   #   "< 0.001 ***"   (special case, 11 chars)
@@ -2338,6 +2445,8 @@ three_step <- function(
   )
 }
 
+#' Print a coefficient data frame with rounded values and significance codes
+#' @noRd
 .print_table <- function(df, digits = 4) {
   df_fmt <- df
   df_fmt$Estimate <- round(df$Estimate, digits)
@@ -2517,7 +2626,6 @@ summary.tseLCA_covariate <- function(object, digits = 4, ...) {
 
   if (!is.null(object$two_step)) {
     ts <- object$two_step
-    # Guard: ensure intercept row is labelled even for pre-fix objects
     if (nrow(ts) > 0L && (is.null(rownames(ts)) || rownames(ts)[1L] == "")) {
       rownames(ts)[1L] <- "Intercept"
     }
@@ -2691,11 +2799,11 @@ coef.tseLCA_both <- function(
 #' Extract the variance-covariance matrix from a tseLCA model object
 #'
 #' For measurement models, returns the BHHH variance-covariance matrix in
-#' the unconstrained log-ratio parameterisation (NOT the probability scale).
+#' the unconstrained log-ratio parameterization (NOT the probability scale).
 #' Row and column names identify each parameter as
 #' `log(pi_t/pi_1)` (class prevalences) or
 #' `log(P(Y=k|C_t)/P(Y=0|C_t))` (item-response probabilities).
-#' An attribute `"parameterisation"` is attached to remind the user of the
+#' An attribute `"parameterization"` is attached to remind the user of the
 #' scale.
 #'
 #' @param object A `tseLCA` object returned by [tseLCA::three_step()].
@@ -2707,9 +2815,9 @@ coef.tseLCA_both <- function(
 #'   `"two_step"`.
 #' @param ... Further arguments (currently unused).
 #' @return A named square matrix in the unconstrained log-ratio
-#'   parameterisation. Row/column names identify each parameter as
+#'   parameterization. Row/column names identify each parameter as
 #'   `log(pi_t/pi_1)` or `log(P(Y=k|C_t)/P(Y=0|C_t))`. An attribute
-#'   `"parameterisation"` is attached as a reminder. Returns `NULL`
+#'   `"parameterization"` is attached as a reminder. Returns `NULL`
 #'   invisibly if `fit0$mU` is not available. For structural models,
 #'   returns the Step-3 vcov matrix; the two-step vcov is only available
 #'   when `get.twostep.vcov = TRUE`.
@@ -2717,9 +2825,9 @@ coef.tseLCA_both <- function(
 #' d    <- generate_data(100, "high", "covariate", seed = 1)
 #' fit_m <- three_step(d, paste0("Y", 1:6), n_classes = 3)
 #' V <- vcov(fit_m)
-#' # Names show log-ratio parameterisation:
+#' # Names show log-ratio parameterization:
 #' rownames(V)
-#' attr(V, "parameterisation")
+#' attr(V, "parameterization")
 #' @export
 vcov.tseLCA_measurement <- function(object, boundary.tol = 1e-2, ...) {
   fit0 <- object$measurement_model$fit0
@@ -2731,7 +2839,6 @@ vcov.tseLCA_measurement <- function(object, boundary.tol = 1e-2, ...) {
   }
 
   # ---- Compute Varmat from mU if available, else return NULL -----------------
-  # fit0 is already rebased, but mU retains the original class column ordering.
   # Use stored ref_idx to reorder u_post columns to match rebased fit0.
   ref_idx <- if (!is.null(object$measurement_model$ref_idx)) {
     object$measurement_model$ref_idx
@@ -2807,7 +2914,7 @@ vcov.tseLCA_measurement <- function(object, boundary.tol = 1e-2, ...) {
   rownames(V) <- all_names
   colnames(V) <- all_names
 
-  attr(V, "parameterisation") <-
+  attr(V, "parameterization") <-
     "log-ratio (unconstrained); NOT probabilities"
 
   V
@@ -2899,6 +3006,8 @@ vcov.tseLCA_both <- function(
 # item-response probability profiles across classes from the Step-1 fit.
 # Extra arguments (horiz, clab, ...) are passed straight through.
 
+#' Extract the raw multiLCA fit0 object from any tseLCA subclass
+#' @noRd
 .get_fit0 <- function(x) {
   # Extract the raw multiLCA fit0 object from any tseLCA subclass.
   if (inherits(x, "tseLCA_both")) {
